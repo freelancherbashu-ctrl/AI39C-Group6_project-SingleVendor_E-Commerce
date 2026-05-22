@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Edit Profile - MeroPasal</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="nav-logo">
+      <span class="logo-red">Mero</span><span class="logo-blue">Pasal</span>
+    </div>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="profile.html">My Profile</a>
+    </div>
+  </nav>
+
+  <!-- EDIT PROFILE CARD -->
+  <div class="profile-container">
+    <h2 class="profile-name">Edit Profile</h2>
+
+    <div class="edit-form">
+      <label>Name</label>
+      <input type="text" id="nameInput" value="Aayusha Karki">
+
+      <label>Email</label>
+      <input type="email" id="emailInput" value="aayusha@example.com">
+
+      <div class="profile-buttons">
+        <button onclick="saveChanges()" class="btn-edit">Save Changes</button>
+        <a href="profile.html" class="btn-logout">Cancel</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Check if logged in
+    if (localStorage.getItem("loggedIn") !== "true") {
+      window.location.href = "login.html";
+    }
+
+    function saveChanges() {
+      alert("Profile updated! (Backend needed for real saving)");
+      window.location.href = "profile.html";
+    }
+  </script>
+
+</body>
+</html>

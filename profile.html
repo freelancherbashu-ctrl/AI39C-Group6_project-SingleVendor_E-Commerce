@@ -6,11 +6,28 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="nav-logo">
+      <span class="logo-red">Mero</span><span class="logo-blue">Pasal</span>
+    </div>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="profile.html" class="active">My Profile</a>
+    </div>
+  </nav>
+
+  <!-- PROFILE CARD -->
   <div class="profile-container">
     <img src="default pp.jpg" alt="Profile Picture" class="profile-pic">
     <h2 class="profile-name">Aayusha Karki</h2>
     <p class="profile-email">aayusha@example.com</p>
-    <button onclick="logoutUser()">Logout</button>
+
+    <div class="profile-buttons">
+      <a href="edit-profile.html" class="btn-edit">Edit Profile</a>
+      <button onclick="logoutUser()" class="btn-logout">Logout</button>
+    </div>
   </div>
 
   <script>
@@ -24,5 +41,6 @@
       window.location.href = "login.html";
     }
   </script>
+
 </body>
 </html>

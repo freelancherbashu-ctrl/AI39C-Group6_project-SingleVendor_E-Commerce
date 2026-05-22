@@ -119,3 +119,66 @@ body {
 .btn-logout:hover {
   background: #16213e;
 }
+
+/* ===== EDIT FORM ===== */
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  gap: 8px;
+}
+
+.edit-form label {
+  font-weight: bold;
+  color: #1d3557;
+  font-size: 14px;
+}
+
+.edit-form input {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.edit-form input:focus {
+  outline: none;
+  border-color: #e63946;
+}
+
+/* ===== HOME PAGE ===== */
+.home-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 80px 20px;
+}
+
+.home-card {
+  text-align: center;
+  background: white;
+  padding: 50px 40px;
+  border-radius: 12px;
+  border-top: 5px solid #e63946;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  max-width: 500px;
+  width: 100%;
+}
+
+.home-title {
+  font-size: 32px;
+  margin-bottom: 10px;
+}
+
+.home-subtitle {
+  font-size: 18px;
+  color: #e63946;
+  margin-bottom: 12px;
+}
+
+.home-desc {
+  color: #666;
+  margin-bottom: 28px;
+  font-size: 15px;
+}

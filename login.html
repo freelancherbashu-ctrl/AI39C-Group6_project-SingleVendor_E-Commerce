@@ -2,26 +2,61 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Login</title>
+  <title>Login - MeroPasal</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="nav-logo">
+      <span class="logo-red">Mero</span><span class="logo-blue">Pasal</span>
+    </div>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+    </div>
+  </nav>
+
+  <!-- LOGIN CARD -->
   <div class="login-container">
-    <h2>Login</h2>
-    <form onsubmit="loginUser(event)">
-      <input type="email" id="email" placeholder="Enter Email" required>
-      <input type="password" id="password" placeholder="Enter Password" required>
-      <button type="submit">Login</button>
-    </form>
+    <h2 class="profile-name">Login</h2>
+
+    <div class="edit-form">
+      <label>Email</label>
+      <input type="email" id="email" placeholder="Enter your email">
+
+      <label>Password</label>
+      <input type="password" id="password" placeholder="Enter your password">
+
+      <p id="error-msg" style="color:red; font-size:13px; display:none;">
+        Wrong email or password!
+      </p>
+
+      <button onclick="loginUser()" class="btn-edit" style="width:100%; margin-top:5px;">
+        Login
+      </button>
+
+      <p style="margin-top:12px; font-size:13px;">
+        Don't have an account? <a href="register.html" style="color:#e63946;">Register</a>
+      </p>
+    </div>
   </div>
 
-  <script>
-    function loginUser(event) {
-      event.preventDefault();
-      // Fake login check
+<script>
+  document.getElementById("error-msg").style.display = "none";
+
+  function loginUser() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    if (email === "aayusha@example.com" && password === "yushies") {
       localStorage.setItem("loggedIn", "true");
       window.location.href = "profile.html";
+    } else {
+      document.getElementById("error-msg").style.display = "block";
     }
-  </script>
+  }
+</script>
+
 </body>
 </html>

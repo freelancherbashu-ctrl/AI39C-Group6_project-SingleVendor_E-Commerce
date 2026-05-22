@@ -182,3 +182,31 @@ body {
   margin-bottom: 28px;
   font-size: 15px;
 }
+
+.nav-links a {
+  transition: color 0.3s;
+}
+
+.btn-edit:hover {
+  background: #c1121f;
+  transition: background 0.3s;
+}
+
+.btn-logout:hover {
+  background: #16213e;
+  transition: background 0.3s;
+}
+
+.profile-container {
+  margin-top: 30px;
+}
+
+/* ===== FOOTER ===== */
+.footer {
+  background-color: #1d3557;
+  color: white;
+  text-align: center;
+  padding: 20px;
+  margin-top: 60px;
+  font-size: 14px;
+}

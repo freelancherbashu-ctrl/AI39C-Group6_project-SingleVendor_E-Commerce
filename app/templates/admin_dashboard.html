@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="welcome-card">
+        <div class="welcome-icon"><span>👑</span></div>
+        <div class="welcome-text">
+            <h1>Welcome, Admin {{ name }}!</h1>
+            <p>Manage your store from here</p>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon blue"><span>📦</span></div>
+            <div class="stat-info">
+                <h3>Total Products</h3>
+                <p>0</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon green"><span>🛒</span></div>
+            <div class="stat-info">
+                <h3>Total Orders</h3>
+                <p>0</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon orange"><span>👥</span></div>
+            <div class="stat-info">
+                <h3>Total Customers</h3>
+                <p>0</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon purple"><span>💰</span></div>
+            <div class="stat-info">
+                <h3>Total Revenue</h3>
+                <p>Rs. 0</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="quick-actions">
+        <h3>Quick Actions</h3>
+        <div class="actions-grid">
+            <a href="/products/add" class="action-btn"><span>➕</span> Add Product</a>
+            <a href="/orders" class="action-btn"><span>📋</span> View Orders</a>
+            <a href="/customers" class="action-btn"><span>👥</span> Manage Customers</a>
+            <a href="/reports" class="action-btn"><span>📊</span> View Reports</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

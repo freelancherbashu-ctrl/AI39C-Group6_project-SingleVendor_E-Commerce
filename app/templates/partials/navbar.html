@@ -1,0 +1,20 @@
+<nav class="navbar">
+    <div class="logo">
+        <a href="/">
+            <h1>Mero<span>Pasal</span></h1>
+        </a>
+    </div>
+    <ul class="nav-links">
+        {% if session.user_id %}
+            {% if session.role == 'admin' %}
+                <li><a href="{{ url_for('authroutes.admin_dashboard') }}">Admin Dashboard</a></li>
+            {% else %}
+                <li><a href="{{ url_for('authroutes.customer_dashboard') }}">My Dashboard</a></li>
+            {% endif %}
+            <li><a href="{{ url_for('authroutes.logout') }}">Logout</a></li>
+        {% else %}
+            <li><a href="{{ url_for('authroutes.login') }}">Login</a></li>
+            <li><a href="{{ url_for('authroutes.register') }}">Register</a></li>
+        {% endif %}
+    </ul>
+</nav>

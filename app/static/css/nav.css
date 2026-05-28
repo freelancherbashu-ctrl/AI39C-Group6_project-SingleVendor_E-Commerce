@@ -1,0 +1,113 @@
+
+/* RESET */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* NAVBAR */
+.navbar {
+    width: 100%;
+    background: #E31C25;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 60px;
+}
+
+/* LOGO */
+.logo-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: white;
+    font-size: 22px;
+    font-weight: 600;
+}
+
+.logo-section img {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: white;
+    object-fit: cover;
+}
+
+/* SEARCH */
+.search-box {
+    width: 420px;
+    background: white;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+}
+
+.search-icon {
+    font-size: 18px;
+    color: gray;
+    margin-right: 10px;
+}
+
+.search-box input {
+    border: none;
+    outline: none;
+    width: 100%;
+    font-size: 15px;
+}
+
+/* BUTTONS */
+.nav-buttons {
+    display: flex;
+    gap: 15px;
+}
+
+.nav-buttons a {
+    text-decoration: none;
+    font-size: 16px;
+    padding: 8px 14px;
+    border-radius: 6px;
+    transition: 0.3s;
+    font-weight: 500;
+}
+
+/* LOGIN */
+.login-btn {
+    color: white;
+    border: 1px solid white;
+}
+
+.login-btn:hover {
+    background: white;
+    color: #E31C25;
+}
+
+/* REGISTER */
+.register-btn {
+    background: white;
+    color: #E31C25;
+}
+
+.register-btn:hover {
+    background: #f2f2f2;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+
+    .navbar {
+        flex-direction: column;
+        gap: 12px;
+        padding: 15px;
+    }
+
+    .search-box {
+        width: 100%;
+    }
+
+    .nav-buttons {
+        justify-content: center;
+    }
+}

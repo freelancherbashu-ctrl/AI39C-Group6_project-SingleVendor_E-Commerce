@@ -1,0 +1,23 @@
+<nav class="navbar">
+
+    <!-- Logo -->
+    <div class="logo-section">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
+        <span>MeroPasal</span>
+    </div>
+
+    <!-- Search -->
+    <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Search in MeroPasal">
+    </div>
+
+    <!-- Buttons -->
+    <div class="nav-buttons">
+
+        <a href="{{ url_for('authroutes.login') }}">Login</a>
+        <a href="{{ url_for('authroutes.register') }}">Register</a>
+
+    </div>
+
+</nav>

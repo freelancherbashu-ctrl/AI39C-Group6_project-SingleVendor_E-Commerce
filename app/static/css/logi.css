@@ -1,0 +1,147 @@
+/* RESET */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* WRAPPER */
+.login-wrapper {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+}
+
+/* LEFT PANEL */
+.left-panel {
+    width: 50%;
+    background: linear-gradient(135deg, #E31C25, #B8151D);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    padding: 40px;
+}
+
+.content {
+    text-align: center;
+}
+
+.content img {
+    width: 90px;
+    height: 90px;
+    background: white;
+    padding: 10px;
+    border-radius: 50%;
+    margin-bottom: 20px;
+}
+
+.content h1 {
+    font-size: 38px;
+    margin-bottom: 10px;
+}
+
+.content p {
+    font-size: 16px;
+    opacity: 0.9;
+    margin-bottom: 25px;
+}
+
+.features {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.features span {
+    background: rgba(255,255,255,0.2);
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 13px;
+}
+
+/* RIGHT PANEL */
+.right-panel {
+    width: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #fff;
+}
+
+/* FORM */
+.login-form {
+    width: 100%;
+    max-width: 400px;
+}
+
+.login-form h2 {
+    font-size: 32px;
+    margin-bottom: 10px;
+    color: #222;
+}
+
+.subtitle {
+    color: gray;
+    margin-bottom: 25px;
+}
+
+/* INPUT */
+.login-form input {
+    width: 100%;
+    padding: 14px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    outline: none;
+    transition: 0.3s;
+}
+
+.login-form input:focus {
+    border-color: #E31C25;
+    box-shadow: 0 0 6px rgba(227,28,37,0.2);
+}
+
+/* FORGOT */
+.forgot {
+    text-align: right;
+    margin-bottom: 20px;
+}
+
+.forgot a {
+    text-decoration: none;
+    color: #E31C25;
+    font-size: 13px;
+}
+
+/* BUTTON */
+.login-btn {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    background: #E31C25;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.login-btn:hover {
+    background: #b8151d;
+}
+
+/* REGISTER */
+.register {
+    text-align: center;
+    margin-top: 20px;
+    color: gray;
+}
+
+.register a {
+    color: #E31C25;
+    text-decoration: none;
+    font-weight: 600;
+}

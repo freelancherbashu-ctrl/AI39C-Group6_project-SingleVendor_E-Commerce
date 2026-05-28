@@ -1,0 +1,106 @@
+/* WRAPPER */
+.register-wrapper {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* LEFT SIDE */
+.left-panel {
+    width: 40%;
+    background: linear-gradient(135deg, #E31C25, #B8151D);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 40px;
+}
+
+.left-panel .logo {
+    width: 100px;
+    height: 100px;
+    background: white;
+    border-radius: 50%;
+    padding: 10px;
+    margin-bottom: 20px;
+}
+
+.left-panel h1 {
+    font-size: 34px;
+    margin-bottom: 10px;
+}
+
+.left-panel p {
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+/* RIGHT SIDE */
+.right-panel {
+    width: 60%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #fff;
+}
+
+/* FORM */
+.register-form {
+    width: 100%;
+    max-width: 400px;
+}
+
+.register-form h2 {
+    font-size: 30px;
+    margin-bottom: 20px;
+    color: #222;
+}
+
+/* INPUT */
+.register-form input {
+    width: 100%;
+    padding: 14px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    outline: none;
+    transition: 0.3s;
+}
+
+.register-form input:focus {
+    border-color: #E31C25;
+    box-shadow: 0 0 6px rgba(227,28,37,0.2);
+}
+
+/* BUTTON */
+.register-form button {
+    width: 100%;
+    padding: 14px;
+    background: #E31C25;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: 0.3s;
+}
+
+.register-form button:hover {
+    background: #b8151d;
+}
+
+/* LOGIN LINK */
+.login-link {
+    text-align: center;
+    margin-top: 15px;
+    font-size: 14px;
+}
+
+.login-link a {
+    color: #E31C25;
+    text-decoration: none;
+    font-weight: 600;
+}

@@ -91,21 +91,16 @@ class AuthController(BaseController):
     # ================= ADMIN DASHBOARD =================
     def admin_dashboard(self):
 
-        if not self.is_logged_in():
-            return redirect(url_for("authroutes.login"))
-
-        if session.get("role") != "admin":
-            return "Access Denied"
-
-        return render_template("admin_dashboard.html")
+        return render_template(
+            "admin_dashboard.html"
+        )
 
     # ================= CUSTOMER DASHBOARD =================
     def customer_dashboard(self):
 
-        if not self.is_logged_in():
-            return redirect(url_for("authroutes.login"))
-
-        return render_template("customer_dashboard.html")
+        return render_template(
+            "customer_dashboard.html"
+        )
 
     # ================= FORGOT PASSWORD =================
     def forgot_password(self):

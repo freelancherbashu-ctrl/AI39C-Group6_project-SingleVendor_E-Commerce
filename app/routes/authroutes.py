@@ -1,7 +1,7 @@
 from flask import Blueprint
 from app.controllers.auth import AuthController
 
-from app.helpers.auth_helper import login_required
+from app.auth import login_required, admin_required
 
 class AuthRoutes:
 
@@ -21,9 +21,6 @@ class AuthRoutes:
             self.controller.register
         )
 
-        self.bp.route("/logout")(
-            self.controller.logout
-        )
 
         
 
@@ -45,6 +42,6 @@ class AuthRoutes:
             self.controller.contact
         )
         self.bp.route('/logout')(self.controller.logout)
-        self.bp.route('/admin_dashboard')(self.controller.admin_dashboard)
-        self.bp.route('/customer_dashboard')(self.controller.customer_dashboard)
+        self.bp.route('/customer_dashboard')(login_required(self.controller.customer_dashboard))
+        self.bp.route('/admin_dashboard')(admin_required(self.controller.admin_dashboard))
         return self.bp

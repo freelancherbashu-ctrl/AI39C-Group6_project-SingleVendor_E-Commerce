@@ -11,24 +11,24 @@ class Database:
                 database=config.MYSQL_DATABASE,
                 cursorclass=pymysql.cursors.DictCursor
             )
-            print("✅ Database connected")
+            print("✅ Database connected successfully")
         except Exception as e:
-            print("❌ Connection failed:", e)
-    
+            print(f"❌ Connection failed: {e}")
+
     def fetch_one(self, query, params=None):
         with self.connection.cursor() as cursor:
-            cursor.execute(query, params)
+            cursor.execute(query, params or ())
             return cursor.fetchone()
-    
+
     def fetch_all(self, query, params=None):
         with self.connection.cursor() as cursor:
-            cursor.execute(query, params)
+            cursor.execute(query, params or ())
             return cursor.fetchall()
-    
+
     def execute(self, query, params=None):
         with self.connection.cursor() as cursor:
-            cursor.execute(query, params)
+            cursor.execute(query, params or ())
             self.connection.commit()
-    
+
     def close(self):
         self.connection.close()

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Meropasal Admin{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar with Logo -->
+        <aside class="sidebar">
+            <div class="logo-area">
+                <img src="{{ url_for('static', filename='uploads/meropasal-logo.png') }}" 
+                     alt="Meropasal Logo" 
+                     class="logo-img"
+                     onerror="this.src='https://via.placeholder.com/60?text=Meropasal'">
+                <h2>Meropasal</h2>
+                <p>Admin Panel</p>
+            </div>
+            <nav class="nav-menu">
+                <a href="/categories" class="nav-item {% if request.endpoint == 'category.categories_list' %}active{% endif %}">
+                    <span class="icon">📁</span> Categories
+                </a>
+                <a href="/add-category" class="nav-item {% if request.endpoint == 'category.add_category' %}active{% endif %}">
+                    <span class="icon">➕</span> Add Category
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-panel">
+            <div class="top-header">
+                <h1>{% block header %}Dashboard{% endblock %}</h1>
+                <div class="admin-info">
+                    <span>👋 Admin</span>
+                </div>
+            </div>
+            <div class="content">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+</body>
+</html>

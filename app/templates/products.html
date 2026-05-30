@@ -1,0 +1,72 @@
+{% extends "layout.html" %}
+
+{% block title %}Products | Meropasal{% endblock %}
+{% block header %}📦 Products{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2>All Products</h2>
+        <a href="/categories" class="btn-primary">← Back to Categories</a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    {% endwith %}
+
+    {% if products %}
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Image</th>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th>Stock</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                <tr>
+                    <td>{{ product.id }}</td>
+                    <td class="image-cell">
+                        {% if product.image %}
+                            <img src="{{ product.image }}" class="thumbnail" alt="{{ product.name }}">
+                        {% else %}
+                            <img src="{{ url_for('static', filename='uploads/meropasal-logo.png') }}" class="thumbnail" alt="Default">
+                        {% endif %}
+                    </td>
+                    <td><strong>{{ product.name }}</strong></td>
+                    <td>{{ product.category_name }}</td>
+                    <td>${{ "%.2f"|format(product.price) }}</td>
+                    <td>{{ product.stock }}</td>
+                    <td>
+                        {% if product.status == 'active' %}
+                            <span class="badge active">Active</span>
+                        {% else %}
+                            <span class="badge inactive">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td class="action-btns">
+                        <a href="/delete-product/{{ product.id }}" class="btn-delete" 
+                           onclick="return confirm('Delete {{ product.name }}?')">🗑️ Delete</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>No products found.</p>
+        <a href="/categories" class="btn-primary">Add products from categories</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

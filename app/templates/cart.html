@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block title %}My Cart - MeroPasal{% endblock %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/cart.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<section class="cart-page">
+
+    <h1 class="title">My Cart</h1>
+
+    {% if cart and cart|length > 0 %}
+
+    <!-- CART TABLE -->
+    <div class="cart-container">
+
+        {% for product_id, qty in cart.items() %}
+
+        <div class="cart-row">
+
+            <!-- PRODUCT INFO -->
+            <div class="cart-product">
+
+                <img src="{{ products[product_id].image }}" alt="product">
+
+                <div>
+                    <h3>{{ products[product_id].name }}</h3>
+
+                    <p>
+                        Rs. {{ products[product_id].price }}
+                    </p>
+
+                </div>
+
+            </div>
+
+            <!-- QUANTITY -->
+            <div class="cart-qty">
+
+                <form action="{{ url_for('auth.update_cart',
+                product_id=product_id) }}"
+                method="POST">
+
+                    <button name="action" value="decrease">-</button>
+
+                    <span>{{ qty }}</span>
+
+                    <button name="action" value="increase">+</button>
+
+                </form>
+
+            </div>
+
+            <!-- TOTAL -->
+            <div class="cart-total">
+                Rs. {{ products[product_id].price * qty }}
+            </div>
+
+            <!-- ACTIONS -->
+            <div class="cart-actions">
+
+                <!-- VIEW DETAILS -->
+                <a href="{{ url_for('auth.view_product', id=product_id) }}"
+                   class="btn view">
+
+                    View Product
+
+                </a>
+
+                <!-- REMOVE -->
+                <form action="{{ url_for('auth.remove_from_cart', product_id=product_id) }}"
+                      method="POST">
+
+                    <button type="submit" class="btn remove">
+                        Remove
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+    <!-- CHECKOUT BUTTON -->
+    <div class="checkout-box">
+
+        <a href="{{ url_for('auth.checkout') }}"
+           class="checkout-btn">
+
+            Proceed to Checkout
+
+        </a>
+
+    </div>
+
+    {% else %}
+
+    <!-- EMPTY CART -->
+    <div class="empty-cart">
+
+        <h2>Your cart is empty 🛒</h2>
+
+        <p>Start shopping to add items here.</p>
+
+        <a href="{{ url_for('auth.dashboard') }}"
+           class="btn shop">
+
+            Go Shopping
+
+        </a>
+
+    </div>
+
+    {% endif %}
+
+</section>
+
+{% endblock %}

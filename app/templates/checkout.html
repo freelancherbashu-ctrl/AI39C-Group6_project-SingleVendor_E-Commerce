@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}Checkout - MeroPasal{% endblock %}
+
+{% block style %}
+<link rel="stylesheet"
+href="{{ url_for('static',
+filename='css/checkout.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<section class="checkout-page">
+
+    <h1>Checkout</h1>
+
+    <!-- DELIVERY FORM -->
+    <form class="checkout-form"
+          onsubmit="placeOrder(event)">
+
+        <h2>Delivery Information</h2>
+
+        <input type="text" name="name" placeholder="Full Name" required>
+
+        <input type="text" name="phone" placeholder="Phone Number" required>
+
+        <input type="text" name="province" placeholder="Province" required>
+
+        <input type="text" name="city" placeholder="City" required>
+
+        <input type="text" name="area" placeholder="Area" required>
+
+        <textarea name="address"
+                  placeholder="Full Address"
+                  required></textarea>
+
+        <input type="text"
+               name="landmark"
+               placeholder="Landmark (Optional)">
+
+        <!-- PAYMENT OPTIONS -->
+        <div class="payment-section">
+
+            <h2>Payment Method</h2>
+
+            <label>
+                <input type="radio"
+                       name="payment"
+                       value="cod"
+                       required>
+                Cash on Delivery
+            </label>
+
+            <label>
+                <input type="radio"
+                       name="payment"
+                       value="esewa">
+                eSewa
+            </label>
+
+            <label>
+                <input type="radio"
+                       name="payment"
+                       value="khalti">
+                Khalti
+            </label>
+
+        </div>
+
+        <!-- PLACE ORDER -->
+        <button type="submit" class="place-order-btn">
+            Place Order
+        </button>
+
+    </form>
+
+</section>
+
+<!-- SCRIPT -->
+<script>
+
+function placeOrder(event){
+
+    event.preventDefault();
+
+    let payment = document.querySelector('input[name="payment"]:checked');
+
+    if(!payment){
+        alert("Please select a payment method");
+        return;
+    }
+
+    alert("Order placed successfully 🎉");
+
+    window.location.href = "{{ url_for('auth.dashboard') }}";
+}
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}MeroPasal{% endblock %}</title>
+    {% block style %}{% endblock %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <!-- Flash Messages (optional but useful) -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    {% endwith %}
+
+    {% include 'partials/header.html' %}
+
+    <main>
+        {% block content %}
+        
+        {% endblock %}
+    </main>
+
+</body>
+</html>

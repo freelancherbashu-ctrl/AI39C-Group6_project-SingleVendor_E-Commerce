@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - MeroPasal{% endblock %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- PRODUCTS SECTION -->
+<section class="products-container">
+
+    {% for product in products %}
+
+    <div class="product-card">
+
+        <img src="{{ product.image }}" alt="product">
+
+        <h3>{{ product.name }}</h3>
+
+        <p class="price">Rs. {{ product.price }}</p>
+
+        <a href="{{ url_for('auth.view_product', id=product.id) }}" class="btn">
+            View Details
+        </a>
+
+    </div>
+
+    {% endfor %}
+
+</section>
+
+{% endblock %}
+
+
+

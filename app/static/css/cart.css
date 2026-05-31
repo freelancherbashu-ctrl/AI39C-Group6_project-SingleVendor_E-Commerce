@@ -1,0 +1,100 @@
+.cart-page{
+    padding:40px;
+    background:#f8fafc;
+}
+
+.title{
+    text-align:center;
+    margin-bottom:30px;
+}
+
+/* CART ROW */
+.cart-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:white;
+    padding:15px;
+    margin-bottom:15px;
+    border-radius:10px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* PRODUCT */
+.cart-product{
+    display:flex;
+    align-items:center;
+    gap:15px;
+}
+
+.cart-product img{
+    width:80px;
+    height:80px;
+    object-fit:contain;
+    border-radius:8px;
+    background:#f1f5f9;
+}
+
+
+/* ACTION BUTTON AREA */
+
+.cart-actions{
+    display:flex;
+    gap:10px;
+    align-items:center;
+}
+
+/* REMOVE FORM DEFAULT SPACING */
+
+.cart-actions form{
+    margin:0;
+}
+
+/* BUTTON STYLE */
+
+.cart-actions .btn,
+.cart-actions button{
+    padding:8px 14px;
+    border:none;
+    border-radius:5px;
+    cursor:pointer;
+    text-decoration:none;
+    color:white;
+    font-size:14px;
+    display:inline-block;
+}
+
+/* VIEW BUTTON */
+
+.view{
+    background:#2563eb;
+}
+
+/* REMOVE BUTTON */
+
+.remove{
+    background:#ef4444;
+}
+
+/* CHECKOUT */
+.checkout-box{
+    text-align:right;
+    margin-top:20px;
+}
+
+.checkout-btn{
+    background:#16a34a;
+    color:white;
+    padding:12px 18px;
+    text-decoration:none;
+    border-radius:8px;
+    font-weight:bold;
+}
+
+/* EMPTY */
+.empty-cart{
+    text-align:center;
+    padding:50px;
+    background:white;
+    border-radius:10px;
+}

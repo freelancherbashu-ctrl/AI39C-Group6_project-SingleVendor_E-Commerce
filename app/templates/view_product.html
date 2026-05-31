@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}View Product - MeroPasal{% endblock %}
+
+{% block style %}
+<link rel="stylesheet"
+href="{{ url_for('static',
+filename='css/view_product.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<section class="product-page">
+
+    <!-- LEFT: IMAGE -->
+    <div class="product-image">
+
+        <img src="{{ product.image }}">
+
+    </div>
+
+    <!-- RIGHT: DETAILS -->
+    <div class="product-details">
+
+        <h1>{{ product.name }}</h1>
+
+        <h2 class="price">
+            Price: Rs. {{ product.price }}
+        </h2>
+
+        <p class="description">
+            Description:{{ product.description if product.description else "No description available for this product." }}
+        </p>
+
+       <form action="{{ url_for('auth.add_to_cart',
+        product_id=product.id) }}"
+        method="POST">
+
+            <!-- QUANTITY -->
+            <input type="number"
+                name="quantity"
+                id="qty"
+                value="1"
+                min="1">
+
+            <button type="submit" class="btn cart">
+
+                Add to Cart
+
+            </button>
+
+        </form>
+
+        <!-- ACTION BUTTONS -->
+        <div class="actions">
+            
+            <a href="{{ url_for('auth.checkout') }}"
+            class="btn buy">
+
+                Buy Now
+
+            </a>
+
+        </div>
+
+    </div>
+
+</section>
+
+<script>
+
+function increaseQty(){
+    let qty = document.getElementById("qty");
+    qty.value = parseInt(qty.value) + 1;
+}
+
+function decreaseQty(){
+    let qty = document.getElementById("qty");
+    if(qty.value > 1){
+        qty.value = parseInt(qty.value) - 1;
+    }
+}
+
+</script>
+
+{% endblock %}

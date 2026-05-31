@@ -1,0 +1,54 @@
+<header class="topbar">
+
+    <!-- Logo -->
+    <div class="logo-section">
+
+        <a href="{{ url_for('auth.dashboard') }}">
+
+            <img src="{{ url_for('static',
+            filename='images/meropasal_logo.png') }}">
+
+        </a>
+
+    </div>
+
+    <!-- Search -->
+    <div class="search-bar">
+
+        
+        <form action="{{ url_for('auth.dashboard') }}" method="GET">
+            <input type="text" name="search" placeholder="Search products...">
+            <button type="submit">Search</button>
+        </form>
+    </div>
+
+    <!-- Profile -->
+    <div class="profile-dropdown">
+
+        <button class="profile-btn">
+            Profile👤 ▼
+        </button>
+
+        <div class="dropdown-content">
+
+            <a href="{{ url_for('auth.all_categories') }}">
+                Categories
+            </a>
+
+            <a href="{{ url_for('auth.cart') }}">
+                Cart
+            </a>
+
+            <a href="{{ url_for('auth.view_my_orders') }}">
+                My Orders
+            </a>
+
+            <a href="{{ url_for('auth.profile') }}">
+                My Profile
+            </a>
+
+        </div>
+
+    </div>
+
+</header>

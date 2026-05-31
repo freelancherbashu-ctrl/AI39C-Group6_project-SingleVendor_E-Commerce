@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block title %}Category - MeroPasal{% endblock %}
+
+{% block style %}
+<link rel="stylesheet"
+href="{{ url_for('static',
+filename='css/single_category.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<section class="category-page">
+
+    <!-- CATEGORY HEADER -->
+
+    <div class="category-header">
+
+        <h1>{{ category.title() }}</h1>
+
+        <!-- SORT OPTIONS -->
+
+        <div class="sort-section">
+
+            <form method="GET">
+
+                <label>Sort By:</label>
+
+                <select name="sort"
+                        onchange="this.form.submit()">
+
+                    <option value="popular"
+                    {% if sort == "popular" %}selected{% endif %}>
+                        Popular
+                    </option>
+
+                    <option value="low"
+                    {% if sort == "low" %}selected{% endif %}>
+                        Price: Low to High
+                    </option>
+
+                    <option value="high"
+                    {% if sort == "high" %}selected{% endif %}>
+                        Price: High to Low
+                    </option>
+
+                </select>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- PRODUCTS -->
+
+    <div class="products-container">
+
+    {% if products %}
+
+        {% for product in products %}
+
+        <div class="product-card">
+
+            <img src="{{ product.image }}">
+
+            <h3>{{ product.name }}</h3>
+
+            <p class="price">
+                Rs. {{ product.price }}
+            </p>
+
+            <a href="{{ url_for('auth.view_product', id=product.id) }}"
+            class="btn">
+
+                View Details
+
+            </a>
+
+        </div>
+
+        {% endfor %}
+
+    {% else %}
+
+        <div class="no-products">
+
+            <h2>
+                No products available yet
+            </h2>
+
+            <p>
+                Products for this category will be added soon.
+            </p>
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+</section>
+
+{% endblock %}

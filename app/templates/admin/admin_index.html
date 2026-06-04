@@ -1,0 +1,106 @@
+{# admin_index.html — Admin landing page (dashboard).
+   Extends admin_layout.html, NOT the customer base.html. #}
+{% extends "admin/admin_layout.html" %}
+
+{% block title %}Dashboard · meropasal Admin{% endblock %}
+{% block heading %}Dashboard{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='admin/css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="dash-section">
+  <div class="dash-stat-grid">
+
+    <div class="dash-card dash-blue" data-target="{{ stats.total_products }}">
+      <div class="dash-card-label">Total Products</div>
+      <div class="dash-card-value" data-count>0</div>
+      <a class="dash-card-link" href="{{ url_for('admin.products') }}">Manage →</a>
+    </div>
+
+    <div class="dash-card dash-purple" data-target="{{ stats.total_categories }}">
+      <div class="dash-card-label">Categories</div>
+      <div class="dash-card-value" data-count>0</div>
+      <a class="dash-card-link" href="{{ url_for('admin.categories') }}">Manage →</a>
+    </div>
+
+    <div class="dash-card dash-orange" data-target="{{ stats.total_orders }}">
+      <div class="dash-card-label">Total Orders</div>
+      <div class="dash-card-value" data-count>0</div>
+      <a class="dash-card-link" href="{{ url_for('admin.orders') }}">View →</a>
+    </div>
+
+    <div class="dash-card dash-green">
+      <div class="dash-card-label">Revenue (Completed)</div>
+      <div class="dash-card-value">Rs. {{ '%.2f'|format(stats.revenue) }}</div>
+      <small class="dash-card-link">From completed orders</small>
+    </div>
+
+  </div>
+</section>
+
+<section class="dash-section">
+  <h3 class="dash-section-title">Order Status Overview</h3>
+  <div class="dash-stat-grid">
+    <div class="dash-card dash-yellow" data-target="{{ stats.pending_orders }}">
+      <div class="dash-card-label">Pending</div>
+      <div class="dash-card-value" data-count>0</div>
+    </div>
+    <div class="dash-card dash-cyan" data-target="{{ stats.processing_orders }}">
+      <div class="dash-card-label">Processing</div>
+      <div class="dash-card-value" data-count>0</div>
+    </div>
+    <div class="dash-card dash-green" data-target="{{ stats.completed_orders }}">
+      <div class="dash-card-label">Completed</div>
+      <div class="dash-card-value" data-count>0</div>
+    </div>
+    <div class="dash-card dash-red" data-target="{{ stats.cancelled_orders }}">
+      <div class="dash-card-label">Cancelled</div>
+      <div class="dash-card-value" data-count>0</div>
+    </div>
+  </div>
+</section>
+
+<section class="dash-two-col">
+  <div class="dash-panel">
+    <h3>Recent Orders</h3>
+    {% if recent_orders %}
+    <table class="dash-table">
+      <thead><tr><th>#</th><th>Customer</th><th>Amount</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for o in recent_orders %}
+        <tr>
+          <td><a href="{{ url_for('admin.order_detail', oid=o.id) }}">#{{ o.id }}</a></td>
+          <td>{{ o.customer_name }}</td>
+          <td>Rs. {{ '%.2f'|format(o.total_amount) }}</td>
+          <td><span class="dash-badge dash-badge-{{ o.status }}">{{ o.status }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<p class="dash-muted">No orders yet.</p>{% endif %}
+  </div>
+
+  <div class="dash-panel">
+    <h3>Low Stock Alerts (≤ 5)</h3>
+    {% if low_stock %}
+    <table class="dash-table">
+      <thead><tr><th>Product</th><th>Stock</th></tr></thead>
+      <tbody>
+        {% for p in low_stock %}
+        <tr>
+          <td>{{ p.name }}</td>
+          <td><span class="dash-stock-low">{{ p.stock }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<p class="dash-muted">Stock levels are healthy 👍</p>{% endif %}
+  </div>
+</section>
+{% endblock %}
+
+{% block page_js %}
+<script src="{{ url_for('static', filename='admin/js/dashboard.js') }}"></script>
+{% endblock %}

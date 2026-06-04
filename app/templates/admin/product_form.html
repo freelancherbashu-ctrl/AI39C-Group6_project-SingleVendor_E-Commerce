@@ -1,0 +1,71 @@
+{% extends "admin/admin_layout.html" %}
+{% block title %}{{ 'Edit' if product else 'Add' }} Product · meropasal Admin{% endblock %}
+{% block heading %}{{ 'Edit' if product else 'Add New' }} Product{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='admin/css/products.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="prod-form-panel">
+  <form method="post" enctype="multipart/form-data" id="prodForm">
+
+    <div class="prod-form-row">
+      <label>Product Name <span class="prod-req">*</span></label>
+      <input type="text" name="name" required value="{{ product.name if product else '' }}">
+    </div>
+
+    <div class="prod-form-row">
+      <label>Description</label>
+      <textarea name="description" rows="4">{{ product.description if product else '' }}</textarea>
+    </div>
+
+    <div class="prod-form-grid">
+      <div class="prod-form-row">
+        <label>Price (Rs.) <span class="prod-req">*</span></label>
+        <input type="number" step="0.01" min="0" name="price" required value="{{ product.price if product else '0' }}">
+      </div>
+      <div class="prod-form-row">
+        <label>Stock Quantity <span class="prod-req">*</span></label>
+        <input type="number" min="0" name="stock" required value="{{ product.stock if product else '0' }}">
+      </div>
+      <div class="prod-form-row">
+        <label>Category</label>
+        <select name="category_id">
+          <option value="">— None —</option>
+          {% for c in categories %}
+            <option value="{{ c.id }}" {% if product and product.category_id==c.id %}selected{% endif %}>{{ c.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="prod-form-row">
+        <label class="prod-check">
+          <input type="checkbox" name="is_active" {% if not product or product.is_active %}checked{% endif %}>
+          Active (visible on storefront)
+        </label>
+      </div>
+    </div>
+
+    <div class="prod-form-row">
+      <label>Product Image {% if product and product.image %}<small>(leave blank to keep current)</small>{% endif %}</label>
+      <input type="file" name="image" id="prodImageInput" accept="image/*">
+      <div class="prod-image-preview-wrap">
+        <img id="prodImagePreview"
+             src="{% if product and product.image %}{{ url_for('static', filename='admin/uploads/' ~ product.image) }}{% endif %}"
+             class="prod-image-preview"
+             style="{% if not (product and product.image) %}display:none{% endif %}">
+      </div>
+    </div>
+
+    <div class="prod-form-actions">
+      <button class="prod-btn prod-btn-primary">{{ 'Update Product' if product else 'Create Product' }}</button>
+      <a class="prod-btn prod-btn-light" href="{{ url_for('admin.products') }}">Cancel</a>
+    </div>
+
+  </form>
+</div>
+{% endblock %}
+
+{% block page_js %}
+<script src="{{ url_for('static', filename='admin/js/products.js') }}"></script>
+{% endblock %}

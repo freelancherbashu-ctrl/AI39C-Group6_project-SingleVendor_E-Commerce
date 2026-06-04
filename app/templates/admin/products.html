@@ -1,0 +1,71 @@
+{% extends "admin/admin_layout.html" %}
+{% block title %}Products · meropasal Admin{% endblock %}
+{% block heading %}Products{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='admin/css/products.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="prod-action-bar">
+  <form method="get" class="prod-search-form">
+    <input type="text" name="q" id="prodSearch" value="{{ q }}" placeholder="🔍 Search products by name...">
+    <button class="prod-btn prod-btn-light">Search</button>
+    {% if q %}<a class="prod-btn prod-btn-ghost" href="{{ url_for('admin.products') }}">Clear</a>{% endif %}
+  </form>
+  <a class="prod-btn prod-btn-primary" href="{{ url_for('admin.add_product') }}">+ Add Product</a>
+</div>
+
+<div class="prod-panel">
+  {% if products %}
+  <table class="prod-table">
+    <thead>
+      <tr>
+        <th>Image</th><th>Name</th><th>Category</th>
+        <th>Price</th><th>Stock</th><th>Status</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in products %}
+      <tr>
+        <td>
+          {% if p.image %}
+            <img src="{{ url_for('static', filename='admin/uploads/' ~ p.image) }}" class="prod-thumb" alt="">
+          {% else %}
+            <div class="prod-thumb prod-thumb-empty">N/A</div>
+          {% endif %}
+        </td>
+        <td><strong>{{ p.name }}</strong></td>
+        <td>{{ p.category.name if p.category else '—' }}</td>
+        <td>Rs. {{ '%.2f'|format(p.price) }}</td>
+        <td class="{% if p.stock <= 5 %}prod-stock-low{% endif %}">{{ p.stock }}</td>
+        <td>
+          {% if p.is_active %}
+            <span class="prod-badge prod-badge-active">Active</span>
+          {% else %}
+            <span class="prod-badge prod-badge-inactive">Inactive</span>
+          {% endif %}
+        </td>
+        <td class="prod-actions">
+          <a class="prod-btn prod-btn-sm prod-btn-light" href="{{ url_for('admin.edit_product', pid=p.id) }}">Edit</a>
+          <form method="post" action="{{ url_for('admin.delete_product', pid=p.id) }}"
+                class="prod-delete-form" data-name="{{ p.name }}" style="display:inline">
+            <button type="submit" class="prod-btn prod-btn-sm prod-btn-danger">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <div class="prod-empty">
+      <p>No products found.</p>
+      <a class="prod-btn prod-btn-primary" href="{{ url_for('admin.add_product') }}">Add your first product</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block page_js %}
+<script src="{{ url_for('static', filename='admin/js/products.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,65 @@
+/* =====================================================
+   orders.css — Styles for orders.html & order_detail.html
+   ===================================================== */
+
+/* Tabs */
+.ord-tabs { display:flex; gap:4px; margin-bottom:16px; flex-wrap:wrap; }
+.ord-tabs a {
+  padding:8px 16px; background:#fff; border-radius:6px; text-decoration:none;
+  color:#555; font-size:14px; border:1px solid #e3e6ed; transition:.15s;
+}
+.ord-tabs a:hover { background:#f4f6fa; }
+.ord-tabs a.active { background:#1d4ed8; color:#fff; border-color:#1d4ed8; }
+.ord-tab-pending.active    { background:#eab308; border-color:#eab308; }
+.ord-tab-processing.active { background:#0891b2; border-color:#0891b2; }
+.ord-tab-completed.active  { background:#16a34a; border-color:#16a34a; }
+.ord-tab-cancelled.active  { background:#dc2626; border-color:#dc2626; }
+
+.ord-panel {
+  background:#fff; padding:20px; border-radius:10px;
+  box-shadow:0 1px 3px rgba(0,0,0,.06); margin-bottom:20px;
+}
+.ord-panel h3, .ord-panel h4 { margin-top:0; }
+
+/* Table */
+.ord-table { width:100%; border-collapse:collapse; }
+.ord-table th, .ord-table td { padding:11px 12px; text-align:left; border-bottom:1px solid #eee; font-size:14px; }
+.ord-table th { background:#fafafa; font-weight:600; color:#555; font-size:13px; }
+.ord-table tr:hover td { background:#fafbff; }
+
+/* Badges */
+.ord-badge { padding:3px 10px; border-radius:12px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
+.ord-badge-pending    { background:#fef3c7; color:#92400e; }
+.ord-badge-processing { background:#cffafe; color:#155e75; }
+.ord-badge-completed  { background:#d1fae5; color:#065f46; }
+.ord-badge-cancelled  { background:#fee2e2; color:#991b1b; }
+
+/* Buttons */
+.ord-btn { display:inline-block; padding:8px 14px; border:none; border-radius:6px;
+           font-size:14px; cursor:pointer; text-decoration:none; transition:.15s; }
+.ord-btn-primary { background:#1d4ed8; color:#fff; }
+.ord-btn-primary:hover { background:#1739a8; }
+.ord-btn-danger { background:#dc2626; color:#fff; }
+.ord-btn-danger:hover { background:#b91c1c; }
+.ord-btn-light { background:#f1f3f8; color:#333; border:1px solid #dfe2ea; }
+.ord-btn-light:hover { background:#e6e9f0; }
+.ord-btn-sm { padding:5px 10px; font-size:12px; }
+
+/* Detail layout */
+.ord-back-btn { margin-bottom:14px; }
+.ord-detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:0; }
+@media (max-width:900px) { .ord-detail-grid { grid-template-columns:1fr; } }
+
+.ord-info-list { display:grid; grid-template-columns:auto 1fr; gap:8px 16px; margin:0; }
+.ord-info-list dt { font-weight:600; color:#555; font-size:13px; }
+.ord-info-list dd { margin:0; font-size:14px; }
+
+.ord-status-form { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.ord-status-form select {
+  flex:1; min-width:140px; padding:9px 11px; border:1px solid #dcdfe6; border-radius:6px; font-size:14px;
+}
+.ord-divider { border:none; border-top:1px solid #eee; margin:18px 0 14px; }
+
+.ord-total-row td { border-top:2px solid #ddd; font-size:15px; }
+
+.ord-muted { color:#888; }

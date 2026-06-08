@@ -1,86 +1,79 @@
 {% extends 'base.html' %}
 
-{% block title %}View Product - MeroPasal{% endblock %}
+{% block title %}{{ product.name }} - MeroPasal{% endblock %}
 
 {% block style %}
-<link rel="stylesheet"
-href="{{ url_for('static',
-filename='css/view_product.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/view_product.css') }}">
 {% endblock %}
 
 {% block content %}
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }} cart-alert">
+        {{ message }}
+        <div class="alert-actions">
+            <a href="{{ url_for('auth.cart') }}" class="alert-btn">View Cart 🛒</a>
+            <a href="{{ url_for('auth.dashboard') }}" class="alert-btn secondary">Continue Shopping</a>
+        </div>
+    </div>
+    {% endfor %}
+{% endwith %}
 
 <section class="product-page">
 
     <!-- LEFT: IMAGE -->
     <div class="product-image">
-
-        <img src="{{ product.image }}">
-
+        <img src="{{ product.image }}" alt="{{ product.name }}">
     </div>
 
     <!-- RIGHT: DETAILS -->
     <div class="product-details">
 
         <h1>{{ product.name }}</h1>
+        <h2 class="price">Rs. {{ "{:,.0f}".format(product.price) }}</h2>
 
-        <h2 class="price">
-            Price: Rs. {{ product.price }}
-        </h2>
+        <p class="description">{{ product.description }}</p>
 
-        <p class="description">
-            Description:{{ product.description if product.description else "No description available for this product." }}
-        </p>
+        <!-- QUANTITY -->
+        <div class="qty-selector">
+            <button type="button" onclick="changeQty(-1)">−</button>
+            <input type="number" id="qty" value="1" min="1" readonly>
+            <button type="button" onclick="changeQty(1)">+</button>
+        </div>
 
-       <form action="{{ url_for('auth.add_to_cart',
-        product_id=product.id) }}"
-        method="POST">
-
-            <!-- QUANTITY -->
-            <input type="number"
-                name="quantity"
-                id="qty"
-                value="1"
-                min="1">
-
-            <button type="submit" class="btn cart">
-
-                Add to Cart
-
-            </button>
-
+        <!-- ADD TO CART -->
+        <form id="cartForm"
+              action="{{ url_for('auth.add_to_cart', product_id=product.id) }}"
+              method="POST">
+            <input type="hidden" name="quantity" id="cartQty" value="1">
+            <button type="submit" class="btn cart">🛒 Add to Cart</button>
         </form>
 
-        <!-- ACTION BUTTONS -->
-        <div class="actions">
-            
-            <a href="{{ url_for('auth.checkout') }}"
-            class="btn buy">
+        <!-- BUY NOW -->
+        <form id="buyNowForm"
+              action="{{ url_for('auth.buy_now', product_id=product.id) }}"
+              method="POST">
+            <input type="hidden" name="quantity" id="buyQty" value="1">
+            <button type="submit" class="btn buy">⚡ Buy Now</button>
+        </form>
 
-                Buy Now
-
-            </a>
-
-        </div>
+        <a href="{{ url_for('auth.dashboard') }}" class="continue-link">
+            ← Continue Shopping
+        </a>
 
     </div>
 
 </section>
 
 <script>
-
-function increaseQty(){
-    let qty = document.getElementById("qty");
-    qty.value = parseInt(qty.value) + 1;
+function changeQty(delta) {
+    const input = document.getElementById("qty");
+    const newVal = Math.max(1, parseInt(input.value) + delta);
+    input.value = newVal;
+    document.getElementById("cartQty").value = newVal;
+    document.getElementById("buyQty").value  = newVal;
 }
-
-function decreaseQty(){
-    let qty = document.getElementById("qty");
-    if(qty.value > 1){
-        qty.value = parseInt(qty.value) - 1;
-    }
-}
-
 </script>
 
 {% endblock %}

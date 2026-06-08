@@ -1,8 +1,122 @@
 {% extends 'base.html' %}
-{% block title %}......{% endblock %}
+
+{% block title %}My Orders - MeroPasal{% endblock %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/view_my_orders.css') }}">
+{% endblock %}
+
 {% block content %}
-<h1>Welcome to MeroPasal</h1>
-...
-...
-...
+
+<section class="orders-page">
+
+    <h1 class="page-title">My Orders</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    {% endwith %}
+
+    {% if orders %}
+
+    <div class="orders-list">
+
+        {% for order in orders %}
+
+        <div class="order-card">
+
+            <!-- HEADER -->
+            <div class="order-header">
+                <div class="order-meta">
+                    <span class="order-id">Order #{{ order.id }}</span>
+                    <span class="order-date">
+                        {{ order.created_at.strftime('%d %b %Y, %I:%M %p') if order.created_at else 'N/A' }}
+                    </span>
+                </div>
+                <span class="order-status status-{{ order.order_status | lower }}">
+                    {{ order.order_status }}
+                </span>
+            </div>
+
+            <!-- ITEMS -->
+            {% if order.order_items %}
+            <div class="order-items">
+                {% for item in order.order_items %}
+                <div class="order-item">
+                    <img src="{{ item.image }}" alt="{{ item.name }}">
+                    <div class="order-item-info">
+                        <span class="order-item-name">{{ item.name }}</span>
+                        <span class="order-item-qty">Qty: {{ item.qty }}</span>
+                    </div>
+                    <span class="order-item-price">Rs. {{ "{:,.0f}".format(item.subtotal) }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- INFO GRID -->
+            <div class="order-body">
+                <div class="order-info-grid">
+
+                    <div class="info-item">
+                        <span class="info-label">Customer</span>
+                        <span class="info-value">{{ order.customer_name }}</span>
+                    </div>
+
+                    <div class="info-item">
+                        <span class="info-label">Phone</span>
+                        <span class="info-value">{{ order.phone }}</span>
+                    </div>
+
+                    <div class="info-item">
+                        <span class="info-label">Location</span>
+                        <span class="info-value">{{ order.district }}, {{ order.province }}</span>
+                    </div>
+
+                    <div class="info-item">
+                        <span class="info-label">Payment</span>
+                        <span class="info-value payment-badge payment-{{ order.payment_method }}">
+                            {% if order.payment_method == 'cod' %}💵 Cash on Delivery
+                            {% elif order.payment_method == 'esewa' %}🟢 eSewa
+                            {% elif order.payment_method == 'khalti' %}🟣 Khalti
+                            {% else %}{{ order.payment_method }}{% endif %}
+                        </span>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- FOOTER -->
+            <div class="order-footer">
+                <span class="order-total-label">Order Total</span>
+                <span class="order-total">Rs. {{ "{:,.0f}".format(order.total_price) }}</span>
+
+                {% if order.order_status == 'Pending' %}
+                <form action="{{ url_for('auth.cancel_order', order_id=order.id) }}" method="POST"
+                    onsubmit="return confirm('Are you sure you want to cancel this order?')">
+                    <button type="submit" class="cancel-order-btn">Cancel Order</button>
+                </form>
+                {% endif %}
+            </div>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+    {% else %}
+
+    <div class="empty-orders">
+        <div class="empty-icon">📦</div>
+        <h2>No orders yet</h2>
+        <p>You haven't placed any orders yet. Start shopping!</p>
+        <a href="{{ url_for('auth.dashboard') }}" class="shop-btn">Browse Products</a>
+    </div>
+
+    {% endif %}
+
+</section>
+
 {% endblock %}

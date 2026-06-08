@@ -1,8 +1,72 @@
 {% extends 'base.html' %}
-{% block title %}......{% endblock %}
+{% block title %}My Profile - MeroPasal{% endblock %}
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
+
 {% block content %}
-<h1>Welcome to MeroPasal</h1>
-...
-...
-...
+<section class="auth-page">
+<div class="profile-card">
+
+    <!-- AVATAR + PICTURE UPLOAD -->
+    <div class="profile-top">
+        <div class="avatar-wrapper">
+            {% if user.profile_picture %}
+                <img src="{{ url_for('static', filename='profile_pics/' + user.profile_picture) }}"
+                     class="avatar-img" alt="Profile Picture">
+            {% else %}
+                <div class="avatar-initials">{{ user.full_name[0].upper() }}</div>
+            {% endif %}
+
+            <!-- Upload form overlays the avatar -->
+            <form action="{{ url_for('auth.upload_picture') }}" method="POST"
+                  enctype="multipart/form-data" class="upload-form">
+                <label class="upload-label" title="Change photo">
+                    📷
+                    <input type="file" name="profile_picture"
+                           accept="image/*" onchange="this.form.submit()" hidden>
+                </label>
+            </form>
+        </div>
+
+        <div class="profile-name-block">
+            <h1>{{ user.full_name }}</h1>
+            <p class="profile-email">{{ user.email }}</p>
+            <p class="profile-since">
+                Member since {{ user.created_at.strftime('%B %Y') if user.created_at else 'N/A' }}
+            </p>
+        </div>
+    </div>
+
+    <!-- ACTION CARDS -->
+    <div class="profile-actions-grid">
+
+        <a href="{{ url_for('auth.edit_profile') }}" class="profile-action-card">
+            <span class="action-icon">✏️</span>
+            <span class="action-label">Edit Profile</span>
+            <span class="action-sub">Update name & email</span>
+        </a>
+
+        <a href="{{ url_for('auth.change_password') }}" class="profile-action-card">
+            <span class="action-icon">🔒</span>
+            <span class="action-label">Change Password</span>
+            <span class="action-sub">Update your password</span>
+        </a>
+
+        <a href="{{ url_for('auth.view_my_orders') }}" class="profile-action-card">
+            <span class="action-icon">📦</span>
+            <span class="action-label">My Orders</span>
+            <span class="action-sub">View order history</span>
+        </a>
+
+        <a href="{{ url_for('auth.logout') }}" class="profile-action-card danger">
+            <span class="action-icon">🚪</span>
+            <span class="action-label">Log Out</span>
+            <span class="action-sub">Sign out of account</span>
+        </a>
+
+    </div>
+
+</div>
+</section>
 {% endblock %}

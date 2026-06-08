@@ -2,50 +2,49 @@
 
     <!-- Logo -->
     <div class="logo-section">
-
         <a href="{{ url_for('auth.dashboard') }}">
-
-            <img src="{{ url_for('static',
-            filename='images/meropasal_logo.png') }}">
-
+            <img src="{{ url_for('static', filename='images/meropasal_logo.png') }}">
         </a>
-
     </div>
 
     <!-- Search -->
     <div class="search-bar">
-
-        
         <form action="{{ url_for('auth.dashboard') }}" method="GET">
             <input type="text" name="search" placeholder="Search products...">
             <button type="submit">Search</button>
         </form>
     </div>
 
-    <!-- Profile -->
-    <div class="profile-dropdown">
+    <!-- Nav -->
+    <div class="header-nav">
 
-        <button class="profile-btn">
-            Profile👤 ▼
-        </button>
+        <!-- Cart with badge -->
+        <a href="{{ url_for('auth.cart') }}" class="cart-icon">
+            🛒
+            {% if cart_count and cart_count > 0 %}
+            <span class="cart-badge">{{ cart_count }}</span>
+            {% endif %}
+        </a>
 
-        <div class="dropdown-content">
+        <!-- Profile dropdown -->
+        <div class="profile-dropdown">
 
-            <a href="{{ url_for('auth.all_categories') }}">
-                Categories
-            </a>
+            {% if user %}
+            <button class="profile-btn logged-in">
+                {{ user.full_name.split()[0] }} 👤 ▼
+            </button>
+            <div class="dropdown-content">
+                <a href="{{ url_for('auth.all_categories') }}">Categories</a>
+                <a href="{{ url_for('auth.cart') }}">My Cart</a>
+                <a href="{{ url_for('auth.view_my_orders') }}">My Orders</a>
+                <a href="{{ url_for('auth.profile') }}">My Profile</a>
+                <div class="dropdown-divider"></div>
+                <a href="{{ url_for('auth.logout') }}" class="logout-link">🚪 Log Out</a>
+            </div>
 
-            <a href="{{ url_for('auth.cart') }}">
-                Cart
-            </a>
-
-            <a href="{{ url_for('auth.view_my_orders') }}">
-                My Orders
-            </a>
-
-            <a href="{{ url_for('auth.profile') }}">
-                My Profile
-            </a>
+            {% else %}
+            <a href="{{ url_for('auth.login') }}" class="login-header-btn">Log In</a>
+            {% endif %}
 
         </div>
 

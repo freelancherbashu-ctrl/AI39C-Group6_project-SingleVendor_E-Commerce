@@ -1,1 +1,5 @@
+__pycache__/
+*.pyc
+app/static/profile_pics/
 venv/
+.envgit add .gitignore

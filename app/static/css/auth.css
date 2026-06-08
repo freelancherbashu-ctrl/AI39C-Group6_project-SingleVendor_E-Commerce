@@ -1,0 +1,226 @@
+.auth-page {
+    min-height: 80vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 20px;
+}
+
+.auth-card {
+    background: #fff;
+    border-radius: 18px;
+    padding: 40px 36px;
+    width: 420px;
+    max-width: 100%;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+    text-align: center;
+}
+
+.auth-logo { font-size: 2.8rem; margin-bottom: 12px; }
+
+.auth-card h1 {
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 6px;
+}
+
+.auth-sub { color: #888; margin-bottom: 28px; font-size: 0.92rem; }
+
+/* FORM */
+.form-group { text-align: left; margin-bottom: 16px; }
+
+.form-group label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #555;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid #ddd;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    color: #1a1a2e;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #2563eb;
+}
+
+/* BUTTONS */
+.auth-btn {
+    display: block;
+    width: 100%;
+    padding: 13px;
+    background: #1a1a2e;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+    margin-top: 8px;
+    transition: background 0.2s;
+    box-sizing: border-box;
+}
+
+.auth-btn:hover { background: #2d2d50; }
+
+.auth-switch {
+    margin-top: 20px;
+    font-size: 0.88rem;
+    color: #888;
+}
+
+.auth-switch a {
+    color: #2563eb;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.auth-switch a:hover { text-decoration: underline; }
+
+/* ── PROFILE CARD ─────────────────────────────────────────────────────────── */
+.profile-card {
+    background: #fff;
+    border-radius: 18px;
+    padding: 36px;
+    width: 560px;
+    max-width: 100%;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+}
+
+/* TOP SECTION: avatar + name */
+.profile-top {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 32px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid #eee;
+}
+
+/* AVATAR */
+.avatar-wrapper {
+    position: relative;
+    flex-shrink: 0;
+    width: 90px;
+    height: 90px;
+}
+
+.avatar-img {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #e8e8e8;
+}
+
+.avatar-initials {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: #1a1a2e;
+    color: #fff;
+    font-size: 2.2rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* CAMERA BUTTON */
+.upload-form {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+}
+
+.upload-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: #2563eb;
+    color: #fff;
+    border-radius: 50%;
+    font-size: 0.75rem;
+    cursor: pointer;
+    border: 2px solid #fff;
+    transition: background 0.2s;
+}
+
+.upload-label:hover { background: #1d4ed8; }
+
+/* NAME BLOCK */
+.profile-name-block { flex: 1; }
+
+.profile-name-block h1 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0 0 4px;
+}
+
+.profile-email { color: #666; font-size: 0.9rem; margin: 0 0 4px; }
+.profile-since { color: #aaa; font-size: 0.8rem; margin: 0; }
+
+/* ACTION CARDS GRID */
+.profile-actions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.profile-action-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 18px 16px;
+    background: #f8f9ff;
+    border: 1.5px solid #e8e8e8;
+    border-radius: 12px;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.profile-action-card:hover {
+    border-color: #2563eb;
+    background: #eef3ff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37,99,235,0.12);
+}
+
+.profile-action-card.danger:hover {
+    border-color: #e53e3e;
+    background: #fff5f5;
+    box-shadow: 0 4px 12px rgba(229,62,62,0.12);
+}
+
+.action-icon { font-size: 1.4rem; }
+
+.action-label {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1a1a2e;
+}
+
+.action-sub {
+    font-size: 0.75rem;
+    color: #999;
+}
+
+.profile-action-card.danger .action-label { color: #e53e3e; }

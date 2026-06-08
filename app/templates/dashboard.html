@@ -7,30 +7,63 @@
 {% endblock %}
 
 {% block content %}
-<!-- PRODUCTS SECTION -->
-<section class="products-container">
 
-    {% for product in products %}
+{% set search = request.args.get('search', '') %}
 
-    <div class="product-card">
+{% if search %}
+<div class="search-header">
+    <h2>Results for "<strong>{{ search }}</strong>"</h2>
+    <a href="{{ url_for('auth.dashboard') }}" class="clear-search">✕ Clear</a>
+</div>
+{% endif %}
 
-        <img src="{{ product.image }}" alt="product">
-
-        <h3>{{ product.name }}</h3>
-
-        <p class="price">Rs. {{ product.price }}</p>
-
-        <a href="{{ url_for('auth.view_product', id=product.id) }}" class="btn">
-            View Details
+<!-- MATCHING CATEGORIES (only during search) -->
+{% if search and matching_categories %}
+<div class="search-section">
+    <h3 class="section-label">Categories</h3>
+    <div class="categories-row">
+        {% for category in matching_categories %}
+        <a href="{{ url_for('auth.single_category', category=category.name) }}"
+           class="category-pill">
+            <img src="{{ url_for('static', filename=category.image) }}" alt="{{ category.name }}">
+            {{ category.name.title() }}
         </a>
-
+        {% endfor %}
     </div>
+</div>
+{% endif %}
 
+<!-- PRODUCTS -->
+{% if search %}
+<h3 class="section-label" style="padding: 0 30px;">Products</h3>
+{% endif %}
+
+{% if products %}
+<section class="products-container">
+    {% for product in products %}
+    <div class="product-card">
+        <img src="{{ product.image }}" alt="{{ product.name }}">
+        <h3>{{ product.name }}</h3>
+        <p class="price">Rs. {{ "{:,.0f}".format(product.price) }}</p>
+        <a href="{{ url_for('auth.view_product', id=product.id) }}" class="btn">View Details</a>
+    </div>
     {% endfor %}
-
 </section>
 
+{% elif search and not matching_categories %}
+<!-- NOTHING FOUND AT ALL -->
+<div class="no-results">
+    <div class="no-results-icon">🔍</div>
+    <h2>No results found</h2>
+    <p>Try searching a product name or category like <em>electronics</em>, <em>food</em>, or <em>clothes</em>.</p>
+    <a href="{{ url_for('auth.dashboard') }}" class="btn">Back to Dashboard</a>
+</div>
+
+{% elif search %}
+<!-- CATEGORIES MATCHED BUT NO PRODUCTS -->
+<div class="no-results-soft">
+    <p>No products matched — but we found matching categories above!</p>
+</div>
+{% endif %}
+
 {% endblock %}
-
-
-

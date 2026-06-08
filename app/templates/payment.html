@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ method.title() }} Payment - MeroPasal{% endblock %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/payment.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<section class="payment-page">
+
+    <div class="payment-card">
+
+        <h1>Pay with {{ method.title() }}</h1>
+
+        {% if total %}
+        <div class="payment-amount">
+            <span class="amount-label">Amount to Pay</span>
+            <span class="amount-value">Rs. {{ "{:,.0f}".format(total) }}</span>
+        </div>
+        {% endif %}
+
+        <p class="scan-instruction">Scan the QR code below to complete your payment.</p>
+
+        <div class="qr-wrapper">
+            <img src="{{ url_for('static', filename=qr) }}" alt="{{ method }} QR Code">
+        </div>
+
+        <div class="payment-note">
+            <p>After completing the payment in your {{ method.title() }} app, tap the button below.</p>
+        </div>
+
+        <button onclick="paymentSuccess()" class="confirm-btn">
+            ✅ I've Completed Payment
+        </button>
+
+        <a href="{{ url_for('auth.view_my_orders') }}" class="orders-link">
+            View My Orders
+        </a>
+
+    </div>
+
+</section>
+
+<script>
+function paymentSuccess() {
+    alert("Thank you! Your payment has been recorded. 🎉");
+    window.location.href = "{{ url_for('auth.view_my_orders') }}";
+}
+</script>
+
+{% endblock %}

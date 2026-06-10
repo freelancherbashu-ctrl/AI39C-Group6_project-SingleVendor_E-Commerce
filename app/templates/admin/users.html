@@ -1,0 +1,30 @@
+{% extends 'admin/base.html' %}
+{% block title %}Users — MeroPasal Admin{% endblock %}
+{% block page_title %}Registered Users{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header"><h2>All Users ({{ users|length }})</h2></div>
+    <table>
+        <thead><tr><th>#id</th><th>Name</th><th>Email</th><th>Joined</th><th>Actions</th></tr></thead>
+        <tbody>
+        {% for u in users %}
+        <tr>
+            <td>{{ u[0] }}</td>
+            <td>{{ u[1] }}</td>
+            <td>{{ u[2] }}</td>
+            <td>{{ u[3].strftime('%Y-%m-%d') if u[3] else '—' }}</td>
+            <td>
+                <form method="POST" action="{{ url_for('admin.delete_user', user_id=u[0]) }}"
+                      onsubmit="return confirm('Delete {{ u[1] }}? This cannot be undone.')">
+                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" style="text-align:center;color:#9ca3af;padding:2rem">No users yet.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -92,6 +92,11 @@
                 <span class="order-total-label">Order Total</span>
                 <span class="order-total">Rs. {{ "{:,.0f}".format(order.total_price) }}</span>
 
+                <a href="{{ url_for('auth.order_details', order_id=order.id) }}"
+                   style="margin-left:auto; font-size:.85rem; color:#374151; text-decoration:underline;">
+                    View Details →
+                </a>
+
                 {% if order.order_status == 'Pending' %}
                 <form action="{{ url_for('auth.cancel_order', order_id=order.id) }}" method="POST"
                     onsubmit="return confirm('Are you sure you want to cancel this order?')">
@@ -112,7 +117,7 @@
         <div class="empty-icon">📦</div>
         <h2>No orders yet</h2>
         <p>You haven't placed any orders yet. Start shopping!</p>
-        <a href="{{ url_for('auth.dashboard') }}" class="shop-btn">Browse Products</a>
+        <a href="{{ url_for('auth.home') }}" class="shop-btn">Browse Products</a>
     </div>
 
     {% endif %}

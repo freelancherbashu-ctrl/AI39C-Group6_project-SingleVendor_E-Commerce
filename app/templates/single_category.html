@@ -3,103 +3,103 @@
 {% block title %}Category - MeroPasal{% endblock %}
 
 {% block style %}
-<link rel="stylesheet"
-href="{{ url_for('static',
-filename='css/single_category.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/single_category.css') }}">
 {% endblock %}
 
 {% block content %}
 
 <section class="category-page">
 
-    <!-- CATEGORY HEADER -->
-
     <div class="category-header">
-
         <h1>{{ category.title() }}</h1>
-
-        <!-- SORT OPTIONS -->
-
         <div class="sort-section">
-
             <form method="GET">
-
                 <label>Sort By:</label>
-
-                <select name="sort"
-                        onchange="this.form.submit()">
-
-                    <option value="popular"
-                    {% if sort == "popular" %}selected{% endif %}>
-                        Popular
-                    </option>
-
-                    <option value="low"
-                    {% if sort == "low" %}selected{% endif %}>
-                        Price: Low to High
-                    </option>
-
-                    <option value="high"
-                    {% if sort == "high" %}selected{% endif %}>
-                        Price: High to Low
-                    </option>
-
+                <select name="sort" onchange="this.form.submit()">
+                    <option value="popular" {% if sort == "popular" %}selected{% endif %}>Popular</option>
+                    <option value="low"     {% if sort == "low" %}selected{% endif %}>Price: Low to High</option>
+                    <option value="high"    {% if sort == "high" %}selected{% endif %}>Price: High to Low</option>
                 </select>
-
             </form>
-
         </div>
-
     </div>
 
-
-    <!-- PRODUCTS -->
-
     <div class="products-container">
-
     {% if products %}
-
         {% for product in products %}
+        <div class="product-card" data-product-id="{{ product.id }}">
 
-        <div class="product-card">
+            {% if user %}
+            <button class="wishlist-btn"
+                    data-product-id="{{ product.id }}"
+                    title="Add to Wishlist">♡</button>
+            {% endif %}
 
-            <img src="{{ product.image }}">
-
+            <img src="{{ product.image }}" alt="{{ product.name }}">
             <h3>{{ product.name }}</h3>
-
+            {% set sale = sale_map.get(product.id) if sale_map else None %}
+            {% if sale %}
             <p class="price">
-                Rs. {{ product.price }}
+                <span class="price-original">Rs. {{ "{:,.0f}".format(product.price) }}</span>
+                <span class="price-sale">Rs. {{ "{:,.0f}".format(sale.sale_price) }}</span>
             </p>
-
-            <a href="{{ url_for('auth.view_product', id=product.id) }}"
-            class="btn">
-
-                View Details
-
-            </a>
-
+            {% else %}
+            <p class="price">Rs. {{ product.price }}</p>
+            {% endif %}
+            <a href="{{ url_for('auth.view_product', id=product.id) }}" class="btn">View Details</a>
         </div>
-
         {% endfor %}
-
     {% else %}
-
         <div class="no-products">
-
-            <h2>
-                No products available yet
-            </h2>
-
-            <p>
-                Products for this category will be added soon.
-            </p>
-
+            <h2>No products available yet</h2>
+            <p>Products for this category will be added soon.</p>
         </div>
-
     {% endif %}
-
-</div>
+    </div>
 
 </section>
+
+{% if user %}
+<script>
+(async function () {
+    const buttons = document.querySelectorAll(".wishlist-btn[data-product-id]");
+    if (!buttons.length) return;
+    const checks = [...buttons].map(b =>
+        fetch(`/wishlist/status/${b.dataset.productId}`).then(r => r.json()).catch(() => ({ wishlisted: false }))
+    );
+    const results = await Promise.all(checks);
+    buttons.forEach((btn, i) => {
+        if (results[i]?.wishlisted) { btn.classList.add("wishlisted"); btn.textContent = "♥"; btn.title = "Remove from Wishlist"; }
+    });
+    const last = results[results.length - 1];
+    if (last?.wishlist_count !== undefined) updateHeaderWishlistBadge(last.wishlist_count);
+})();
+
+document.addEventListener("click", function (e) {
+    const btn = e.target.closest(".wishlist-btn[data-product-id]");
+    if (!btn) return;
+    const productId = btn.dataset.productId;
+    fetch(`/wishlist/toggle/${productId}`, { method: "POST" })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) { if (data.error === "login_required") window.location.href = "/login"; return; }
+            if (data.wishlisted) { btn.classList.add("wishlisted"); btn.textContent = "♥"; btn.title = "Remove from Wishlist"; }
+            else { btn.classList.remove("wishlisted"); btn.textContent = "♡"; btn.title = "Add to Wishlist"; }
+            updateHeaderWishlistBadge(data.wishlist_count);
+            showToast(data.message, data.wishlisted ? "success" : "info");
+        }).catch(() => showToast("Something went wrong.", "error"));
+});
+
+function showToast(message, type) {
+    document.querySelector(".wishlist-toast")?.remove();
+    const toast = document.createElement("div");
+    toast.className = `wishlist-toast wishlist-toast-${type}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add("show"), 10);
+    setTimeout(() => { toast.classList.remove("show"); setTimeout(() => toast.remove(), 300); }, 2500);
+}
+</script>
+{% endif %}
 
 {% endblock %}

@@ -1,0 +1,41 @@
+{% extends 'admin/base.html' %}
+{% block title %}Categories — MeroPasal Admin{% endblock %}
+{% block page_title %}Categories{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2>All Categories ({{ categories|length }})</h2>
+        <a href="{{ url_for('admin.add_category') }}" class="btn btn-primary">+ Add Category</a>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Image Path</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for cat in categories %}
+        <tr>
+            <td>{{ cat.id }}</td>
+            <td>{{ cat.name|title }}</td>
+            <td style="font-size:0.78rem;color:#64748b">{{ cat.image }}</td>
+            <td>
+                <a href="{{ url_for('admin.edit_category', cat_id=cat.id) }}" class="btn btn-sm btn-primary">Edit</a>
+                <form method="POST" action="{{ url_for('admin.delete_category', cat_id=cat.id) }}"
+                      style="display:inline"
+                      onsubmit="return confirm('Delete category {{ cat.name }}? Products in this category will remain.')">
+                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" style="text-align:center;color:#9ca3af;padding:2rem">No categories yet.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

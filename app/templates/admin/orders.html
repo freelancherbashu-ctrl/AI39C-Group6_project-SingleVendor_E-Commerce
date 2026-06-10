@@ -1,0 +1,37 @@
+{% extends 'admin/base.html' %}
+{% block title %}Orders — MeroPasal Admin{% endblock %}
+{% block page_title %}Orders{% endblock %}
+
+{% block content %}
+<div class="filter-bar">
+    <a href="{{ url_for('admin.orders') }}"                          class="{{ 'active' if not active_status }}">All</a>
+    <a href="{{ url_for('admin.orders', status='Pending') }}"        class="{{ 'active' if active_status=='Pending' }}">Pending</a>
+    <a href="{{ url_for('admin.orders', status='Processing') }}"     class="{{ 'active' if active_status=='Processing' }}">Processing</a>
+    <a href="{{ url_for('admin.orders', status='Completed') }}"      class="{{ 'active' if active_status=='Completed' }}">Completed</a>
+    <a href="{{ url_for('admin.orders', status='Cancelled') }}"      class="{{ 'active' if active_status=='Cancelled' }}">Cancelled</a>
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr><th>#</th><th>Customer</th><th>Phone</th><th>Amount</th><th>Payment</th><th>Status</th><th>Date</th><th></th></tr>
+        </thead>
+        <tbody>
+        {% for o in orders %}
+        <tr>
+            <td>#{{ o[0] }}</td>
+            <td>{{ o[1] }}</td>
+            <td>{{ o[2] }}</td>
+            <td>Rs. {{ "{:,.0f}".format(o[3]) }}</td>
+            <td>{{ o[5] }}</td>
+            <td><span class="badge badge-{{ o[4]|lower }}">{{ o[4] }}</span></td>
+            <td>{{ o[6].strftime('%Y-%m-%d') if o[6] else '—' }}</td>
+            <td><a href="{{ url_for('admin.order_detail', order_id=o[0]) }}" class="btn btn-sm btn-primary">View</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" style="text-align:center;color:#9ca3af;padding:2rem">No orders found.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

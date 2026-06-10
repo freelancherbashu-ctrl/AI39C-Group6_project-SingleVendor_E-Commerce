@@ -119,12 +119,12 @@ class Order:
         return Order._row_to_dict(row) if row else None
 
     @staticmethod
-    def cancel(mysql, order_id):
+    def cancel(mysql, order_id, user_id):
         cursor = mysql.connection.cursor()
         cursor.execute("""
             UPDATE orders
             SET order_status = 'Cancelled'
-            WHERE id = %s AND order_status = 'Pending'
-        """, (order_id,))
+            WHERE id = %s AND order_status = 'Pending' AND user_id = %s
+        """, (order_id, user_id))
         mysql.connection.commit()
         return cursor.rowcount

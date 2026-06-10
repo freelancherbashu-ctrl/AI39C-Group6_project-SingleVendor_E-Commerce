@@ -1,16 +1,17 @@
 import os
 from functools import wraps
-from flask import render_template, session, request, redirect, url_for, flash
+from flask import render_template, session, request, redirect, url_for, flash, jsonify
 from werkzeug.utils import secure_filename
-from app.data.products import products
-from app.data.categories import categories
+from app.models.product import Product
+from app.models.category import Category
 from app.models.order import Order
 from app.models.user import User
-from app.extensions import mysql
+from app.models.wishlist import Wishlist
+from app.models.flash_sale import FlashSale
+from app.extensions import mysql, mail
 
-UPLOAD_FOLDER   = os.path.join(os.path.dirname(__file__), '..', 'static', 'profile_pics')
-ALLOWED_EXT     = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
-product_map     = {str(p["id"]): p for p in products}
+UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), '..', 'static', 'profile_pics')
+ALLOWED_EXT   = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -22,13 +23,26 @@ def _allowed(filename):
 
 def _build_items_snapshot(cart):
     items = []
+    stale_pids = []
+    sale_map = _get_sale_map()
     for pid, qty in cart.items():
-        p = product_map.get(str(pid))
+        p = Product.get_by_id(mysql, int(pid))
         if p:
+            sale = sale_map.get(p["id"])
+            price = sale["sale_price"] if sale else p["price"]
             items.append({
-                "id": p["id"], "name": p["name"], "price": p["price"],
-                "image": p["image"], "qty": qty, "subtotal": p["price"] * qty
+                "id": p["id"], "name": p["name"], "price": price,
+                "original_price": p["price"],
+                "on_sale": bool(sale),
+                "image": p["image"], "qty": qty, "subtotal": price * qty
             })
+        else:
+            stale_pids.append(pid)
+    if stale_pids:
+        for pid in stale_pids:
+            cart.pop(pid, None)
+        session["cart"] = cart
+        session.modified = True
     return items
 
 def _calc_total(items):
@@ -37,11 +51,13 @@ def _calc_total(items):
 def _cart_count():
     return sum(session.get("cart", {}).values())
 
+def _get_sale_map():
+    return FlashSale.get_sale_map(mysql)
+
 def _current_user():
     return session.get("user")
 
 def _refresh_user_session(user_id):
-    """Re-read user from DB and update session so header reflects changes."""
     u = User.get_by_id(mysql, user_id)
     if u:
         session["user"] = {
@@ -68,22 +84,28 @@ class AuthController:
 
     def login(self):
         if session.get("user"):
-            return redirect(url_for("auth.dashboard"))
+            return redirect(url_for("auth.home"))
         if request.method == "POST":
             email    = request.form.get("email", "").strip()
             password = request.form.get("password", "")
             user = User.verify(mysql, email, password)
             if user:
-                session["user"] = user
+                full = User.get_by_id(mysql, user["id"])
+                session["user"] = {
+                    "id":              full["id"],
+                    "full_name":       full["full_name"],
+                    "email":           full["email"],
+                    "profile_picture": full["profile_picture"]
+                }
                 session.modified = True
                 flash(f"Welcome back, {user['full_name']}! 👋", "success")
-                return redirect(url_for("auth.dashboard"))
+                return redirect(url_for("auth.home"))
             flash("Invalid email or password.", "error")
         return render_template("login.html", cart_count=_cart_count())
 
     def register(self):
         if session.get("user"):
-            return redirect(url_for("auth.dashboard"))
+            return redirect(url_for("auth.home"))
         if request.method == "POST":
             full_name = request.form.get("full_name", "").strip()
             email     = request.form.get("email", "").strip()
@@ -114,14 +136,12 @@ class AuthController:
         if not user:
             return redirect(url_for("auth.login"))
         full_user = User.get_by_id(mysql, user["id"])
-        return render_template("profile.html", user=full_user,
-                               cart_count=_cart_count())
+        return render_template("profile.html", user=full_user, cart_count=_cart_count())
 
     def edit_profile(self):
         user = _current_user()
         if not user:
             return redirect(url_for("auth.login"))
-
         if request.method == "POST":
             full_name = request.form.get("full_name", "").strip()
             email     = request.form.get("email", "").strip()
@@ -133,29 +153,31 @@ class AuthController:
                 if ok:
                     _refresh_user_session(user["id"])
                     return redirect(url_for("auth.profile"))
-
         full_user = User.get_by_id(mysql, user["id"])
-        return render_template("edit_profile.html", user=full_user,
-                               cart_count=_cart_count())
+        return render_template("edit_profile.html", user=full_user, cart_count=_cart_count())
 
     def upload_picture(self):
         user = _current_user()
         if not user:
             return redirect(url_for("auth.login"))
-
         file = request.files.get("profile_picture")
         if not file or file.filename == "":
             flash("No file selected.", "error")
             return redirect(url_for("auth.profile"))
-
         if not _allowed(file.filename):
             flash("Only image files are allowed (png, jpg, jpeg, gif, webp).", "error")
             return redirect(url_for("auth.profile"))
-
         ext      = file.filename.rsplit('.', 1)[1].lower()
         filename = f"user_{user['id']}.{ext}"
-        file.save(os.path.join(UPLOAD_FOLDER, filename))
 
+        # Delete the previous profile picture if it exists (extension may differ)
+        old_pic = user.get("profile_picture")
+        if old_pic:
+            old_path = os.path.join(UPLOAD_FOLDER, old_pic)
+            if os.path.isfile(old_path) and old_path != os.path.join(UPLOAD_FOLDER, filename):
+                os.remove(old_path)
+
+        file.save(os.path.join(UPLOAD_FOLDER, filename))
         User.update_picture(mysql, user["id"], filename)
         _refresh_user_session(user["id"])
         flash("Profile picture updated!", "success")
@@ -165,7 +187,6 @@ class AuthController:
         user = _current_user()
         if not user:
             return redirect(url_for("auth.login"))
-
         if request.method == "POST":
             old_pw  = request.form.get("old_password", "")
             new_pw  = request.form.get("new_password", "")
@@ -181,21 +202,30 @@ class AuthController:
                 flash(msg, "success" if ok else "error")
                 if ok:
                     return redirect(url_for("auth.profile"))
-
-        return render_template("change_password.html", cart_count=_cart_count(),
-                               user=_current_user())
+        return render_template("change_password.html", cart_count=_cart_count(), user=_current_user())
 
     def forgot_password(self):
         if request.method == "POST":
             email = request.form.get("email", "").strip()
             token = User.create_reset_token(mysql, email)
-            # Always show success to avoid email enumeration
-            # In production: email the reset link. For now: show it as flash.
+            if token == "google_account":
+                flash("This account uses Google login. Please sign in with Google instead.", "error")
+                return redirect(url_for("auth.forgot_password"))
             if token:
                 reset_url = url_for("auth.reset_password", token=token, _external=True)
-                flash(f"Reset link (share this with the user): {reset_url}", "success")
+                from flask_mail import Message
+                msg = Message(subject="MeroPasal — Password Reset Request", recipients=[email])
+                msg.body = f"""Hi,\n\nYou requested a password reset for your MeroPasal account.\n\nClick the link below to reset your password (valid for 1 hour):\n\n{reset_url}\n\nIf you did not request this, you can safely ignore this email.\n\n— MeroPasal Team"""
+                msg.html = f"""<p>Hi,</p><p>You requested a password reset for your <strong>MeroPasal</strong> account.</p>
+<p><a href="{reset_url}" style="background:#4f46e5;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;">Reset My Password</a></p>
+<p>This link is valid for <strong>1 hour</strong>. If you did not request this, ignore this email.</p><p>— MeroPasal Team</p>"""
+                try:
+                    mail.send(msg)
+                    flash("A password reset link has been sent to your email.", "success")
+                except Exception:
+                    flash("Could not send email. Please try again later.", "error")
             else:
-                flash("If that email exists, a reset link has been generated.", "success")
+                flash("If that email exists, a reset link has been sent.", "success")
             return redirect(url_for("auth.forgot_password"))
         return render_template("forgot_password.html", cart_count=_cart_count())
 
@@ -204,7 +234,6 @@ class AuthController:
         if not user_id:
             flash("This reset link is invalid or has expired.", "error")
             return redirect(url_for("auth.forgot_password"))
-
         if request.method == "POST":
             new_pw  = request.form.get("new_password", "")
             confirm = request.form.get("confirm_password", "")
@@ -219,61 +248,95 @@ class AuthController:
                 flash(msg, "success" if ok else "error")
                 if ok:
                     return redirect(url_for("auth.login"))
-
-        return render_template("reset_password.html", token=token,
-                               cart_count=_cart_count())
+        return render_template("reset_password.html", token=token, cart_count=_cart_count())
 
     # ── PAGES ─────────────────────────────────────────────────────────────────
 
-    def dashboard(self):
+    def home(self):
         search = request.args.get("search", "").strip()
-        if search:
-            filtered_products = [
-                p for p in products
-                if search.lower() in p["name"].lower()
-                or search.lower() in p["category"].lower()
-            ]
-            matching_categories = [
-                c for c in categories
-                if search.lower() in c["name"].lower()
-                or any(search.lower() in prod.lower() for prod in c["products"])
-            ]
-        else:
-            filtered_products   = products
+        sort   = request.args.get("sort", "popular")
+        if not search:
+            filtered_products   = Product.get_all(mysql)
             matching_categories = []
-        return render_template("dashboard.html", products=filtered_products,
-                               matching_categories=matching_categories,
+        else:
+            filtered_products   = Product.search(mysql, search)
+            all_cats = Category.get_all(mysql)
+            matching_categories = [c for c in all_cats if search.lower() in c["name"].lower()]
+        if search:
+            if sort == "low":
+                filtered_products = sorted(filtered_products, key=lambda x: x["price"])
+            elif sort == "high":
+                filtered_products = sorted(filtered_products, key=lambda x: x["price"], reverse=True)
+        sales    = FlashSale.get_active(mysql)
+        sale_map = {s["product_id"]: s for s in sales}
+        return render_template("home_page.html", products=filtered_products,
+                               matching_categories=matching_categories, sort=sort,
+                               flash_sales=sales, sale_map=sale_map,
                                cart_count=_cart_count(), user=_current_user())
 
     def all_categories(self):
-        return render_template("all_categories.html", categories=categories,
+        return render_template("all_categories.html", categories=Category.get_all(mysql),
                                cart_count=_cart_count(), user=_current_user())
 
     def single_category(self, category):
         sort     = request.args.get("sort", "popular")
-        filtered = [p for p in products if p["category"] == category]
+        filtered = Product.get_by_category(mysql, category)
         if sort == "low":
             filtered.sort(key=lambda x: x["price"])
         elif sort == "high":
             filtered.sort(key=lambda x: x["price"], reverse=True)
         return render_template("single_category.html", products=filtered,
                                category=category, sort=sort,
+                               sale_map=_get_sale_map(),
                                cart_count=_cart_count(), user=_current_user())
 
     def view_product(self, id):
-        product = next((p for p in products if p["id"] == id), None)
-        return render_template("view_product.html", product=product,
+        product  = Product.get_by_id(mysql, id)
+        sale_map = _get_sale_map()
+        sale     = sale_map.get(product["id"]) if product else None
+        return render_template("view_product.html", product=product, sale=sale,
                                cart_count=_cart_count(), user=_current_user())
 
-    def order_details(self):
-        return render_template("order_details.html", cart_count=_cart_count())
+    def order_details(self, order_id):
+        user = _current_user()
+        if not user:
+            flash("Please log in to view order details.", "warning")
+            return redirect(url_for("auth.login"))
+        order = Order.get_by_id(mysql, order_id)
+        if not order or order["user_id"] != user["id"]:
+            flash("Order not found.", "danger")
+            return redirect(url_for("auth.view_my_orders"))
+        return render_template("order_details.html", order=order, cart_count=_cart_count())
 
     # ── CART ──────────────────────────────────────────────────────────────────
 
     def cart(self):
         session.pop("buy_now", None)
         session.modified = True
-        cart = session.get("cart", {})
+        cart     = session.get("cart", {})
+        sale_map = _get_sale_map()
+        product_map = {}
+        stale_pids  = []
+        for pid in cart:
+            p = Product.get_by_id(mysql, int(pid))
+            if p:
+                sale = sale_map.get(p["id"])
+                if sale:
+                    p["sale_price"]     = sale["sale_price"]
+                    p["discount"]       = sale["discount"]
+                    p["original_price"] = p["price"]
+                    p["on_sale"]        = True
+                else:
+                    p["on_sale"] = False
+                product_map[pid] = p
+            else:
+                stale_pids.append(pid)
+        if stale_pids:
+            for pid in stale_pids:
+                cart.pop(pid, None)
+            session["cart"] = cart
+            session.modified = True
+            flash(f"{len(stale_pids)} item(s) were removed from your cart because they are no longer available.", "error")
         return render_template("cart.html", cart=cart, products=product_map,
                                cart_count=_cart_count(), user=_current_user())
 
@@ -319,14 +382,18 @@ class AuthController:
         if not session.get("user"):
             flash("Please log in to purchase.", "error")
             return redirect(url_for("auth.login"))
-        p = product_map.get(str(product_id))
+        p = Product.get_by_id(mysql, product_id)
         if not p:
             flash("Product not found.", "error")
-            return redirect(url_for("auth.dashboard"))
+            return redirect(url_for("auth.home"))
+        sale_map = _get_sale_map()
+        sale = sale_map.get(p["id"])
+        price = sale["sale_price"] if sale else p["price"]
         qty = int(request.form.get("quantity", 1))
         session["buy_now"] = {
-            "id": p["id"], "name": p["name"], "price": p["price"],
-            "image": p["image"], "qty": qty, "subtotal": p["price"] * qty
+            "id": p["id"], "name": p["name"], "price": price,
+            "original_price": p["price"], "on_sale": bool(sale),
+            "image": p["image"], "qty": qty, "subtotal": price * qty
         }
         session.modified = True
         return redirect(url_for("auth.checkout"))
@@ -349,7 +416,7 @@ class AuthController:
             total = _calc_total(items)
         else:
             flash("Nothing to checkout.", "error")
-            return redirect(url_for("auth.dashboard"))
+            return redirect(url_for("auth.home"))
         return render_template("checkout.html", items=items, total=total,
                                cart_count=_cart_count(), user=_current_user())
 
@@ -363,7 +430,7 @@ class AuthController:
         elif cart:
             items = _build_items_snapshot(cart)
         else:
-            return redirect(url_for("auth.dashboard"))
+            return redirect(url_for("auth.home"))
         total          = _calc_total(items)
         payment_method = request.form.get("payment")
         order_data = {
@@ -393,7 +460,7 @@ class AuthController:
 
     def payment(self, method):
         qr_codes = {"esewa": "images/esewa_qr.png", "khalti": "images/khalti_qr.png"}
-        total = session.pop("last_order_total", None)
+        total = session.get("last_order_total", None)
         return render_template("payment.html", method=method,
                                qr=qr_codes.get(method), total=total,
                                cart_count=_cart_count(), user=_current_user())
@@ -401,9 +468,13 @@ class AuthController:
     # ── ORDERS ────────────────────────────────────────────────────────────────
 
     def order_confirmed(self, order_id):
+        user  = _current_user()
         order = Order.get_by_id(mysql, order_id)
+        if not order or (user and order["user_id"] != user["id"]):
+            flash("Order not found.", "error")
+            return redirect(url_for("auth.home"))
         return render_template("order_confirmed.html", order=order,
-                               cart_count=_cart_count(), user=_current_user())
+                               cart_count=_cart_count(), user=user)
 
     def view_my_orders(self):
         if not session.get("user"):
@@ -413,11 +484,72 @@ class AuthController:
                                cart_count=_cart_count(), user=_current_user())
 
     def cancel_order(self, order_id):
-        result = Order.cancel(mysql, order_id)
-        flash("Order cancelled successfully." if result
-              else "This order cannot be cancelled.",
+        user = _current_user()
+        if not user:
+            return redirect(url_for("auth.login"))
+        result = Order.cancel(mysql, order_id, user["id"])
+        flash("Order cancelled successfully." if result else "This order cannot be cancelled.",
               "success" if result else "error")
         return redirect(url_for("auth.view_my_orders"))
 
+    # ── SEARCH ────────────────────────────────────────────────────────────────
 
-auth_controller = AuthController()
+    def search_suggest(self):
+        q = request.args.get("q", "").strip().lower()
+        if len(q) < 1:
+            return jsonify([])
+        suggestions = []
+        for p in Product.search(mysql, q):
+            suggestions.append({"label": p["name"], "type": "product",
+                                "url": url_for("auth.view_product", id=p["id"])})
+        for c in Category.get_all(mysql):
+            if q in c["name"].lower():
+                suggestions.append({"label": c["name"].title(), "type": "category",
+                                    "url": url_for("auth.single_category", category=c["name"])})
+        return jsonify(suggestions[:10])
+
+    # ── WISHLIST ──────────────────────────────────────────────────────────────
+
+    def view_wishlist(self):
+        user = _current_user()
+        if not user:
+            flash("Please log in to view your wishlist.", "error")
+            return redirect(url_for("auth.login"))
+        product_ids       = Wishlist.get_product_ids(mysql, user["id"])
+        wishlist_products = [p for pid in product_ids
+                             for p in [Product.get_by_id(mysql, pid)] if p]
+        return render_template("wishlist.html",
+                               wishlist_products=wishlist_products,
+                               wishlist_count=len(wishlist_products),
+                               sale_map=_get_sale_map(),
+                               cart_count=_cart_count(),
+                               user=user)
+
+    def toggle_wishlist(self, product_id):
+        user = _current_user()
+        if not user:
+            return jsonify({"success": False, "error": "login_required"}), 401
+        if not Product.get_by_id(mysql, product_id):
+            return jsonify({"success": False, "error": "Product not found"}), 404
+        already = Wishlist.is_wishlisted(mysql, user["id"], product_id)
+        if already:
+            Wishlist.remove(mysql, user["id"], product_id)
+            wishlisted = False
+            message    = "Removed from wishlist"
+        else:
+            Wishlist.add(mysql, user["id"], product_id)
+            wishlisted = True
+            message    = "Added to wishlist"
+        count = Wishlist.get_count(mysql, user["id"])
+        return jsonify({"success": True, "wishlisted": wishlisted,
+                        "message": message, "wishlist_count": count})
+
+    def wishlist_status(self, product_id):
+        user = _current_user()
+        if not user:
+            return jsonify({"wishlisted": False, "wishlist_count": 0})
+        count = Wishlist.get_count(mysql, user["id"])
+        if product_id == 0:
+            return jsonify({"wishlisted": False, "wishlist_count": count})
+        wishlisted = Wishlist.is_wishlisted(mysql, user["id"], product_id)
+        return jsonify({"wishlisted": wishlisted, "wishlist_count": count})

@@ -1,0 +1,52 @@
+{% extends 'admin/base.html' %}
+{% block title %}Order #{{ order.id }} — MeroPasal Admin{% endblock %}
+{% block page_title %}Order #{{ order.id }}{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('admin.orders') }}" style="color:#4f46e5;font-size:0.9rem;text-decoration:none;">← Back to Orders</a>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:1.5rem;">
+
+    <div class="card" style="padding:1.5rem;">
+        <h3 style="margin-bottom:1rem;color:#1e293b;">Customer Details</h3>
+        <p><strong>Name:</strong> {{ order.customer_name }}</p>
+        <p><strong>Phone:</strong> {{ order.phone }}</p>
+        <p><strong>Address:</strong> {{ order.area }}, {{ order.city }}, {{ order.district }}, {{ order.province }}</p>
+        {% if order.landmark %}<p><strong>Landmark:</strong> {{ order.landmark }}</p>{% endif %}
+        <p><strong>Payment:</strong> {{ order.payment_method }}</p>
+        <p><strong>Placed:</strong> {{ order.created_at }}</p>
+    </div>
+
+    <div class="card" style="padding:1.5rem;">
+        <h3 style="margin-bottom:1rem;color:#1e293b;">Update Status</h3>
+        <p style="margin-bottom:1rem;">Current: <span class="badge badge-{{ order.order_status|lower }}">{{ order.order_status }}</span></p>
+        <form method="POST" action="{{ url_for('admin.update_order_status', order_id=order.id) }}">
+            <select name="status" style="width:100%;padding:0.6rem;border:1px solid #d1d5db;border-radius:8px;margin-bottom:0.8rem;font-size:0.9rem;">
+                {% for s in ['Pending','Processing','Completed','Cancelled'] %}
+                <option value="{{ s }}" {{ 'selected' if order.order_status == s }}>{{ s }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-primary" style="width:100%">Update Status</button>
+        </form>
+    </div>
+</div>
+
+<div class="card" style="margin-top:1.5rem;">
+    <div class="card-header"><h2>Items Ordered</h2><strong>Total: Rs. {{ "{:,.0f}".format(order.total_price) }}</strong></div>
+    <table>
+        <thead><tr><th>Product</th><th>Qty</th><th>Price</th><th>Subtotal</th></tr></thead>
+        <tbody>
+        {% for item in order.order_items %}
+        <tr>
+            <td>{{ item.name }}</td>
+            <td>{{ item.qty }}</td>
+            <td>Rs. {{ "{:,.0f}".format(item.price) }}</td>
+            <td>Rs. {{ "{:,.0f}".format(item.subtotal) }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" style="text-align:center;color:#9ca3af">No items.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

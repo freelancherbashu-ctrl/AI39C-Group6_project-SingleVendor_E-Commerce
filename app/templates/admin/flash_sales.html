@@ -1,0 +1,78 @@
+{% extends 'admin/base.html' %}
+{% block title %}Flash Sales — MeroPasal Admin{% endblock %}
+{% block page_title %}Flash Sales{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2>All Flash Sales</h2>
+        <a href="{{ url_for('admin.add_flash_sale') }}" class="btn btn-primary btn-sm">+ New Sale</a>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Product</th>
+                <th>Label</th>
+                <th>Discount</th>
+                <th>Sale Price</th>
+                <th>Starts</th>
+                <th>Ends</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for s in sales %}
+        <tr>
+            <td>#{{ s.id }}</td>
+            <td>{{ s.product_name }}</td>
+            <td>{{ s.label }}</td>
+            <td><strong>{{ s.discount | int }}%</strong> off</td>
+            <td>
+                <span style="text-decoration:line-through;color:#9ca3af;font-size:.8rem;">
+                    Rs. {{ "{:,.0f}".format(s.original_price) }}
+                </span><br>
+                <strong style="color:#ef4444;">Rs. {{ "{:,.0f}".format(s.sale_price) }}</strong>
+            </td>
+            <td style="font-size:.82rem;">{{ s.starts_at.strftime('%Y-%m-%d %H:%M') if s.starts_at else '—' }}</td>
+            <td style="font-size:.82rem;">{{ s.ends_at.strftime('%Y-%m-%d %H:%M') if s.ends_at else '—' }}</td>
+            <td>
+                {% if s.is_active %}
+                    <span class="badge badge-processing">Active</span>
+                {% else %}
+                    <span class="badge badge-cancelled">Inactive</span>
+                {% endif %}
+            </td>
+            <td style="display:flex;gap:.4rem;flex-wrap:wrap;">
+                <a href="{{ url_for('admin.edit_flash_sale', sale_id=s.id) }}"
+                   class="btn btn-sm btn-primary">Edit</a>
+
+                <form method="POST"
+                      action="{{ url_for('admin.toggle_flash_sale', sale_id=s.id) }}"
+                      style="margin:0;">
+                    <button class="btn btn-sm" type="submit">
+                        {{ 'Deactivate' if s.is_active else 'Activate' }}
+                    </button>
+                </form>
+
+                <form method="POST"
+                      action="{{ url_for('admin.delete_flash_sale', sale_id=s.id) }}"
+                      style="margin:0;"
+                      onsubmit="return confirm('Delete this sale?');">
+                    <button class="btn btn-sm btn-danger" type="submit">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="9" style="text-align:center;color:#9ca3af;padding:2rem;">
+                No flash sales yet. <a href="{{ url_for('admin.add_flash_sale') }}">Create one →</a>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

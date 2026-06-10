@@ -1,0 +1,64 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; display: flex; min-height: 100vh; }
+
+        /* Sidebar */
+        .sidebar { width: 230px; background: #1a1a2e; color: #fff; display: flex; flex-direction: column; padding: 1.5rem 0; flex-shrink: 0; }
+        .sidebar .brand { font-size: 1.2rem; font-weight: 700; padding: 0 1.5rem 1.5rem; border-bottom: 1px solid #ffffff22; }
+        .sidebar .brand span { color: #818cf8; }
+        .sidebar nav { flex: 1; padding-top: 1rem; }
+        .sidebar nav a { display: block; padding: 0.65rem 1.5rem; color: #cbd5e1; text-decoration: none; font-size: 0.9rem; transition: all 0.2s; }
+        .sidebar nav a:hover, .sidebar nav a.active { background: #ffffff15; color: #fff; border-left: 3px solid #818cf8; }
+        .sidebar .logout { padding: 1rem 1.5rem; }
+        .sidebar .logout a { color: #f87171; text-decoration: none; font-size: 0.85rem; }
+
+        /* Main */
+        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .topbar { background: #fff; padding: 1rem 2rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+        .topbar h1 { font-size: 1.15rem; color: #1e293b; }
+        .topbar .admin-name { font-size: 0.85rem; color: #64748b; }
+        .content { padding: 2rem; overflow-y: auto; }
+
+        /* Alerts */
+        .alert { padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1.2rem; font-size: 0.9rem; }
+        .alert-error   { background: #fee2e2; color: #991b1b; }
+        .alert-success { background: #dcfce7; color: #166534; }
+        .alert-info    { background: #dbeafe; color: #1e40af; }
+
+        /* Cards */
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card { background: #fff; padding: 1.25rem; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+        .stat-card .label { font-size: 0.78rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+        .stat-card .value { font-size: 1.8rem; font-weight: 700; color: #1e293b; margin-top: 0.25rem; }
+
+        /* Table */
+        .card { background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); overflow: hidden; }
+        .card-header { padding: 1rem 1.5rem; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
+        .card-header h2 { font-size: 1rem; color: #1e293b; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f8fafc; padding: 0.75rem 1rem; text-align: left; font-size: 0.78rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+        td { padding: 0.85rem 1rem; border-top: 1px solid #f1f5f9; font-size: 0.9rem; color: #374151; }
+        tr:hover td { background: #fafafa; }
+
+        /* Badge */
+        .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
+        .badge-pending    { background: #fef9c3; color: #854d0e; }
+        .badge-processing { background: #dbeafe; color: #1d4ed8; }
+        .badge-completed  { background: #dcfce7; color: #166534; }
+        .badge-cancelled  { background: #fee2e2; color: #991b1b; }
+
+        /* Buttons */
+        .btn { display: inline-block; padding: 0.45rem 1rem; border-radius: 7px; font-size: 0.85rem; font-weight: 600; cursor: pointer; text-decoration: none; border: none; transition: opacity 0.2s; }
+        .btn:hover { opacity: 0.85; }
+        .btn-primary { background: #4f46e5; color: #fff; }
+        .btn-sm { padding: 0.3rem 0.7rem; font-size: 0.78rem; }
+
+        /* Filter bar */
+        .filter-bar { display: flex; gap: 0.5rem; margin-bottom: 1.2rem; flex-wrap: wrap; }
+        .filter-bar a { padding: 0.4rem 0.9rem; border-radius: 6px; font-size: 0.83rem; text-decoration: none; background: #fff; border: 1px solid #e2e8f0; color: #374151; }
+        .filter-bar a.active, .filter-bar a:hover { background: #4f46e5; color: #fff; border-color: #4f46e5; }
+.btn-danger {
+    background: #ef4444;
+    color: #fff;
+    border: none;
+}
+.btn-danger:hover { background: #dc2626; }

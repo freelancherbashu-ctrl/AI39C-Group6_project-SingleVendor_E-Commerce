@@ -28,11 +28,15 @@
 
                 <div>
                     <h3>{{ products[product_id].name }}</h3>
-
+                    {% if products[product_id].on_sale %}
                     <p>
-                        Rs. {{ products[product_id].price }}
+                        <span style="text-decoration:line-through;color:#9ca3af;font-size:.85rem;">Rs. {{ "{:,.0f}".format(products[product_id].price) }}</span>
+                        <span style="color:#ef4444;font-weight:700;"> Rs. {{ "{:,.0f}".format(products[product_id].sale_price) }}</span>
+                        <span style="background:#ef4444;color:#fff;font-size:0.7rem;padding:1px 6px;border-radius:10px;margin-left:4px;">{{ products[product_id].discount | int }}% OFF</span>
                     </p>
-
+                    {% else %}
+                    <p>Rs. {{ products[product_id].price }}</p>
+                    {% endif %}
                 </div>
 
             </div>
@@ -56,7 +60,11 @@
 
             <!-- TOTAL -->
             <div class="cart-total">
+                {% if products[product_id].on_sale %}
+                Rs. {{ "{:,.0f}".format(products[product_id].sale_price * qty) }}
+                {% else %}
                 Rs. {{ products[product_id].price * qty }}
+                {% endif %}
             </div>
 
             <!-- ACTIONS -->
@@ -109,7 +117,7 @@
 
         <p>Start shopping to add items here.</p>
 
-        <a href="{{ url_for('auth.dashboard') }}"
+        <a href="{{ url_for('auth.home') }}"
            class="btn shop">
 
             Go Shopping

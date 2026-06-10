@@ -35,8 +35,8 @@ def reset_password(token): return controller.reset_password(token)
 
 # Pages
 @auth_bp.route("/")
-@auth_bp.route("/dashboard", methods=["GET"])
-def dashboard():  return controller.dashboard()
+@auth_bp.route("/home", methods=["GET"])
+def home():  return controller.home()
 
 @auth_bp.route("/all_categories")
 def all_categories(): return controller.all_categories()
@@ -67,7 +67,6 @@ def buy_now(product_id): return controller.buy_now(product_id)
 # Checkout
 @auth_bp.route("/checkout", methods=["GET", "POST"])
 def checkout():
-    from flask import make_response
     response = make_response(controller.checkout())
     response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
     response.headers["Pragma"] = "no-cache"
@@ -88,5 +87,18 @@ def view_my_orders(): return controller.view_my_orders()
 @auth_bp.route("/cancel_order/<int:order_id>", methods=["POST"])
 def cancel_order(order_id): return controller.cancel_order(order_id)
 
-@auth_bp.route("/order_details")
-def order_details(): return controller.order_details()
+@auth_bp.route("/order_details/<int:order_id>")
+def order_details(order_id): return controller.order_details(order_id)
+
+@auth_bp.route("/search/suggest")
+def search_suggest(): return controller.search_suggest()
+
+# Wishlist
+@auth_bp.route("/wishlist")
+def wishlist(): return controller.view_wishlist()
+
+@auth_bp.route("/wishlist/toggle/<int:product_id>", methods=["POST"])
+def toggle_wishlist(product_id): return controller.toggle_wishlist(product_id)
+
+@auth_bp.route("/wishlist/status/<int:product_id>")
+def wishlist_status(product_id): return controller.wishlist_status(product_id)

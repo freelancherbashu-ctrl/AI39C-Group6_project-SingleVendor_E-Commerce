@@ -97,3 +97,27 @@
 .actions form{
     margin:0;
 }
+/* Product title with inline heart */
+.product-title-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 28px;
+    margin-bottom: 10px;
+}
+
+.heart-btn {
+    background: none;
+    border: none;
+    font-size: 1.9rem;
+    cursor: pointer;
+    color: #d1d5db;
+    line-height: 1;
+    padding: 0;
+    margin-left: 12px;
+    transition: color 0.2s, transform 0.15s;
+    text-decoration: none;
+    flex-shrink: 0;
+}
+.heart-btn:hover { color: #ef4444; transform: scale(1.2); }
+.heart-btn.wishlisted { color: #ef4444; }

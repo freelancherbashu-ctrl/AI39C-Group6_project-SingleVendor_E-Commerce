@@ -10,6 +10,15 @@
 
         <div class="auth-logo">🛍️</div>
         <h1>Welcome Back</h1>
+
+
+        <a href="{{ url_for('google.login') }}" class="google-btn">
+            <img src="https://developers.google.com/identity/images/g-logo.png" width="18">
+            Continue with Google
+        </a>
+
+        <div class="divider">or</div>
+
         <p class="auth-sub">Log in to your MeroPasal account</p>
 
         <form method="POST" action="{{ url_for('auth.login') }}">
@@ -24,7 +33,9 @@
                 <label>Password</label>
                 <input type="password" name="password" placeholder="••••••••" required>
             </div>
-
+            <a href="{{ url_for('auth.forgot_password') }}" class="forgot-link">
+                Forgot password?
+            </a>
             <button type="submit" class="auth-btn">Log In</button>
 
         </form>

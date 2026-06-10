@@ -224,3 +224,58 @@
 }
 
 .profile-action-card.danger .action-label { color: #e53e3e; }
+
+.forgot-link {
+    display: block;
+    text-align: right;
+    margin-top: -8px;
+    margin-bottom: 16px;
+    font-size: 0.85rem;
+    color: #4f46e5;
+    text-decoration: none;
+}
+
+.forgot-link:hover {
+    text-decoration: underline;
+}
+
+.divider {
+    text-align: center;
+    margin: 16px 0;
+    color: #aaa;
+    font-size: 0.85rem;
+    position: relative;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 42%;
+    height: 1px;
+    background: #e5e7eb;
+}
+
+.divider::before { left: 0; }
+.divider::after  { right: 0; }
+
+.google-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #fff;
+    color: #333;
+    font-size: 0.95rem;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.google-btn:hover {
+    background: #f9fafb;
+}

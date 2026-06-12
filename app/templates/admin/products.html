@@ -11,7 +11,7 @@
     </div>
     <table>
         <thead>
-            <tr><th>#</th><th>Image</th><th>Name</th><th>Category</th><th>Price (Rs.)</th><th>Actions</th></tr>
+            <tr><th>#</th><th>Image</th><th>Name</th><th>Category</th><th>Price (Rs.)</th><th>Stock</th><th>Actions</th></tr>
         </thead>
         <tbody>
         {% for p in products %}
@@ -24,11 +24,27 @@
             <td>{{ p.name }}</td>
             <td><span class="badge badge-processing">{{ p.category }}</span></td>
             <td>{{ "{:,.0f}".format(p.price) }}</td>
+            <td>
+                {% if p.available == 0 %}
+                    <span class="badge badge-danger">Out of Stock</span>
+                {% elif p.available <= 5 %}
+                    <span class="badge badge-warning">Low: {{ p.available }}</span>
+                {% else %}
+                    <span class="badge badge-success">{{ p.available }}</span>
+                {% endif %}
+                <form method="POST" action="{{ url_for('admin.update_stock', product_id=p.id) }}"
+                      style="display:inline-flex;gap:.3rem;align-items:center;margin-left:.4rem;">
+                    <input type="number" name="stock" value="{{ p.stock }}" min="0"
+                           style="width:64px;padding:3px 6px;font-size:.78rem;border-radius:5px;border:1px solid var(--border);">
+                    <button type="submit" class="btn btn-sm" style="padding:3px 8px;font-size:.75rem;">Set</button>
+                </form>
+            </td>
             <td style="display:flex;gap:.4rem;align-items:center;">
                 <button class="btn btn-sm btn-primary"
                     data-pid="{{ p.id }}"
                     data-name="{{ p.name | e }}"
                     data-price="{{ p.price }}"
+                    data-stock="{{ p.stock }}"
                     data-category="{{ p.category | e }}"
                     data-image="{{ p.image | e }}"
                     data-description="{{ (p.description or '') | e }}"
@@ -69,8 +85,13 @@
                     </div>
                 </div>
 
-                <div class="fg">
-                    <label>Category <span style="color:#ef4444">*</span></label>
+                <div class="fg-row">
+                    <div class="fg">
+                        <label>Stock Quantity <span style="color:#ef4444">*</span></label>
+                        <input type="number" name="stock" id="prodStock" min="0" value="0" required placeholder="e.g. 50">
+                    </div>
+                    <div class="fg">
+                        <label>Category <span style="color:#ef4444">*</span></label>
                     <input type="hidden" name="category" id="prodCategoryHidden">
                     <select id="prodCategory" required onchange="document.getElementById('prodCategoryHidden').value=this.value">
                         <option value="">— Select category —</option>
@@ -78,6 +99,7 @@
                         <option value="{{ cat.name }}">{{ cat.name|title }}</option>
                         {% endfor %}
                     </select>
+                    </div>
                 </div>
 
                 <div class="fg">
@@ -164,6 +186,7 @@ function openEditProductModal(btn) {
     document.getElementById('productForm').action = EDIT_PROD_URL.replace('{id}', id);
     document.getElementById('prodName').value = name;
     document.getElementById('prodPrice').value = price;
+    document.getElementById('prodStock').value = btn.dataset.stock || 0;
     document.getElementById('prodDescription').value = description;
 
     // set category — case-insensitive match

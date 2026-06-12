@@ -53,6 +53,14 @@
             {% endif %}
         </div>
 
+        {% if product.available == 0 %}
+        <div class="stock-badge stock-out">Out of Stock</div>
+        {% elif product.available <= 5 %}
+        <div class="stock-badge stock-low">Only {{ product.available }} left!</div>
+        {% else %}
+        <div class="stock-badge stock-in">In Stock</div>
+        {% endif %}
+
         {% if product.description %}
         <p class="product-description">{{ product.description }}</p>
         {% endif %}
@@ -63,12 +71,16 @@
             <label>Quantity</label>
             <div class="qty-selector">
                 <button type="button" onclick="changeQty(-1)">−</button>
-                <input type="number" id="qty" value="1" min="1" readonly>
+                <input type="number" id="qty" value="1" min="1" max="{{ product.available if product.available > 0 else 1 }}" readonly>
                 <button type="button" onclick="changeQty(1)">+</button>
             </div>
         </div>
 
         <div class="product-actions">
+            {% if product.available == 0 %}
+            <button class="btn cart" disabled style="opacity:.5;cursor:not-allowed;">🛒 Out of Stock</button>
+            <button class="btn buy"  disabled style="opacity:.5;cursor:not-allowed;">⚡ Unavailable</button>
+            {% else %}
             <form id="cartForm" action="{{ url_for('auth.add_to_cart', product_id=product.id) }}" method="POST">
                 <input type="hidden" name="quantity" id="cartQty" value="1">
                 <button type="submit" class="btn cart">🛒 Add to Cart</button>
@@ -77,6 +89,7 @@
                 <input type="hidden" name="quantity" id="buyQty" value="1">
                 <button type="submit" class="btn buy">⚡ Buy Now</button>
             </form>
+            {% endif %}
         </div>
 
         <a href="{{ url_for('auth.home') }}" class="continue-link">← Continue Shopping</a>

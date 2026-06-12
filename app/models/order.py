@@ -21,6 +21,7 @@ class Order:
             total_price DECIMAL(10,2) NOT NULL,
             items_json TEXT,
             order_status VARCHAR(20) DEFAULT 'Pending',
+            payment_status VARCHAR(20) DEFAULT 'Pending',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         """)
@@ -39,8 +40,36 @@ class Order:
 
     @staticmethod
     def create(mysql, order_data):
-        cursor = mysql.connection.cursor()
-        items_json = json.dumps(order_data.get("items", []))
+        """Create order and reserve stock for all items.
+        Returns (order_id, failed_items).
+        failed_items is a list of product names that had insufficient stock.
+        """
+        from app.models.product import Product
+
+        items     = order_data.get("items", [])
+        payment   = order_data["payment"]
+
+        # Try to reserve stock for every item first
+        failed_items = []
+        reserved_so_far = []
+        for item in items:
+            pid = item["id"]
+            qty = item["qty"]
+            ok  = Product.reserve_stock(mysql, pid, qty)
+            if ok:
+                reserved_so_far.append((pid, qty))
+            else:
+                failed_items.append(item["name"])
+
+        # If any item failed, roll back all reservations made so far
+        if failed_items:
+            for pid, qty in reserved_so_far:
+                Product.release_reservation(mysql, pid, qty)
+            return None, failed_items
+
+        # All reserved — create the order
+        cursor     = mysql.connection.cursor()
+        items_json = json.dumps(items)
         cursor.execute("""
         INSERT INTO orders (
             user_id, customer_name, phone, province, district,
@@ -58,13 +87,13 @@ class Order:
             order_data["area"],
             order_data["address"],
             order_data.get("landmark", ""),
-            order_data["payment"],
+            payment,
             order_data["total"],
             items_json
         ))
         order_id = cursor.lastrowid
         mysql.connection.commit()
-        return order_id
+        return order_id, []
 
     @staticmethod
     def _row_to_dict(row):
@@ -122,6 +151,15 @@ class Order:
 
     @staticmethod
     def cancel(mysql, order_id, user_id):
+        """Cancel order and release stock reservations."""
+        from app.models.product import Product
+
+        order = Order.get_by_id(mysql, order_id)
+        if not order or order["user_id"] != user_id:
+            return False
+        if order["order_status"] not in ("Pending",):
+            return False
+
         cursor = mysql.connection.cursor()
         cursor.execute("""
             UPDATE orders
@@ -129,4 +167,32 @@ class Order:
             WHERE id = %s AND order_status = 'Pending' AND user_id = %s
         """, (order_id, user_id))
         mysql.connection.commit()
-        return cursor.rowcount
+
+        if cursor.rowcount:
+            # Release reservations
+            for item in order.get("order_items", []):
+                Product.release_reservation(mysql, item["id"], item["qty"])
+            return True
+        return False
+
+    @staticmethod
+    def confirm_stock(mysql, order_id):
+        """Convert reservations to real deductions — call on payment approval or COD delivery."""
+        from app.models.product import Product
+
+        order = Order.get_by_id(mysql, order_id)
+        if not order:
+            return
+        for item in order.get("order_items", []):
+            Product.confirm_deduction(mysql, item["id"], item["qty"])
+
+    @staticmethod
+    def release_stock(mysql, order_id):
+        """Release reservations without deducting — call on payment rejection."""
+        from app.models.product import Product
+
+        order = Order.get_by_id(mysql, order_id)
+        if not order:
+            return
+        for item in order.get("order_items", []):
+            Product.release_reservation(mysql, item["id"], item["qty"])

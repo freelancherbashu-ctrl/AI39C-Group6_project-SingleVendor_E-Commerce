@@ -132,6 +132,7 @@ def dashboard():
     recent_orders = cursor.fetchall()
     total_products   = len(Product.get_all(mysql))
     total_categories = len(Category.get_all(mysql))
+    low_stock        = Product.get_low_stock(mysql, threshold=5)
     return render_template("admin/dashboard.html",
         total_orders=total_orders,
         pending_orders=pending_orders,
@@ -141,6 +142,7 @@ def dashboard():
         recent_orders=recent_orders,
         total_products=total_products,
         total_categories=total_categories,
+        low_stock=low_stock,
         admin=session["admin"]
     )
 
@@ -262,6 +264,7 @@ def add_product():
         price       = request.form.get("price", "0").strip()
         category    = request.form.get("category", "").strip()
         description = request.form.get("description", "").strip()
+        stock       = request.form.get("stock", "0").strip()
         image_file  = request.files.get("image")
 
         if not name or not category:
@@ -272,10 +275,17 @@ def add_product():
         except ValueError:
             flash("Price must be a number.", "error")
             return redirect(url_for("admin.products"))
+        try:
+            stock = int(stock)
+            if stock < 0:
+                raise ValueError
+        except ValueError:
+            flash("Stock must be a non-negative number.", "error")
+            return redirect(url_for("admin.products"))
 
         image_path = _save_image(image_file, "products") or "/static/images/placeholder.png"
 
-        pid, err = Product.create(mysql, name, price, category, image_path, description)
+        pid, err = Product.create(mysql, name, price, category, image_path, description, stock)
         if pid:
             flash(f"Product '{name}' added successfully.", "success")
             return redirect(url_for("admin.products"))
@@ -297,6 +307,7 @@ def edit_product(product_id):
         price       = request.form.get("price", "0").strip()
         category    = request.form.get("category", "").strip()
         description = request.form.get("description", "").strip()
+        stock       = request.form.get("stock", "0").strip()
         image_file  = request.files.get("image")
 
         if not name or not category:
@@ -307,6 +318,13 @@ def edit_product(product_id):
         except ValueError:
             flash("Price must be a number.", "error")
             return redirect(url_for("admin.products"))
+        try:
+            stock = int(stock)
+            if stock < 0:
+                raise ValueError
+        except ValueError:
+            flash("Stock must be a non-negative number.", "error")
+            return redirect(url_for("admin.products"))
 
         # Only replace image if a new file was uploaded; delete the old one first
         new_image = _save_image(image_file, "products")
@@ -316,7 +334,7 @@ def edit_product(product_id):
         else:
             image_path = product["image"]
 
-        ok, err = Product.update(mysql, product_id, name, price, category, image_path, description)
+        ok, err = Product.update(mysql, product_id, name, price, category, image_path, description, stock)
         if ok:
             flash(f"Product '{name}' updated successfully.", "success")
         else:
@@ -337,6 +355,20 @@ def delete_product(product_id):
             flash("Could not delete product.", "error")
     else:
         flash("Product not found.", "error")
+    return redirect(url_for("admin.products"))
+
+@admin_bp.route("/products/<int:product_id>/stock", methods=["POST"])
+@admin_required
+def update_stock(product_id):
+    try:
+        new_stock = int(request.form.get("stock", 0))
+        if new_stock < 0:
+            raise ValueError
+    except (ValueError, TypeError):
+        flash("Stock must be a non-negative number.", "error")
+        return redirect(url_for("admin.products"))
+    Product.update_stock(mysql, product_id, new_stock)
+    flash("Stock updated.", "success")
     return redirect(url_for("admin.products"))
 
 # ── CATEGORIES ────────────────────────────────────────────────────────────────
@@ -576,6 +608,7 @@ def approve_payment(order_id):
     """, (order_id,))
     mysql.connection.commit()
     if cursor.rowcount:
+        Order.confirm_stock(mysql, order_id)
         flash(f"Payment for Order #{order_id} approved.", "success")
     else:
         flash("Could not approve — payment may already be processed.", "error")
@@ -591,6 +624,7 @@ def reject_payment(order_id):
     """, (order_id,))
     mysql.connection.commit()
     if cursor.rowcount:
+        Order.release_stock(mysql, order_id)
         flash(f"Payment for Order #{order_id} rejected. Order auto-cancelled.", "error")
     else:
         flash("Could not reject — payment may already be processed.", "error")

@@ -413,10 +413,21 @@ class AuthController:
         if not session.get("user"):
             flash("Please log in to add items to your cart.", "error")
             return redirect(url_for("auth.login"))
-        cart      = session.get("cart", {})
-        pid       = str(product_id)
-        qty       = int(request.form.get("quantity", 1))
-        cart[pid] = cart.get(pid, 0) + qty
+        product = Product.get_by_id(mysql, product_id)
+        if not product:
+            flash("Product not found.", "error")
+            return redirect(url_for("auth.home"))
+        if product["available"] == 0:
+            flash(f"Sorry, {product['name']} is out of stock.", "error")
+            return redirect(url_for("auth.view_product", id=product_id))
+        cart    = session.get("cart", {})
+        pid     = str(product_id)
+        qty     = int(request.form.get("quantity", 1))
+        new_qty = cart.get(pid, 0) + qty
+        if new_qty > product["available"]:
+            flash(f"Only {product['available']} unit(s) available.", "error")
+            new_qty = product["available"]
+        cart[pid] = new_qty
         session["cart"] = cart
         session.modified = True
         flash("Added to cart!", "success")
@@ -516,11 +527,17 @@ class AuthController:
             "total":    total,
             "items":    items,
         }
-        order_id = Order.create(mysql, order_data)
+        order_id, failed = Order.create(mysql, order_data)
+
+        if failed:
+            flash(f"Sorry, the following item(s) are out of stock: {', '.join(failed)}. Please update your cart.", "error")
+            return redirect(url_for("auth.cart"))
+
         session.pop("buy_now", None)
         session["cart"] = {}
         session.modified = True
         session["last_order_total"] = total
+        session["last_order_id"]    = order_id
         if payment_method in ("esewa", "khalti"):
             return redirect(url_for("auth.payment", method=payment_method))
         return redirect(url_for("auth.order_confirmed", order_id=order_id))
@@ -529,9 +546,11 @@ class AuthController:
 
     def payment(self, method):
         qr_codes = {"esewa": "images/esewa_qr.png", "khalti": "images/khalti_qr.png"}
-        total = session.get("last_order_total", None)
+        total    = session.get("last_order_total", None)
+        order_id = session.get("last_order_id", None)
         return render_template("payment.html", method=method,
                                qr=qr_codes.get(method), total=total,
+                               order_id=order_id,
                                cart_count=_cart_count(), user=_current_user())
 
     # ── ORDERS ────────────────────────────────────────────────────────────────

@@ -294,3 +294,15 @@
     .price-main, .price-sale { font-size: 1.4rem; }
     .product-image { max-width: 100%; }
 }
+/* ── Stock badges ─────────────────────────────────── */
+.stock-badge {
+    display: inline-block;
+    font-size: .82rem;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin: .5rem 0 1rem;
+}
+.stock-in  { background: #EAF3DE; color: #3B6D11; }
+.stock-low { background: #FAEEDA; color: #854F0B; }
+.stock-out { background: #FCEBEB; color: #A32D2D; }

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,25 +8,141 @@
 </head>
 <body>
 
-<div class="sidebar">
-    <div class="brand">Mero<span>Pasal</span> Admin</div>
+<div class="sidebar" id="sidebar">
+    <div class="brand">
+        <img src="{{ url_for('static', filename='images/meropasal_logo.png') }}" class="brand-logo-img" alt="MeroPasal">
+        <span class="brand-text">
+            <span class="mero">Mero</span><span class="pasal">Pasal</span>
+            <span class="brand-admin-tag">Admin</span>
+        </span>
+    </div>
     <nav>
-        <a href="{{ url_for('admin.dashboard') }}" class="{{ 'active' if request.endpoint == 'admin.dashboard' }}">📊 Dashboard</a>
-        <a href="{{ url_for('admin.orders') }}"    class="{{ 'active' if request.endpoint in ['admin.orders','admin.order_detail'] }}">📦 Orders</a>
-        <a href="{{ url_for('admin.users') }}"     class="{{ 'active' if request.endpoint == 'admin.users' }}">👥 Users</a>
-        <a href="{{ url_for('admin.products') }}"  class="{{ 'active' if request.endpoint in ['admin.products','admin.add_product','admin.edit_product'] }}">🛍️ Products</a>
-        <a href="{{ url_for('admin.categories') }}" class="{{ 'active' if request.endpoint in ['admin.categories','admin.add_category','admin.edit_category'] }}">🗂️ Categories</a>
-        <a href="{{ url_for('admin.flash_sales') }}" class="{{ 'active' if request.endpoint in ['admin.flash_sales','admin.add_flash_sale','admin.edit_flash_sale'] }}">⚡ Flash Sales</a>
+        <a href="{{ url_for('admin.dashboard') }}" class="{{ 'active' if request.endpoint == 'admin.dashboard' }}" title="Dashboard">
+            <span class="nav-icon">
+                <svg viewBox="0 0 20 20" fill="currentColor"><rect x="2" y="2" width="7" height="7" rx="1.5"/><rect x="11" y="2" width="7" height="7" rx="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5"/></svg>
+            </span>
+            <span class="nav-label">Dashboard</span>
+        </a>
+        <a href="{{ url_for('admin.orders') }}" class="{{ 'active' if request.endpoint in ['admin.orders','admin.order_detail'] }}" title="Orders">
+            <span class="nav-icon">
+                <svg viewBox="0 0 20 20" fill="currentColor"><path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 6a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2zm0 6a1 1 0 011-1h7a1 1 0 010 2H4a1 1 0 01-1-1z"/></svg>
+            </span>
+            <span class="nav-label">Orders</span>
+        </a>
+        <a href="{{ url_for('admin.payments') }}" class="{{ 'active' if request.endpoint in ['admin.payments'] }}" title="Payments">
+            <span class="nav-icon">
+                <svg viewBox="0 0 20 20" fill="currentColor"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM2 9h16v5a2 2 0 01-2 2H4a2 2 0 01-2-2V9zm4 3a1 1 0 011-1h2a1 1 0 010 2H7a1 1 0 01-1-1z"/></svg>
+            </span>
+            <span class="nav-label">Payments</span>
+        </a>
+        <a href="{{ url_for('admin.users') }}" class="{{ 'active' if request.endpoint == 'admin.users' }}" title="Users">
+            <span class="nav-icon">
+                <svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zm8 0a3 3 0 11-6 0 3 3 0 016 0zM9 12a6 6 0 00-6 6h12a6 6 0 00-6-6zm8 0a6 6 0 00-6 6h8a6 6 0 00-2-4.47z"/></svg>
+            </span>
+            <span class="nav-label">Users</span>
+        </a>
+        <a href="{{ url_for('admin.products') }}" class="{{ 'active' if request.endpoint in ['admin.products','admin.add_product','admin.edit_product'] }}" title="Products">
+            <span class="nav-icon">
+                <svg viewBox="0 0 20 20" fill="currentColor"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+            </span>
+            <span class="nav-label">Products</span>
+        </a>
+        <a href="{{ url_for('admin.categories') }}" class="{{ 'active' if request.endpoint in ['admin.categories','admin.add_category','admin.edit_category'] }}" title="Categories">
+            <span class="nav-icon">
+                <svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/></svg>
+            </span>
+            <span class="nav-label">Categories</span>
+        </a>
+        <a href="{{ url_for('admin.flash_sales') }}" class="{{ 'active' if request.endpoint in ['admin.flash_sales','admin.add_flash_sale','admin.edit_flash_sale'] }}" title="Flash Sales">
+            <span class="nav-icon">
+                <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"/></svg>
+            </span>
+            <span class="nav-label">Flash Sales</span>
+        </a>
+        <a href="{{ url_for('admin.reports') }}" class="{{ 'active' if request.endpoint == 'admin.reports' }}" title="Reports">
+            <span class="nav-icon">
+                <svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zm6-4a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zm6-3a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>
+            </span>
+            <span class="nav-label">Reports</span>
+        </a>
     </nav>
     <div class="logout">
-        <a href="{{ url_for('admin.logout') }}">⬅ Logout</a>
+        <a href="{{ url_for('admin.logout') }}" title="Logout">
+            <span class="nav-icon">
+                <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z"/></svg>
+            </span>
+            <span class="nav-label">Logout</span>
+        </a>
     </div>
 </div>
 
-<div class="main">
+<div class="main" id="mainContent">
     <div class="topbar">
-        <h1>{% block page_title %}Dashboard{% endblock %}</h1>
-        <span class="admin-name">👤 {{ admin.username }}</span>
+        <div class="topbar-left">
+            <nav class="breadcrumb" aria-label="breadcrumb">
+                <a href="{{ url_for('admin.dashboard') }}" class="bc-home">
+                    <svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14"><path d="M8.354 1.146a.5.5 0 00-.708 0l-6 6-.354.354.708.708L3 7.207V13.5A1.5 1.5 0 004.5 15h2A1.5 1.5 0 008 13.5V11h0V9.5h0V13.5a.5.5 0 01-.5.5h-2a.5.5 0 01-.5-.5V6.793L8 2.207l5 5V13.5a.5.5 0 01-.5.5h-2a.5.5 0 01-.5-.5V9.5H8V11h-.001V13.5A1.5 1.5 0 009.5 15h2a1.5 1.5 0 001.5-1.5V7.207l1-.999.708-.708-.354-.354-6-6z"/></svg>
+                </a>
+                {% block breadcrumb %}{% endblock %}
+            </nav>
+            <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+        </div>
+        <div class="topbar-right">
+
+            <!-- Quick Search -->
+            <div class="admin-search-wrap" id="adminSearchWrap">
+                <button class="admin-search-btn" id="adminSearchToggle" onclick="toggleAdminSearch()" title="Quick Search">
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"/></svg>
+                </button>
+                <div class="admin-search-box" id="adminSearchBox">
+                    <input type="text" id="adminSearchInput" placeholder="Jump to… orders, users, products" autocomplete="off" oninput="filterAdminSearch(this.value)" onkeydown="adminSearchKey(event)">
+                    <div class="admin-search-results" id="adminSearchResults"></div>
+                </div>
+            </div>
+
+            <!-- Notification Bell -->
+            <div class="notif-wrap" id="notifWrap">
+                <button class="notif-btn" id="notifBtn" onclick="toggleNotifPanel()" title="Pending Orders">
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="18" height="18"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zm0 16a2 2 0 01-2-2h4a2 2 0 01-2 2z"/></svg>
+                    {% if pending_orders and pending_orders > 0 %}
+                    <span class="notif-badge">{{ pending_orders }}</span>
+                    {% endif %}
+                </button>
+                <div class="notif-panel" id="notifPanel" style="display:none;">
+                    <div class="notif-header">
+                        <span>Pending Orders</span>
+                        <a href="{{ url_for('admin.orders') }}?status=Pending" class="notif-view-all">View All</a>
+                    </div>
+                    <div class="notif-body">
+                        {% if pending_orders and pending_orders > 0 %}
+                        <div class="notif-summary">
+                            <span class="notif-count">{{ pending_orders }}</span>
+                            <span class="notif-text">order{{ 's' if pending_orders != 1 }} awaiting processing</span>
+                        </div>
+                        <a href="{{ url_for('admin.orders') }}?status=Pending" class="notif-action-btn">Process Orders →</a>
+                        {% else %}
+                        <div class="notif-empty">✅ No pending orders</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dark Mode Toggle -->
+            <button class="dark-toggle" id="darkToggle" onclick="toggleDarkMode()" title="Toggle dark mode">
+                <span class="dark-toggle-track">
+                    <span class="dark-toggle-thumb">
+                        <span class="icon-sun">☀️</span>
+                        <span class="icon-moon">🌙</span>
+                    </span>
+                </span>
+            </button>
+
+            <!-- Admin name -->
+            <div class="admin-pill">
+                <span class="admin-avatar">{{ admin.username[0].upper() }}</span>
+                <span class="admin-name">{{ admin.username }}</span>
+            </div>
+        </div>
     </div>
     <div class="content">
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -38,5 +154,100 @@
     </div>
 </div>
 
+<script>
+/* ── Dark Mode ── */
+(function() {
+    const saved = localStorage.getItem('mp-admin-dark');
+    if (saved === 'true') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+    }
+})();
+
+function toggleDarkMode() {
+    const html = document.documentElement;
+    const isDark = html.getAttribute('data-theme') === 'dark';
+    html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    localStorage.setItem('mp-admin-dark', !isDark);
+}
+
+/* ── Notification Panel ── */
+function toggleNotifPanel() {
+    const panel = document.getElementById('notifPanel');
+    const isOpen = panel.style.display !== 'none';
+    panel.style.display = isOpen ? 'none' : 'block';
+    if (!isOpen) document.getElementById('adminSearchBox').classList.remove('open');
+}
+document.addEventListener('click', function(e) {
+    const wrap = document.getElementById('notifWrap');
+    if (wrap && !wrap.contains(e.target)) {
+        document.getElementById('notifPanel').style.display = 'none';
+    }
+});
+
+/* ── Admin Quick Search ── */
+const adminLinks = [
+    { label: 'Dashboard',    icon: '🏠', url: '{{ url_for("admin.dashboard") }}',   tags: ['home','overview','stats'] },
+    { label: 'Orders',       icon: '📦', url: '{{ url_for("admin.orders") }}',       tags: ['orders','purchase','buy'] },
+    { label: 'Pending Orders', icon: '⏳', url: '{{ url_for("admin.orders") }}?status=Pending', tags: ['pending','waiting'] },
+    { label: 'Payments',     icon: '💳', url: '{{ url_for("admin.payments") }}',     tags: ['payment','esewa','khalti','cod'] },
+    { label: 'Users',        icon: '👥', url: '{{ url_for("admin.users") }}',        tags: ['users','customers','accounts'] },
+    { label: 'Products',     icon: '🛍️', url: '{{ url_for("admin.products") }}',     tags: ['products','items','inventory'] },
+    { label: 'Categories',   icon: '📁', url: '{{ url_for("admin.categories") }}',   tags: ['categories','folders'] },
+    { label: 'Flash Sales',  icon: '⚡', url: '{{ url_for("admin.flash_sales") }}',  tags: ['flash','sale','discount','promo'] },
+    { label: 'Reports',      icon: '📊', url: '{{ url_for("admin.reports") }}',      tags: ['reports','analytics','revenue'] },
+    { label: 'Logout',       icon: '🚪', url: '{{ url_for("admin.logout") }}',       tags: ['logout','signout','exit'] },
+];
+
+let searchActive = false;
+
+function toggleAdminSearch() {
+    const box = document.getElementById('adminSearchBox');
+    searchActive = !searchActive;
+    box.classList.toggle('open', searchActive);
+    if (searchActive) {
+        setTimeout(() => document.getElementById('adminSearchInput').focus(), 80);
+        renderSearchResults('');
+    }
+}
+
+function filterAdminSearch(val) {
+    renderSearchResults(val.toLowerCase().trim());
+}
+
+function renderSearchResults(q) {
+    const res = document.getElementById('adminSearchResults');
+    const matches = q === ''
+        ? adminLinks
+        : adminLinks.filter(l =>
+            l.label.toLowerCase().includes(q) ||
+            l.tags.some(t => t.includes(q))
+          );
+    if (!matches.length) {
+        res.innerHTML = '<div class="asr-empty">No results</div>';
+        return;
+    }
+    res.innerHTML = matches.map((l, i) =>
+        `<a href="${l.url}" class="asr-item" data-idx="${i}">
+            <span class="asr-icon">${l.icon}</span>
+            <span class="asr-label">${l.label}</span>
+        </a>`
+    ).join('');
+}
+
+let _selectedIdx = -1;
+function adminSearchKey(e) {
+    const items = document.querySelectorAll('.asr-item');
+    if (e.key === 'ArrowDown') { _selectedIdx = Math.min(_selectedIdx + 1, items.length - 1); }
+    else if (e.key === 'ArrowUp') { _selectedIdx = Math.max(_selectedIdx - 1, 0); }
+    else if (e.key === 'Enter' && _selectedIdx >= 0) { items[_selectedIdx]?.click(); return; }
+    else if (e.key === 'Escape') { toggleAdminSearch(); return; }
+    items.forEach((el, i) => el.classList.toggle('asr-selected', i === _selectedIdx));
+}
+
+document.addEventListener('click', function(e) {
+    const wrap = document.getElementById('adminSearchWrap');
+    if (wrap && !wrap.contains(e.target) && searchActive) toggleAdminSearch();
+});
+</script>
 </body>
 </html>

@@ -20,8 +20,17 @@
 
     <div class="header-nav">
 
-        <!-- Categories link (always visible) -->
-        <a href="{{ url_for('auth.all_categories') }}" class="header-categories-link">Categories</a>
+        <!-- Categories mega-dropdown -->
+        <div class="cat-mega-wrap" id="catMegaWrap">
+            <button class="header-categories-link" id="catBtn" onclick="toggleCatMenu(event)" aria-expanded="false">
+                Categories ▾
+            </button>
+            <div class="cat-mega-menu" id="catMegaMenu" style="display:none;">
+                <div class="cat-mega-grid" id="catMegaGrid">
+                    <div class="cat-mega-loading">Loading…</div>
+                </div>
+            </div>
+        </div>
 
         <!-- Wishlist icon (logged-in only) -->
         <a href="{{ url_for('auth.wishlist') }}" class="wishlist-icon" id="header-wishlist-link" title="My Wishlist">
@@ -35,6 +44,16 @@
             <span class="cart-badge">{{ cart_count }}</span>
             {% endif %}
         </a>
+
+
+        <!-- Dark Mode Toggle -->
+        <button class="user-dark-toggle" onclick="toggleUserDarkMode()" title="Toggle dark mode" aria-label="Toggle dark mode">
+            <span class="udt-track">
+                <span class="udt-thumb">
+                    <span id="udtIcon">☀️</span>
+                </span>
+            </span>
+        </button>
 
         <div class="profile-dropdown">
             {% if user %}
@@ -64,9 +83,103 @@
 
 </header>
 
+<!-- Invisible overlay to close mega menu when clicking outside -->
+<div id="catMegaOverlay" onclick="closeCatMenu()" style="display:none;position:fixed;inset:0;z-index:98;"></div>
+
+<style>
+/* ── Category Mega Menu ── */
+.cat-mega-wrap { position: relative; }
+
+.header-categories-link {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: .9rem;
+    font-weight: 600;
+    color: #1e293b;
+    padding: .4rem .7rem;
+    border-radius: 7px;
+    transition: background .15s, color .15s;
+    white-space: nowrap;
+}
+.header-categories-link:hover,
+.header-categories-link.active { background: #f1f5f9; color: #4f46e5; }
+
+.cat-mega-menu {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    box-shadow: 0 16px 60px rgba(0,0,0,.14);
+    padding: 1.2rem;
+    z-index: 99;
+    min-width: 520px;
+    max-width: 640px;
+    animation: megaDown .18s ease;
+}
+@keyframes megaDown { from{opacity:0;transform:translateX(-50%) translateY(-8px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+
+.cat-mega-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: .7rem;
+}
+
+.cat-mega-loading { text-align:center; color:#94a3b8; padding:1.5rem; font-size:.85rem; grid-column:1/-1; }
+
+.cat-mega-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .4rem;
+    padding: .65rem .5rem;
+    border-radius: 10px;
+    text-decoration: none;
+    color: #374151;
+    font-size: .8rem;
+    font-weight: 600;
+    text-align: center;
+    transition: background .15s, color .15s;
+    cursor: pointer;
+}
+.cat-mega-item:hover { background: #f5f3ff; color: #4f46e5; }
+
+.cat-mega-thumb {
+    width: 56px;
+    height: 56px;
+    border-radius: 10px;
+    object-fit: cover;
+    border: 1px solid #f1f5f9;
+    background: #f8fafc;
+}
+
+.cat-mega-thumb-placeholder {
+    width: 56px;
+    height: 56px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #818cf820, #c7d2fe40);
+    border: 1px solid #e0e7ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+}
+
+.cat-mega-name {
+    line-height: 1.2;
+    max-width: 90px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+</style>
+
 <script>
 (function () {
-    /* ── Search autocomplete (unchanged) ── */
+    /* ── Search autocomplete ── */
     const input    = document.getElementById("search-input");
     const dropdown = document.getElementById("search-dropdown");
     const results  = document.getElementById("search-results");
@@ -105,11 +218,7 @@
         dropdown.style.display = "block";
     }
 
-    function hide() {
-        dropdown.style.display = "none";
-        results.innerHTML = "";
-        activeIndex = -1;
-    }
+    function hide() { dropdown.style.display = "none"; results.innerHTML = ""; activeIndex = -1; }
 
     function setActive(index) {
         const items = results.querySelectorAll(".sd-item");
@@ -140,7 +249,7 @@
     document.addEventListener("click", (e) => { if (!e.target.closest(".search-bar")) hide(); });
     dropdown.addEventListener("mousedown", (e) => e.preventDefault());
 
-    /* ── Wishlist badge: load count on every page ── */
+    /* ── Wishlist badge ── */
     const badge = document.getElementById("header-wishlist-badge");
     if (badge) {
         fetch("/wishlist/status/0")
@@ -153,7 +262,82 @@
     }
 })();
 
-/* Global — called by any page after a toggle */
+/* ── Category Mega Menu ── */
+let catsLoaded = false;
+
+function toggleCatMenu(e) {
+    e.stopPropagation();
+    const menu    = document.getElementById('catMegaMenu');
+    const overlay = document.getElementById('catMegaOverlay');
+    const btn     = document.getElementById('catBtn');
+    const open    = menu.style.display !== 'none';
+
+    if (open) {
+        closeCatMenu();
+    } else {
+        menu.style.display = 'block';
+        overlay.style.display = 'block';
+        btn.classList.add('active');
+        btn.setAttribute('aria-expanded', 'true');
+        if (!catsLoaded) loadCategories();
+    }
+}
+
+function closeCatMenu() {
+    document.getElementById('catMegaMenu').style.display = 'none';
+    document.getElementById('catMegaOverlay').style.display = 'none';
+    const btn = document.getElementById('catBtn');
+    if (btn) { btn.classList.remove('active'); btn.setAttribute('aria-expanded', 'false'); }
+}
+
+function loadCategories() {
+    fetch('/categories/json')
+        .then(r => r.json())
+        .then(cats => {
+            catsLoaded = true;
+            const grid = document.getElementById('catMegaGrid');
+            if (!cats.length) {
+                grid.innerHTML = '<div class="cat-mega-loading">No categories yet.</div>';
+                return;
+            }
+            grid.innerHTML = cats.map(c => {
+                const imgHtml = c.image
+                    ? `<img class="cat-mega-thumb" src="${c.image}" alt="${c.name}" onerror="this.parentElement.innerHTML='<div class=cat-mega-thumb-placeholder>🗂️</div>'">`
+                    : `<div class="cat-mega-thumb-placeholder">🗂️</div>`;
+                return `<a class="cat-mega-item" href="/single_category/${encodeURIComponent(c.name)}" onclick="closeCatMenu()">
+                    ${imgHtml}
+                    <span class="cat-mega-name">${c.name.charAt(0).toUpperCase() + c.name.slice(1)}</span>
+                </a>`;
+            }).join('');
+        })
+        .catch(() => {
+            document.getElementById('catMegaGrid').innerHTML =
+                '<div class="cat-mega-loading" style="color:#ef4444;">Could not load categories.</div>';
+        });
+}
+
+
+/* ── User Dark Mode ── */
+(function() {
+    const saved = localStorage.getItem('mp-user-dark');
+    if (saved === 'true') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+    }
+    // update icon immediately
+    const icon = document.getElementById('udtIcon');
+    if (icon) icon.textContent = (saved === 'true') ? '🌙' : '☀️';
+})();
+
+function toggleUserDarkMode() {
+    const html = document.documentElement;
+    const isDark = html.getAttribute('data-theme') === 'dark';
+    html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    localStorage.setItem('mp-user-dark', !isDark);
+    const icon = document.getElementById('udtIcon');
+    if (icon) icon.textContent = isDark ? '☀️' : '🌙';
+}
+
+/* Global — called by any page after a wishlist toggle */
 function updateHeaderWishlistBadge(count) {
     const badge = document.getElementById("header-wishlist-badge");
     if (!badge) return;

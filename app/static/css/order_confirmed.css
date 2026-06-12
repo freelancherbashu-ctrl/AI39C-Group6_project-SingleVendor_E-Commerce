@@ -1,3 +1,4 @@
+/* order_confirmed.css — fully dark-mode aware */
 .confirmed-page {
     min-height: 80vh;
     display: flex;
@@ -7,37 +8,24 @@
 }
 
 .confirmed-card {
-    background: #fff;
+    background: var(--surface);
     border-radius: 18px;
     padding: 40px 36px;
     max-width: 520px;
     width: 100%;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border);
     text-align: center;
 }
 
-.confirmed-icon {
-    font-size: 3.5rem;
-    margin-bottom: 16px;
-}
+.confirmed-icon { font-size: 3.5rem; margin-bottom: 16px; }
 
-.confirmed-card h1 {
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: #1a1a2e;
-    margin-bottom: 8px;
-}
+.confirmed-card h1 { font-size: 1.8rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
+.confirmed-sub { color: var(--text-muted); margin-bottom: 28px; font-size: 0.95rem; }
 
-.confirmed-sub {
-    color: #666;
-    margin-bottom: 28px;
-    font-size: 0.95rem;
-}
-
-/* DETAILS BOX */
 .confirmed-details {
-    background: #f8f9ff;
-    border: 1px solid #e8e8e8;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
     border-radius: 12px;
     padding: 20px;
     text-align: left;
@@ -49,89 +37,45 @@
     justify-content: space-between;
     align-items: flex-start;
     padding: 8px 0;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--border);
     gap: 12px;
 }
-
 .confirmed-row:last-child { border-bottom: none; }
 
-.confirmed-label {
-    font-size: 0.78rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-weight: 600;
-    color: #999;
-    white-space: nowrap;
-}
+.confirmed-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
+.confirmed-value { font-size: 0.92rem; font-weight: 500; color: var(--text-primary); text-align: right; }
 
-.confirmed-value {
-    font-size: 0.92rem;
-    font-weight: 500;
-    color: #1a1a2e;
-    text-align: right;
-}
+.confirmed-items { padding: 10px 0; border-bottom: 1px solid var(--border); }
+.confirmed-items > .confirmed-label { display: block; margin-bottom: 10px; }
 
-/* ITEMS */
-.confirmed-items {
-    padding: 10px 0;
-    border-bottom: 1px solid #eee;
-}
-
-.confirmed-items > .confirmed-label {
-    display: block;
-    margin-bottom: 10px;
-}
-
-.confirmed-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 6px 0;
-}
+.confirmed-item { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
 
 .confirmed-item img {
     width: 40px;
     height: 40px;
     object-fit: contain;
     border-radius: 6px;
-    border: 1px solid #eee;
-    background: #fff;
+    border: 1px solid var(--border);
+    background: var(--bg-2);
 }
 
-.confirmed-item span:nth-child(2) {
-    flex: 1;
-    font-size: 0.88rem;
-    color: #1a1a2e;
-    font-weight: 500;
-}
+.confirmed-item span:nth-child(2) { flex: 1; font-size: 0.88rem; color: var(--text-primary); font-weight: 500; }
+.confirmed-item span:last-child   { font-size: 0.88rem; font-weight: 600; color: var(--text-secondary); }
 
-.confirmed-item span:last-child {
-    font-size: 0.88rem;
-    font-weight: 600;
-    color: #444;
-}
-
-/* TOTAL */
 .confirmed-total {
     display: flex;
     justify-content: space-between;
     padding-top: 12px;
     font-weight: 700;
     font-size: 1.05rem;
-    color: #1a1a2e;
+    color: var(--text-primary);
 }
 
-/* BUTTONS */
-.confirmed-actions {
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-    flex-wrap: wrap;
-}
+.confirmed-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
 .btn-primary {
     padding: 12px 28px;
-    background: #1a1a2e;
+    background: var(--mp-blue);
     color: #fff;
     border-radius: 8px;
     text-decoration: none;
@@ -139,22 +83,17 @@
     font-size: 0.95rem;
     transition: background 0.2s;
 }
-
-.btn-primary:hover { background: #2d2d50; }
+.btn-primary:hover { background: var(--mp-red); }
 
 .btn-secondary {
     padding: 12px 28px;
-    background: #fff;
-    color: #1a1a2e;
-    border: 1.5px solid #1a1a2e;
+    background: var(--surface);
+    color: var(--text-primary);
+    border: 1.5px solid var(--border);
     border-radius: 8px;
     text-decoration: none;
     font-weight: 600;
     font-size: 0.95rem;
     transition: all 0.2s;
 }
-
-.btn-secondary:hover {
-    background: #1a1a2e;
-    color: #fff;
-}
+.btn-secondary:hover { background: var(--mp-blue); color: #fff; border-color: var(--mp-blue); }

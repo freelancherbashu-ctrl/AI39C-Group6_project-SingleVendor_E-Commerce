@@ -71,12 +71,9 @@
             <div class="cart-actions">
 
                 <!-- VIEW DETAILS -->
-                <a href="{{ url_for('auth.view_product', id=product_id) }}"
-                   class="btn view">
-
+                <button class="btn view" onclick="openProductModal({{ product_id }})">
                     View Product
-
-                </a>
+                </button>
 
                 <!-- REMOVE -->
                 <form action="{{ url_for('auth.remove_from_cart', product_id=product_id) }}"

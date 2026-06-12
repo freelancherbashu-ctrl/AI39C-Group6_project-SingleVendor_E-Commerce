@@ -1,0 +1,75 @@
+{% extends 'admin/base.html' %}
+{% block title %}Payments — MeroPasal Admin{% endblock %}
+{% block page_title %}Payment Management{% endblock %}
+{% block breadcrumb %}<span class="bc-sep">›</span><span class="bc-current">Payments</span>{% endblock %}
+
+{% block content %}
+<div class="filter-bar">
+    <a href="{{ url_for('admin.payments') }}"                              class="{{ 'active' if not active_status }}">All</a>
+    <a href="{{ url_for('admin.payments', status='Pending') }}"            class="{{ 'active' if active_status=='Pending' }}">⏳ Pending</a>
+    <a href="{{ url_for('admin.payments', status='Approved') }}"           class="{{ 'active' if active_status=='Approved' }}">✅ Approved</a>
+    <a href="{{ url_for('admin.payments', status='Rejected') }}"           class="{{ 'active' if active_status=='Rejected' }}">❌ Rejected</a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>Digital Payments (eSewa / Khalti)</h2>
+        <span style="font-size:0.82rem;color:#64748b;">Approve or reject customer payments</span>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Order #</th>
+                <th>Customer</th>
+                <th>Amount</th>
+                <th>Method</th>
+                <th>Payment Status</th>
+                <th>Order Status</th>
+                <th>Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for p in payments %}
+        <tr>
+            <td>#{{ p[0] }}</td>
+            <td>{{ p[1] }}</td>
+            <td>Rs. {{ "{:,.0f}".format(p[2]) }}</td>
+            <td>
+                {% if p[3] == 'esewa' %}
+                    <span style="color:#00a651;font-weight:600;">🟢 eSewa</span>
+                {% else %}
+                    <span style="color:#5c2d91;font-weight:600;">🟣 Khalti</span>
+                {% endif %}
+            </td>
+            <td>
+                <span class="badge badge-{{ (p[4] or 'pending')|lower }}">{{ p[4] or 'Pending' }}</span>
+            </td>
+            <td>
+                <span class="badge badge-{{ p[5]|lower }}">{{ p[5] }}</span>
+            </td>
+            <td>{{ p[6].strftime('%Y-%m-%d') if p[6] else '—' }}</td>
+            <td>
+                {% if (p[4] or 'Pending') == 'Pending' %}
+                <div style="display:flex;gap:0.4rem;">
+                    <form method="POST" action="{{ url_for('admin.approve_payment', order_id=p[0]) }}"
+                          onsubmit="return confirm('Approve payment for Order #{{ p[0] }}?')">
+                        <button type="submit" class="btn btn-sm btn-success">✅ Approve</button>
+                    </form>
+                    <form method="POST" action="{{ url_for('admin.reject_payment', order_id=p[0]) }}"
+                          onsubmit="return confirm('Reject payment? This will auto-cancel the order.')">
+                        <button type="submit" class="btn btn-sm btn-danger">❌ Reject</button>
+                    </form>
+                </div>
+                {% else %}
+                    <span style="color:#9ca3af;font-size:0.82rem;">Processed</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" style="text-align:center;color:#9ca3af;padding:2rem">No digital payments found.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

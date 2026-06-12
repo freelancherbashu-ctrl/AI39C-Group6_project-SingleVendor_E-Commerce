@@ -28,6 +28,7 @@ class Order:
         for sql in [
             "ALTER TABLE orders ADD COLUMN items_json TEXT AFTER total_price",
             "ALTER TABLE orders ADD COLUMN user_id INT NOT NULL DEFAULT 0 AFTER id",
+            "ALTER TABLE orders ADD COLUMN payment_status VARCHAR(20) DEFAULT 'Pending'",
         ]:
             try:
                 cursor.execute(sql)
@@ -88,7 +89,8 @@ class Order:
             "total_price":    row[11],
             "order_items":    items,
             "order_status":   row[13],
-            "created_at":     row[14],
+            "payment_status": row[14] if len(row) > 14 else "Pending",
+            "created_at":     row[15] if len(row) > 15 else row[14],
         }
 
     @staticmethod
@@ -98,7 +100,7 @@ class Order:
         SELECT id, user_id, customer_name, phone, province, district,
                city, area, address, landmark,
                payment_method, total_price, items_json,
-               order_status, created_at
+               order_status, payment_status, created_at
         FROM orders
         WHERE user_id = %s
         ORDER BY created_at DESC
@@ -112,7 +114,7 @@ class Order:
         SELECT id, user_id, customer_name, phone, province, district,
                city, area, address, landmark,
                payment_method, total_price, items_json,
-               order_status, created_at
+               order_status, payment_status, created_at
         FROM orders WHERE id = %s
         """, (order_id,))
         row = cursor.fetchone()

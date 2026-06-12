@@ -1,13 +1,10 @@
 {% extends 'base.html' %}
-
 {% block title %}My Orders - MeroPasal{% endblock %}
-
 {% block style %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/view_my_orders.css') }}">
 {% endblock %}
 
 {% block content %}
-
 <section class="orders-page">
 
     <h1 class="page-title">My Orders</h1>
@@ -19,14 +16,10 @@
     {% endwith %}
 
     {% if orders %}
-
     <div class="orders-list">
-
         {% for order in orders %}
-
         <div class="order-card">
 
-            <!-- HEADER -->
             <div class="order-header">
                 <div class="order-meta">
                     <span class="order-id">Order #{{ order.id }}</span>
@@ -34,15 +27,14 @@
                         {{ order.created_at.strftime('%d %b %Y, %I:%M %p') if order.created_at else 'N/A' }}
                     </span>
                 </div>
-                <span class="order-status status-{{ order.order_status | lower }}">
+                <span class="order-status status-{{ order.order_status|lower }}">
                     {{ order.order_status }}
                 </span>
             </div>
 
-            <!-- ITEMS -->
             {% if order.order_items %}
             <div class="order-items">
-                {% for item in order.order_items %}
+                {% for item in order.order_items[:2] %}
                 <div class="order-item">
                     <img src="{{ item.image }}" alt="{{ item.name }}">
                     <div class="order-item-info">
@@ -52,76 +44,232 @@
                     <span class="order-item-price">Rs. {{ "{:,.0f}".format(item.subtotal) }}</span>
                 </div>
                 {% endfor %}
+                {% if order.order_items|length > 2 %}
+                <div style="font-size:.8rem;color:var(--text-muted,#9ca3af);padding:.3rem 0;">
+                    + {{ order.order_items|length - 2 }} more item(s)
+                </div>
+                {% endif %}
             </div>
             {% endif %}
 
-            <!-- INFO GRID -->
-            <div class="order-body">
-                <div class="order-info-grid">
-
-                    <div class="info-item">
-                        <span class="info-label">Customer</span>
-                        <span class="info-value">{{ order.customer_name }}</span>
-                    </div>
-
-                    <div class="info-item">
-                        <span class="info-label">Phone</span>
-                        <span class="info-value">{{ order.phone }}</span>
-                    </div>
-
-                    <div class="info-item">
-                        <span class="info-label">Location</span>
-                        <span class="info-value">{{ order.district }}, {{ order.province }}</span>
-                    </div>
-
-                    <div class="info-item">
-                        <span class="info-label">Payment</span>
-                        <span class="info-value payment-badge payment-{{ order.payment_method }}">
-                            {% if order.payment_method == 'cod' %}💵 Cash on Delivery
-                            {% elif order.payment_method == 'esewa' %}🟢 eSewa
-                            {% elif order.payment_method == 'khalti' %}🟣 Khalti
-                            {% else %}{{ order.payment_method }}{% endif %}
-                        </span>
-                    </div>
-
-                </div>
-            </div>
-
-            <!-- FOOTER -->
             <div class="order-footer">
                 <span class="order-total-label">Order Total</span>
                 <span class="order-total">Rs. {{ "{:,.0f}".format(order.total_price) }}</span>
 
-                <a href="{{ url_for('auth.order_details', order_id=order.id) }}"
-                   style="margin-left:auto; font-size:.85rem; color:#374151; text-decoration:underline;">
+                <button class="view-details-btn" onclick="openOrderModal({{ order.id }})">
                     View Details →
-                </a>
+                </button>
 
                 {% if order.order_status == 'Pending' %}
-                <form action="{{ url_for('auth.cancel_order', order_id=order.id) }}" method="POST"
-                    onsubmit="return confirm('Are you sure you want to cancel this order?')">
-                    <button type="submit" class="cancel-order-btn">Cancel Order</button>
-                </form>
+                <button class="cancel-order-btn"
+                    onclick="openCancelModal({{ order.id }})">Cancel Order</button>
                 {% endif %}
             </div>
 
         </div>
-
         {% endfor %}
-
     </div>
 
     {% else %}
-
     <div class="empty-orders">
         <div class="empty-icon">📦</div>
         <h2>No orders yet</h2>
         <p>You haven't placed any orders yet. Start shopping!</p>
         <a href="{{ url_for('auth.home') }}" class="shop-btn">Browse Products</a>
     </div>
-
     {% endif %}
 
 </section>
 
+<!-- ── ORDER DETAIL MODAL (centered) ─────────────────────────────────────── -->
+<div id="orderModal" class="om-backdrop" onclick="closeOrderModal(event)">
+    <div class="om-box">
+        <div class="om-header">
+            <h3 id="omTitle">Order Details</h3>
+            <button class="om-close" onclick="closeOrderModal()">&times;</button>
+        </div>
+        <div id="omBody" class="om-body">
+            <div class="om-loading">Loading…</div>
+        </div>
+    </div>
+</div>
+
+<!-- ── CANCEL CONFIRMATION MODAL ─────────────────────────────────────────── -->
+<div id="cancelModal" class="mp-backdrop" onclick="closeCancelModal(event)">
+    <div class="mp-box">
+        <div class="mp-head">
+            <h3>Cancel Order</h3>
+            <button class="mp-x" onclick="closeCancelModal()">&times;</button>
+        </div>
+        <div class="mp-body">
+            <p>Are you sure you want to cancel <strong id="cancelOrderId"></strong>?</p>
+            <p style="font-size:.83rem;color:var(--text-muted,#6b7280);margin-top:.3rem;">This cannot be undone once submitted.</p>
+        </div>
+        <div class="mp-foot">
+            <button class="mp-btn" onclick="closeCancelModal()">Keep Order</button>
+            <form id="cancelForm" method="POST" style="margin:0;">
+                <button type="submit" class="mp-btn danger">Yes, Cancel</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+/* ── View details btn ── */
+.view-details-btn{background:none;border:1px solid var(--border,#e2e8f0);border-radius:7px;padding:.35rem .8rem;font-size:.82rem;color:var(--text-secondary,#374151);cursor:pointer;margin-left:auto;transition:all .15s;}
+.view-details-btn:hover{background:var(--bg-2,#f1f5f9);border-color:var(--mp-blue,#2563eb);color:var(--mp-blue,#2563eb);}
+
+/* ── Centered Order Modal ── */
+.om-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:900;padding:1rem;}
+.om-backdrop.open{display:flex;}
+.om-box{background:var(--surface,#fff);border:1px solid var(--border,#e2e8f0);border-radius:16px;width:100%;max-width:560px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,.28);animation:omUp .22s ease;}
+@keyframes omUp{from{transform:translateY(20px) scale(.98);opacity:0}to{transform:none;opacity:1}}
+.om-header{display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.5rem;border-bottom:1px solid var(--border,#f1f5f9);flex-shrink:0;background:var(--surface,#fff);border-radius:16px 16px 0 0;}
+.om-header h3{margin:0;font-size:1rem;font-weight:700;color:var(--text-primary,#1e293b);}
+.om-close{background:var(--bg-2,#f1f5f9);border:1px solid var(--border,#e2e8f0);font-size:1.2rem;color:var(--text-secondary,#64748b);cursor:pointer;line-height:1;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-weight:700;transition:all .15s;}
+.om-close:hover{background:var(--mp-red,#ef4444);border-color:var(--mp-red,#ef4444);color:#fff;}
+.om-body{flex:1;overflow-y:auto;padding:1.4rem;background:var(--surface,#fff);border-radius:0 0 16px 16px;}
+.om-loading{text-align:center;color:var(--text-muted,#94a3b8);padding:3rem 0;font-size:.9rem;}
+
+/* Sections inside modal */
+.od-sec{background:var(--bg-2,#f8fafc);border:1px solid var(--border,#f1f5f9);border-radius:10px;padding:.9rem 1rem;margin-bottom:1rem;}
+.od-sec h4{margin:0 0 .6rem;font-size:.73rem;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted,#64748b);font-weight:700;}
+.od-row{display:flex;justify-content:space-between;align-items:center;padding:.3rem 0;font-size:.87rem;border-bottom:1px solid var(--border,#f1f5f9);}
+.od-row:last-child{border-bottom:none;}
+.od-row span{color:var(--text-secondary,#6b7280);}
+.od-row strong{color:var(--text-primary,#1e293b);}
+.od-item{display:flex;align-items:center;gap:.7rem;padding:.45rem 0;border-bottom:1px solid var(--border,#f3f4f6);}
+.od-item:last-child{border-bottom:none;}
+.od-item img{width:44px;height:44px;object-fit:cover;border-radius:7px;border:1px solid var(--border,#e2e8f0);flex-shrink:0;background:var(--bg-2,#f8fafc);}
+.od-item-info{flex:1;}
+.od-item-name{font-size:.87rem;font-weight:600;color:var(--text-primary,#1e293b);display:block;}
+.od-item-qty{font-size:.78rem;color:var(--text-muted,#6b7280);}
+.od-item-price{font-size:.87rem;font-weight:700;color:var(--text-primary,#1e293b);white-space:nowrap;}
+.od-badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:.75rem;font-weight:700;}
+.od-pending{background:#fef3c7;color:#92400e;}
+.od-approved,.od-processing{background:#dbeafe;color:#1e40af;}
+.od-completed{background:#d1fae5;color:#065f46;}
+.od-rejected,.od-cancelled{background:#fee2e2;color:#991b1b;}
+[data-theme="dark"] .od-pending{background:#422006;color:#fcd34d;}
+[data-theme="dark"] .od-approved,[data-theme="dark"] .od-processing{background:#0c1a3a;color:#93c5fd;}
+[data-theme="dark"] .od-completed{background:#052e16;color:#86efac;}
+[data-theme="dark"] .od-rejected,[data-theme="dark"] .od-cancelled{background:#450a0a;color:#fca5a5;}
+/* Cancel modal dark mode */
+[data-theme="dark"] .mp-box{background:var(--surface);border-color:var(--border);}
+[data-theme="dark"] .mp-head{border-color:var(--border);}
+[data-theme="dark"] .mp-head h3{color:var(--text-primary);}
+[data-theme="dark"] .mp-x{background:var(--bg-2);border-color:var(--border);color:var(--text-secondary);}
+[data-theme="dark"] .mp-body{color:var(--text-primary);}
+[data-theme="dark"] .mp-foot{border-color:var(--border);}
+[data-theme="dark"] .mp-btn{background:var(--surface);border-color:var(--border);color:var(--text-primary);}
+[data-theme="dark"] .mp-btn:hover{background:var(--bg-2);}
+/* Order modal dark mode */
+[data-theme="dark"] .om-box{background:var(--surface);border-color:var(--border);}
+[data-theme="dark"] .om-header{background:var(--surface);border-color:var(--border);}
+[data-theme="dark"] .om-body{background:var(--surface);}
+[data-theme="dark"] .od-sec{background:var(--bg-2);border-color:var(--border);}
+[data-theme="dark"] .od-row{border-color:var(--border);}
+[data-theme="dark"] .od-item{border-color:var(--border);}
+[data-theme="dark"] .od-item img{border-color:var(--border);background:var(--bg-2);}
+
+/* Cancel modal */
+.mp-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:950;padding:1rem;}
+.mp-backdrop.open{display:flex;}
+.mp-box{background:var(--surface,#fff);border:1px solid var(--border,#e2e8f0);border-radius:14px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.22);animation:mpUp .2s ease;}
+@keyframes mpUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.mp-head{display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.4rem;border-bottom:1px solid var(--border,#f1f5f9);}
+.mp-head h3{margin:0;font-size:.97rem;font-weight:700;color:var(--text-primary,#1e293b);}
+.mp-x{background:var(--bg-2,#f1f5f9);border:1px solid var(--border,#e2e8f0);font-size:1.2rem;color:var(--text-secondary,#64748b);cursor:pointer;line-height:1;border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:700;transition:all .15s;}
+.mp-x:hover{background:var(--mp-red,#ef4444);border-color:var(--mp-red,#ef4444);color:#fff;}
+.mp-body{padding:1.2rem 1.4rem;font-size:.9rem;color:var(--text-primary,#374151);}
+.mp-body p+p{color:var(--text-muted,#6b7280);}
+.mp-foot{display:flex;justify-content:flex-end;gap:.5rem;padding:.9rem 1.4rem;border-top:1px solid var(--border,#f1f5f9);}
+.mp-btn{padding:.45rem 1rem;border:1px solid var(--border,#e2e8f0);border-radius:7px;background:var(--surface,#fff);font-size:.85rem;cursor:pointer;color:var(--text-primary,#374151);transition:background .15s;}
+.mp-btn:hover{background:var(--bg-2,#f1f5f9);}
+.mp-btn.danger{background:#ef4444;color:#fff;border-color:#ef4444;font-weight:600;}
+.mp-btn.danger:hover{background:#dc2626;}
+</style>
+
+<script>
+// ── Centered Order Modal ──────────────────────────────────────────────────
+function openOrderModal(orderId) {
+    document.getElementById('omTitle').textContent = 'Order #' + orderId;
+    document.getElementById('omBody').innerHTML = '<div class="om-loading">Loading…</div>';
+    document.getElementById('orderModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    fetch(`/order_details/${orderId}/json`)
+        .then(r => r.json())
+        .then(renderOrderModal)
+        .catch(() => {
+            document.getElementById('omBody').innerHTML =
+                '<div class="om-loading" style="color:#ef4444;">Could not load order details.</div>';
+        });
+}
+
+function closeOrderModal(e) {
+    if (e && e.target !== document.getElementById('orderModal')) return;
+    document.getElementById('orderModal').classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+function statusBadge(status) {
+    const cls = 'od-badge od-' + (status || 'pending').toLowerCase();
+    return `<span class="${cls}">${status || 'Pending'}</span>`;
+}
+
+function fmt(n) { return Number(n).toLocaleString('en-IN', {maximumFractionDigits:0}); }
+
+function renderOrderModal(o) {
+    const pay = {cod:'💵 Cash on Delivery', esewa:'🟢 eSewa', khalti:'🟣 Khalti'};
+    const itemsHtml = (o.items || []).map(it => `
+        <div class="od-item">
+            <img src="${it.image || ''}" alt="${it.name}"
+                 onerror="this.src='/static/images/products/placeholder.png'">
+            <div class="od-item-info">
+                <span class="od-item-name">${it.name}</span>
+                <span class="od-item-qty">Qty: ${it.qty}</span>
+            </div>
+            <span class="od-item-price">Rs. ${fmt(it.subtotal)}</span>
+        </div>`).join('');
+
+    document.getElementById('omBody').innerHTML = `
+    <div class="od-sec">
+        <h4>Order Summary</h4>
+        <div class="od-row"><span>Order #</span><strong>${o.id}</strong></div>
+        <div class="od-row"><span>Date</span><strong>${o.created_at || '—'}</strong></div>
+        <div class="od-row"><span>Status</span>${statusBadge(o.order_status)}</div>
+        <div class="od-row"><span>Payment</span><strong>${pay[o.payment_method] || o.payment_method}</strong></div>
+        ${o.payment_method !== 'cod' ? `<div class="od-row"><span>Payment Status</span>${statusBadge(o.payment_status)}</div>` : ''}
+        <div class="od-row"><span>Total</span><strong style="font-size:.97rem;">Rs. ${fmt(o.total_price)}</strong></div>
+    </div>
+    <div class="od-sec">
+        <h4>Delivery Address</h4>
+        <div class="od-row"><span>Name</span><strong>${o.customer_name}</strong></div>
+        <div class="od-row"><span>Phone</span><strong>${o.phone}</strong></div>
+        <div class="od-row"><span>Area / City</span><strong>${o.area}, ${o.city}</strong></div>
+        <div class="od-row"><span>District / Province</span><strong>${o.district}, ${o.province}</strong></div>
+        ${o.landmark ? `<div class="od-row"><span>Landmark</span><strong>${o.landmark}</strong></div>` : ''}
+    </div>
+    <div class="od-sec">
+        <h4>Items Ordered</h4>
+        ${itemsHtml || '<p style="color:#9ca3af;font-size:.85rem;">No item details available.</p>'}
+    </div>`;
+}
+
+// ── Cancel Modal ────────────────────────────────────────────────────────────
+function openCancelModal(orderId) {
+    document.getElementById('cancelOrderId').textContent = 'Order #' + orderId;
+    document.getElementById('cancelForm').action = `/cancel_order/${orderId}`;
+    document.getElementById('cancelModal').classList.add('open');
+}
+function closeCancelModal(e) {
+    if (e && e.target !== document.getElementById('cancelModal')) return;
+    document.getElementById('cancelModal').classList.remove('open');
+}
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeOrderModal(); closeCancelModal(); }
+});
+</script>
 {% endblock %}

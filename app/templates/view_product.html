@@ -10,7 +10,7 @@
 
 {% with messages = get_flashed_messages(with_categories=true) %}
     {% for category, message in messages %}
-    <div class="alert alert-{{ category }} cart-alert">
+    <div class="cart-alert alert-{{ category }}">
         {{ message }}
         <div class="alert-actions">
             <a href="{{ url_for('auth.cart') }}" class="alert-btn">View Cart 🛒</a>
@@ -22,46 +22,62 @@
 
 <section class="product-page">
 
+    <!-- LEFT: IMAGE -->
     <div class="product-image">
-        <img src="{{ product.image }}" alt="{{ product.name }}">
+        <div class="product-image-wrap">
+            <img src="{{ product.image }}" alt="{{ product.name }}">
+        </div>
     </div>
 
+    <!-- RIGHT: DETAILS -->
     <div class="product-details">
 
-        <h1 class="product-title-row">
-            {{ product.name }}
+        <span class="product-badge">{{ product.category | title }}</span>
+
+        <div class="product-title-row">
+            <h1>{{ product.name }}</h1>
             {% if user %}
             <button class="heart-btn" id="wishlist-btn" data-product-id="{{ product.id }}" title="Add to Wishlist">♡</button>
             {% else %}
-            <a href="{{ url_for('auth.login') }}" class="heart-btn" title="Login to Wishlist">♡</a>
+            <a href="{{ url_for('auth.login') }}" class="heart-btn" title="Login to add to Wishlist">♡</a>
             {% endif %}
-        </h1>
-        <h2 class="price">
-            {% if sale %}
-            <span class="price-original" style="font-size:1rem;color:#9ca3af;text-decoration:line-through;font-weight:400;">Rs. {{ "{:,.0f}".format(product.price) }}</span>
-            <span style="color:#ef4444;">Rs. {{ "{:,.0f}".format(sale.sale_price) }}</span>
-            <span style="background:#ef4444;color:#fff;font-size:0.75rem;padding:2px 8px;border-radius:12px;margin-left:6px;font-weight:700;">{{ sale.discount | int }}% OFF</span>
-            {% else %}
-            Rs. {{ "{:,.0f}".format(product.price) }}
-            {% endif %}
-        </h2>
-        <p class="description">{{ product.description }}</p>
-
-        <div class="qty-selector">
-            <button type="button" onclick="changeQty(-1)">−</button>
-            <input type="number" id="qty" value="1" min="1" readonly>
-            <button type="button" onclick="changeQty(1)">+</button>
         </div>
 
-        <form id="cartForm" action="{{ url_for('auth.add_to_cart', product_id=product.id) }}" method="POST">
-            <input type="hidden" name="quantity" id="cartQty" value="1">
-            <button type="submit" class="btn cart">🛒 Add to Cart</button>
-        </form>
+        <div class="price-block">
+            {% if sale %}
+            <span class="price-original">Rs. {{ "{:,.0f}".format(product.price) }}</span>
+            <span class="price-sale">Rs. {{ "{:,.0f}".format(sale.sale_price) }}</span>
+            <span class="sale-badge">{{ sale.discount | int }}% OFF</span>
+            {% else %}
+            <span class="price-main">Rs. {{ "{:,.0f}".format(product.price) }}</span>
+            {% endif %}
+        </div>
 
-        <form id="buyNowForm" action="{{ url_for('auth.buy_now', product_id=product.id) }}" method="POST">
-            <input type="hidden" name="quantity" id="buyQty" value="1">
-            <button type="submit" class="btn buy">⚡ Buy Now</button>
-        </form>
+        {% if product.description %}
+        <p class="product-description">{{ product.description }}</p>
+        {% endif %}
+
+        <hr class="product-divider">
+
+        <div class="qty-section">
+            <label>Quantity</label>
+            <div class="qty-selector">
+                <button type="button" onclick="changeQty(-1)">−</button>
+                <input type="number" id="qty" value="1" min="1" readonly>
+                <button type="button" onclick="changeQty(1)">+</button>
+            </div>
+        </div>
+
+        <div class="product-actions">
+            <form id="cartForm" action="{{ url_for('auth.add_to_cart', product_id=product.id) }}" method="POST">
+                <input type="hidden" name="quantity" id="cartQty" value="1">
+                <button type="submit" class="btn cart">🛒 Add to Cart</button>
+            </form>
+            <form id="buyNowForm" action="{{ url_for('auth.buy_now', product_id=product.id) }}" method="POST">
+                <input type="hidden" name="quantity" id="buyQty" value="1">
+                <button type="submit" class="btn buy">⚡ Buy Now</button>
+            </form>
+        </div>
 
         <a href="{{ url_for('auth.home') }}" class="continue-link">← Continue Shopping</a>
 

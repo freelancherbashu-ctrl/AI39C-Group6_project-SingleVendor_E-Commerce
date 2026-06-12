@@ -46,7 +46,7 @@
             {% else %}
             <p class="price">Rs. {{ product.price }}</p>
             {% endif %}
-            <a href="{{ url_for('auth.view_product', id=product.id) }}" class="btn">View Details</a>
+            <button class="btn" onclick="openProductModal({{ product.id }})">View Details</button>
         </div>
         {% endfor %}
     {% else %}

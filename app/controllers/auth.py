@@ -89,6 +89,9 @@ class AuthController:
             email    = request.form.get("email", "").strip()
             password = request.form.get("password", "")
             user = User.verify(mysql, email, password)
+            if user == "blocked":
+                flash("Your account has been suspended. Please contact support.", "error")
+                return render_template("login.html", cart_count=_cart_count())
             if user:
                 full = User.get_by_id(mysql, user["id"])
                 session["user"] = {
@@ -297,6 +300,37 @@ class AuthController:
         return render_template("view_product.html", product=product, sale=sale,
                                cart_count=_cart_count(), user=_current_user())
 
+    def view_product_json(self, id):
+        from flask import jsonify
+        product  = Product.get_by_id(mysql, id)
+        if not product:
+            return jsonify({"error": "Not found"}), 404
+        sale_map = _get_sale_map()
+        sale     = sale_map.get(product["id"])
+        data = {
+            "id":          product["id"],
+            "name":        product["name"],
+            "price":       float(product["price"]),
+            "image":       product["image"],
+            "description": product.get("description", ""),
+            "category":    product.get("category", ""),
+            "sale_price":  float(sale["sale_price"]) if sale else None,
+            "discount":    int(sale["discount"])     if sale else None,
+        }
+        return jsonify(data)
+
+    def categories_json(self):
+        from flask import jsonify
+        cats = Category.get_all(mysql)
+        result = []
+        for c in cats:
+            result.append({
+                "id":    c["id"],
+                "name":  c["name"],
+                "image": ("/static/" + c["image"]) if c.get("image") else "",
+            })
+        return jsonify(result)
+
     def order_details(self, order_id):
         user = _current_user()
         if not user:
@@ -308,7 +342,42 @@ class AuthController:
             return redirect(url_for("auth.view_my_orders"))
         return render_template("order_details.html", order=order, cart_count=_cart_count())
 
-    # ── CART ──────────────────────────────────────────────────────────────────
+    def order_details_json(self, order_id):
+        """JSON endpoint for the order detail drawer on My Orders page."""
+        from flask import jsonify
+        user = _current_user()
+        if not user:
+            return jsonify({"error": "Unauthorized"}), 401
+        order = Order.get_by_id(mysql, order_id)
+        if not order or order["user_id"] != user["id"]:
+            return jsonify({"error": "Not found"}), 404
+        items = []
+        for it in (order.get("order_items") or []):
+            items.append({
+                "name":     it.get("name", ""),
+                "image":    it.get("image", ""),
+                "qty":      it.get("qty", 1),
+                "subtotal": float(it.get("subtotal", 0)),
+                "on_sale":  it.get("on_sale", False),
+            })
+        return jsonify({
+            "id":             order["id"],
+            "customer_name":  order["customer_name"],
+            "phone":          order["phone"],
+            "area":           order.get("area", ""),
+            "city":           order.get("city", ""),
+            "district":       order.get("district", ""),
+            "province":       order.get("province", ""),
+            "landmark":       order.get("landmark", ""),
+            "payment_method": order.get("payment_method", ""),
+            "payment_status": order.get("payment_status", "Pending"),
+            "order_status":   order["order_status"],
+            "total_price":    float(order["total_price"]),
+            "created_at":     order["created_at"].strftime("%d %b %Y, %I:%M %p") if order.get("created_at") else "",
+            "items":          items,
+        })
+
+    # __ CART ──────────────────────────────────────────────────────────────────
 
     def cart(self):
         session.pop("buy_now", None)

@@ -28,6 +28,7 @@ class User:
             "ALTER TABLE users ADD COLUMN reset_token_expiry DATETIME DEFAULT NULL",
             "ALTER TABLE users ADD COLUMN google_id VARCHAR(100) DEFAULT NULL",
             "ALTER TABLE users MODIFY COLUMN password_hash VARCHAR(256) DEFAULT NULL",
+            "ALTER TABLE users ADD COLUMN is_blocked TINYINT(1) NOT NULL DEFAULT 0",
         ]:
             try:
                 cursor.execute(sql)
@@ -67,12 +68,14 @@ class User:
     def verify(mysql, email, password):
         cursor = mysql.connection.cursor()
         cursor.execute("""
-        SELECT id, full_name, email, profile_picture, password_hash
+        SELECT id, full_name, email, profile_picture, password_hash, is_blocked
         FROM users
         WHERE email = %s
         """, (email,))
         row = cursor.fetchone()
         if row and row[4] and User._verify_hash(password, row[4]):
+            if row[5]:  # is_blocked
+                return "blocked"
             return {
                 "id": row[0], "full_name": row[1],
                 "email": row[2], "profile_picture": row[3]
@@ -83,16 +86,40 @@ class User:
     def get_by_id(mysql, user_id):
         cursor = mysql.connection.cursor()
         cursor.execute("""
-        SELECT id, full_name, email, profile_picture, created_at
+        SELECT id, full_name, email, profile_picture, created_at, is_blocked
         FROM users WHERE id = %s
         """, (user_id,))
         row = cursor.fetchone()
         if row:
             return {
                 "id": row[0], "full_name": row[1], "email": row[2],
-                "profile_picture": row[3], "created_at": row[4]
+                "profile_picture": row[3], "created_at": row[4],
+                "is_blocked": bool(row[5])
             }
         return None
+
+    @staticmethod
+    def get_all(mysql):
+        cursor = mysql.connection.cursor()
+        cursor.execute("""
+        SELECT id, full_name, email, created_at, is_blocked
+        FROM users ORDER BY created_at DESC
+        """)
+        rows = cursor.fetchall()
+        return [{"id": r[0], "full_name": r[1], "email": r[2],
+                 "created_at": r[3], "is_blocked": bool(r[4])} for r in rows]
+
+    @staticmethod
+    def toggle_block(mysql, user_id):
+        cursor = mysql.connection.cursor()
+        cursor.execute("SELECT is_blocked FROM users WHERE id=%s", (user_id,))
+        row = cursor.fetchone()
+        if not row:
+            return None
+        new_val = 0 if row[0] else 1
+        cursor.execute("UPDATE users SET is_blocked=%s WHERE id=%s", (new_val, user_id))
+        mysql.connection.commit()
+        return bool(new_val)  # True = now blocked
 
     @staticmethod
     def update_profile(mysql, user_id, full_name, email):

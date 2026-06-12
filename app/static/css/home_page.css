@@ -1,59 +1,54 @@
-:root {
-    --primary-blue: #2563eb;
-    --primary-red: #ef4444;
-    --primary-white: #ffffff;
+/* home_page.css — fully dark-mode aware, uses CSS vars from style.css */
 
-    --light-bg: #f8fafc;
-    --text-dark: #111827;
+.products-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 25px;
+    padding: 30px;
 }
 
-
-.products-container{
-    display:grid;
-    grid-template-columns:repeat(3, 1fr);
-    gap:25px;
-    padding:30px;
+.product-card {
+    background: var(--surface);
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border);
+    transition: transform 0.3s, box-shadow 0.3s;
 }
 
-.product-card{
-    background:white;
-    padding:20px;
-    border-radius:12px;
-    text-align:center;
-    box-shadow:0 2px 10px rgba(0,0,0,0.1);
-    transition:0.3s;
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-md);
 }
 
-.product-card:hover{
-    transform:translateY(-5px);
+.product-card img {
+    width: 220px;
+    height: 160px;
+    object-fit: contain;
+    display: block;
+    margin: auto;
 }
 
-.product-card img{
-    width:220px;
-    height:160px;
-    object-fit:contain;
-    display:block;
-    margin:auto;
+.price {
+    color: #16a34a;
+    font-weight: bold;
+    margin: 10px 0;
 }
 
-.price{
-    color:green;
-    font-weight:bold;
-    margin:10px 0;
-}
+[data-theme="dark"] .price { color: #4ade80; }
 
-.btn{
-    display:inline-block;
-    padding:10px 15px;
-    background:var(--primary-blue);
-    color:var(--primary-white);
-    text-decoration:none;
-    border-radius:5px;
+.btn {
+    display: inline-block;
+    padding: 10px 15px;
+    background: var(--mp-blue);
+    color: #fff;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: background 0.2s;
 }
+.btn:hover { background: var(--mp-red); }
 
-.btn:hover{
-    background:var(--primary-red);
-}
 /* SEARCH RESULTS HEADER */
 .search-header {
     display: flex;
@@ -64,23 +59,22 @@
 
 .search-header h2 {
     font-size: 1.2rem;
-    color: #1a1a2e;
+    color: var(--text-primary);
     font-weight: 500;
 }
 
 .clear-search {
-    color: #888;
+    color: var(--text-muted);
     text-decoration: none;
     font-size: 0.9rem;
     padding: 4px 10px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--border);
     border-radius: 20px;
     transition: all 0.2s;
 }
-
 .clear-search:hover {
-    background: #f0f0f0;
-    color: #333;
+    background: var(--surface);
+    color: var(--text-secondary);
 }
 
 /* SECTION LABEL */
@@ -88,16 +82,14 @@
     font-size: 0.85rem;
     text-transform: uppercase;
     letter-spacing: 0.07em;
-    color: #888;
+    color: var(--text-muted);
     font-weight: 700;
     margin: 0;
     padding: 20px 30px 10px;
 }
 
-/* CATEGORY PILLS ROW */
-.search-section {
-    padding: 0;
-}
+/* CATEGORY PILLS */
+.search-section { padding: 0; }
 
 .categories-row {
     display: flex;
@@ -111,61 +103,36 @@
     align-items: center;
     gap: 8px;
     padding: 10px 18px;
-    background: #fff;
-    border: 1.5px solid #e0e0e0;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
     border-radius: 30px;
     text-decoration: none;
-    color: #1a1a2e;
+    color: var(--text-primary);
     font-weight: 600;
     font-size: 0.92rem;
     transition: all 0.2s;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    box-shadow: var(--shadow-sm);
 }
-
 .category-pill img {
     width: 28px;
     height: 28px;
     object-fit: contain;
     border-radius: 50%;
 }
-
 .category-pill:hover {
-    border-color: #2563eb;
-    color: #2563eb;
-    background: #eef3ff;
+    border-color: var(--mp-blue);
+    color: var(--mp-blue);
+    background: var(--bg-2);
 }
 
 /* NO RESULTS */
-.no-results {
-    text-align: center;
-    padding: 60px 20px;
-    color: #666;
-}
+.no-results { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+.no-results-icon { font-size: 3rem; margin-bottom: 12px; }
+.no-results h2 { font-size: 1.4rem; color: var(--text-primary); margin-bottom: 8px; }
+.no-results p  { margin-bottom: 24px; color: var(--text-muted); }
+.no-results-soft { text-align: center; padding: 10px 30px 30px; color: var(--text-muted); font-size: 0.9rem; }
 
-.no-results-icon {
-    font-size: 3rem;
-    margin-bottom: 12px;
-}
-
-.no-results h2 {
-    font-size: 1.4rem;
-    color: #1a1a2e;
-    margin-bottom: 8px;
-}
-
-.no-results p {
-    margin-bottom: 24px;
-    color: #888;
-}
-
-.no-results-soft {
-    text-align: center;
-    padding: 10px 30px 30px;
-    color: #888;
-    font-size: 0.9rem;
-}
-
-/* SEARCH RESULTS: products header + sort bar */
+/* SORT BAR */
 .search-products-header {
     display: flex;
     align-items: center;
@@ -175,47 +142,34 @@
     flex-wrap: wrap;
     gap: 10px;
 }
+.search-products-header .section-label { padding: 0; margin: 0; }
 
-.search-products-header .section-label {
-    padding: 0;
-    margin: 0;
-}
-
-.sort-bar {
-    display: flex;
-    gap: 8px;
-}
+.sort-bar { display: flex; gap: 8px; }
 
 .sort-btn {
     padding: 6px 14px;
-    border: 1.5px solid #ddd;
+    border: 1.5px solid var(--border);
     border-radius: 20px;
     text-decoration: none;
     font-size: 0.82rem;
     font-weight: 500;
-    color: #555;
-    background: #fff;
+    color: var(--text-secondary);
+    background: var(--surface);
     transition: all 0.2s;
     white-space: nowrap;
 }
-
 .sort-btn:hover {
-    border-color: #2563eb;
-    color: #2563eb;
-    background: #eef3ff;
+    border-color: var(--mp-blue);
+    color: var(--mp-blue);
+    background: var(--bg-2);
 }
-
 .sort-btn.active {
-    background: #1a1a2e;
+    background: var(--mp-blue);
     color: #fff;
-    border-color: #1a1a2e;
+    border-color: var(--mp-blue);
 }
 
-
-/* ═══════════════════════════════════════════════
-   FLASH SALE SECTION
-   ═══════════════════════════════════════════════ */
-
+/* ── FLASH SALE SECTION ── */
 .flash-sale-section {
     padding: 32px 28px 8px;
     max-width: 1200px;
@@ -229,8 +183,9 @@
     margin-bottom: 20px;
     flex-wrap: wrap;
 }
+
 .flash-sale-badge {
-    background: #ef4444;
+    background: var(--mp-red);
     color: #fff;
     font-weight: 700;
     font-size: 0.78rem;
@@ -242,22 +197,13 @@
     animation: flash-pulse 1.6s ease-in-out infinite;
 }
 @keyframes flash-pulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.5); }
-    50%       { box-shadow: 0 0 0 6px rgba(239,68,68,0); }
-}
-.flash-sale-header h2 {
-    font-size: 1.45rem;
-    font-weight: 700;
-    color: #111827;
-    margin: 0;
-}
-.flash-sale-sub {
-    color: #6b7280;
-    font-size: 0.9rem;
-    margin: 0;
+    0%, 100% { box-shadow: 0 0 0 0 rgba(229,62,62,0.5); }
+    50%       { box-shadow: 0 0 0 6px rgba(229,62,62,0); }
 }
 
-/* Cards grid */
+.flash-sale-header h2 { font-size: 1.45rem; font-weight: 700; color: var(--text-primary); margin: 0; }
+.flash-sale-sub { color: var(--text-muted); font-size: 0.9rem; margin: 0; }
+
 .flash-sale-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
@@ -267,8 +213,8 @@
 
 .flash-card {
     position: relative;
-    background: #fff;
-    border: 1px solid #fee2e2;
+    background: var(--surface);
+    border: 1px solid var(--border);
     border-radius: 14px;
     overflow: hidden;
     text-decoration: none;
@@ -276,19 +222,18 @@
     display: flex;
     flex-direction: column;
     transition: transform 0.18s, box-shadow 0.18s;
-    box-shadow: 0 2px 8px rgba(239,68,68,0.07);
+    box-shadow: var(--shadow-sm);
 }
 .flash-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(239,68,68,0.14);
+    box-shadow: 0 8px 24px rgba(229,62,62,0.18);
 }
 
-/* Discount badge */
 .flash-discount-badge {
     position: absolute;
     top: 10px;
     left: 10px;
-    background: #ef4444;
+    background: var(--mp-red);
     color: #fff;
     font-size: 0.75rem;
     font-weight: 800;
@@ -301,7 +246,7 @@
     width: 100%;
     height: 160px;
     object-fit: contain;
-    background: #fff8f8;
+    background: var(--bg-2);
     padding: 12px;
 }
 
@@ -313,54 +258,19 @@
     flex: 1;
 }
 
-.flash-label {
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
-    color: #ef4444;
-}
-.flash-card-body h3 {
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: #111827;
-    margin: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.flash-prices {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-top: 2px;
-}
-.flash-original {
-    font-size: 0.8rem;
-    color: #9ca3af;
-    text-decoration: line-through;
-}
-.flash-sale-price {
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: #ef4444;
-}
+.flash-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--mp-red); }
+.flash-card-body h3 { font-size: 0.95rem; font-weight: 600; color: var(--text-primary); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.flash-prices { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
+.flash-original { font-size: 0.8rem; color: var(--text-muted); text-decoration: line-through; }
+.flash-sale-price { font-size: 1.05rem; font-weight: 700; color: var(--mp-red); }
 
-/* Countdown timer */
-.flash-timer {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-top: 6px;
-    font-size: 0.78rem;
-}
-.timer-label { color: #6b7280; }
+.flash-timer { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 0.78rem; }
+.timer-label { color: var(--text-muted); }
 .timer-display {
     font-family: 'Courier New', monospace;
     font-weight: 700;
-    color: #111827;
-    background: #f3f4f6;
+    color: var(--text-primary);
+    background: var(--bg-2);
     padding: 2px 7px;
     border-radius: 5px;
     letter-spacing: 0.04em;
@@ -372,7 +282,7 @@
     .flash-card img { height: 120px; }
 }
 
-/* ── Section divider ───────────────────────────── */
+/* ── Section divider ── */
 .section-divider {
     display: flex;
     align-items: center;
@@ -386,26 +296,10 @@
     content: "";
     flex: 1;
     height: 1px;
-    background: #e5e7eb;
+    background: var(--border);
 }
-.section-divider span {
-    font-size: 1rem;
-    font-weight: 700;
-    color: #374151;
-    white-space: nowrap;
-}
+.section-divider span { font-size: 1rem; font-weight: 700; color: var(--text-secondary); white-space: nowrap; }
 
-/* ── Sale price display on product cards ───────── */
-.price-original {
-    text-decoration: line-through;
-    color: #9ca3af;
-    font-size: 0.82rem;
-    font-weight: 400;
-    display: block;
-    line-height: 1.2;
-}
-.price-sale {
-    color: #ef4444;
-    font-weight: 700;
-    font-size: 1rem;
-}
+/* ── Sale price on product cards ── */
+.price-original { text-decoration: line-through; color: var(--text-muted); font-size: 0.82rem; font-weight: 400; display: block; line-height: 1.2; }
+.price-sale { color: var(--mp-red); font-weight: 700; font-size: 1rem; }

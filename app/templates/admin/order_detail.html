@@ -1,6 +1,7 @@
 {% extends 'admin/base.html' %}
 {% block title %}Order #{{ order.id }} — MeroPasal Admin{% endblock %}
 {% block page_title %}Order #{{ order.id }}{% endblock %}
+{% block breadcrumb %}<span class="bc-sep">›</span><a href="{{ url_for('admin.orders') }}" class="bc-item">Orders</a><span class="bc-sep">›</span><span class="bc-current">Order #{{ order.id }}</span>{% endblock %}
 
 {% block content %}
 <a href="{{ url_for('admin.orders') }}" style="color:#4f46e5;font-size:0.9rem;text-decoration:none;">← Back to Orders</a>
@@ -8,21 +9,30 @@
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:1.5rem;">
 
     <div class="card" style="padding:1.5rem;">
-        <h3 style="margin-bottom:1rem;color:#1e293b;">Customer Details</h3>
+        <h3 style="margin-bottom:1rem;color:var(--text-primary);">Customer Details</h3>
         <p><strong>Name:</strong> {{ order.customer_name }}</p>
         <p><strong>Phone:</strong> {{ order.phone }}</p>
         <p><strong>Address:</strong> {{ order.area }}, {{ order.city }}, {{ order.district }}, {{ order.province }}</p>
         {% if order.landmark %}<p><strong>Landmark:</strong> {{ order.landmark }}</p>{% endif %}
-        <p><strong>Payment:</strong> {{ order.payment_method }}</p>
+        <p><strong>Payment:</strong> {{ order.payment_method | upper }}</p>
+        <p><strong>Payment Status:</strong>
+            <span class="badge badge-{{ (order.payment_status or 'pending')|lower }}">{{ order.payment_status or 'Pending' }}</span>
+        </p>
         <p><strong>Placed:</strong> {{ order.created_at }}</p>
     </div>
 
     <div class="card" style="padding:1.5rem;">
-        <h3 style="margin-bottom:1rem;color:#1e293b;">Update Status</h3>
+        <h3 style="margin-bottom:1rem;color:var(--text-primary);">Update Order Status</h3>
         <p style="margin-bottom:1rem;">Current: <span class="badge badge-{{ order.order_status|lower }}">{{ order.order_status }}</span></p>
+
+        <div style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:1rem;padding:0.6rem;background:var(--surface-2);border-radius:6px;">
+            Flow: <strong>Pending → Approved → Processing → Completed</strong><br>
+            Or: <strong>Pending → Rejected</strong>
+        </div>
+
         <form method="POST" action="{{ url_for('admin.update_order_status', order_id=order.id) }}">
-            <select name="status" style="width:100%;padding:0.6rem;border:1px solid #d1d5db;border-radius:8px;margin-bottom:0.8rem;font-size:0.9rem;">
-                {% for s in ['Pending','Processing','Completed','Cancelled'] %}
+            <select name="status" style="width:100%;padding:0.6rem;border:1px solid var(--border);border-radius:8px;margin-bottom:0.8rem;font-size:0.9rem;background:var(--input-bg);color:var(--text-primary);">
+                {% for s in ['Pending','Approved','Processing','Completed','Rejected','Cancelled'] %}
                 <option value="{{ s }}" {{ 'selected' if order.order_status == s }}>{{ s }}</option>
                 {% endfor %}
             </select>
@@ -34,17 +44,35 @@
 <div class="card" style="margin-top:1.5rem;">
     <div class="card-header"><h2>Items Ordered</h2><strong>Total: Rs. {{ "{:,.0f}".format(order.total_price) }}</strong></div>
     <table>
-        <thead><tr><th>Product</th><th>Qty</th><th>Price</th><th>Subtotal</th></tr></thead>
+        <thead><tr><th>Image</th><th>Product</th><th>Qty</th><th>Price</th><th>Subtotal</th></tr></thead>
         <tbody>
         {% for item in order.order_items %}
         <tr>
-            <td>{{ item.name }}</td>
+            <td>
+                {% if item.image %}
+                <img src="{{ item.image }}" alt="{{ item.name }}"
+                     style="width:52px;height:52px;object-fit:cover;border-radius:6px;border:1px solid var(--border);background:var(--surface-2);">
+                {% else %}
+                <div style="width:52px;height:52px;border-radius:6px;background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:1.2rem;">🛍</div>
+                {% endif %}
+            </td>
+            <td>
+                <span style="font-weight:500;">{{ item.name }}</span>
+                {% if item.on_sale %}<br><span class="badge badge-processing" style="font-size:.7rem;">Flash Sale</span>{% endif %}
+            </td>
             <td>{{ item.qty }}</td>
-            <td>Rs. {{ "{:,.0f}".format(item.price) }}</td>
-            <td>Rs. {{ "{:,.0f}".format(item.subtotal) }}</td>
+            <td>
+                {% if item.on_sale and item.original_price is defined %}
+                <span style="text-decoration:line-through;color:var(--text-muted);font-size:.8rem;">Rs. {{ "{:,.0f}".format(item.original_price) }}</span><br>
+                <strong style="color:#ef4444;">Rs. {{ "{:,.0f}".format(item.price) }}</strong>
+                {% else %}
+                Rs. {{ "{:,.0f}".format(item.price) }}
+                {% endif %}
+            </td>
+            <td><strong>Rs. {{ "{:,.0f}".format(item.subtotal) }}</strong></td>
         </tr>
         {% else %}
-        <tr><td colspan="4" style="text-align:center;color:#9ca3af">No items.</td></tr>
+        <tr><td colspan="5" style="text-align:center;color:var(--text-muted)">No items.</td></tr>
         {% endfor %}
         </tbody>
     </table>

@@ -47,6 +47,12 @@ def single_category(category): return controller.single_category(category)
 @auth_bp.route("/view_product/<int:id>")
 def view_product(id): return controller.view_product(id)
 
+@auth_bp.route("/view_product/<int:id>/json")
+def view_product_json(id): return controller.view_product_json(id)
+
+@auth_bp.route("/categories/json")
+def categories_json(): return controller.categories_json()
+
 # Cart
 @auth_bp.route("/cart")
 def cart(): return controller.cart()
@@ -92,6 +98,10 @@ def order_details(order_id): return controller.order_details(order_id)
 
 @auth_bp.route("/search/suggest")
 def search_suggest(): return controller.search_suggest()
+
+
+@auth_bp.route("/order_details/<int:order_id>/json")
+def order_details_json(order_id): return controller.order_details_json(order_id)
 
 # Wishlist
 @auth_bp.route("/wishlist")

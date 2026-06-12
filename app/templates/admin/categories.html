@@ -1,35 +1,40 @@
 {% extends 'admin/base.html' %}
 {% block title %}Categories — MeroPasal Admin{% endblock %}
 {% block page_title %}Categories{% endblock %}
+{% block breadcrumb %}<span class="bc-sep">›</span><span class="bc-current">Categories</span>{% endblock %}
 
 {% block content %}
 <div class="card">
     <div class="card-header">
         <h2>All Categories ({{ categories|length }})</h2>
-        <a href="{{ url_for('admin.add_category') }}" class="btn btn-primary">+ Add Category</a>
+        <button class="btn btn-primary" onclick="openCatModal()">+ Add Category</button>
     </div>
     <table>
         <thead>
-            <tr>
-                <th>#</th>
-                <th>Name</th>
-                <th>Image Path</th>
-                <th>Actions</th>
-            </tr>
+            <tr><th>#</th><th>Image</th><th>Name</th><th>Actions</th></tr>
         </thead>
         <tbody>
         {% for cat in categories %}
         <tr>
             <td>{{ cat.id }}</td>
-            <td>{{ cat.name|title }}</td>
-            <td style="font-size:0.78rem;color:#64748b">{{ cat.image }}</td>
             <td>
-                <a href="{{ url_for('admin.edit_category', cat_id=cat.id) }}" class="btn btn-sm btn-primary">Edit</a>
-                <form method="POST" action="{{ url_for('admin.delete_category', cat_id=cat.id) }}"
-                      style="display:inline"
-                      onsubmit="return confirm('Delete category {{ cat.name }}? Products in this category will remain.')">
-                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                </form>
+                {% if cat.image %}
+                <img src="/static/{{ cat.image }}" alt="{{ cat.name }}"
+                     style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0;background:#f8fafc;">
+                {% else %}
+                <div style="width:48px;height:48px;border-radius:6px;background:#f1f5f9;border:1px solid #e2e8f0;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:1.2rem;">🖼</div>
+                {% endif %}
+            </td>
+            <td>{{ cat.name|title }}</td>
+            <td style="display:flex;gap:.4rem;align-items:center;">
+                <button class="btn btn-sm btn-primary"
+                    onclick="openEditModal({{ cat.id }}, '{{ cat.name }}', '{{ ('/static/' + cat.image) if cat.image else '' }}')">
+                    Edit
+                </button>
+                <button class="btn btn-sm btn-danger"
+                    onclick="openDeleteModal({{ cat.id }}, '{{ cat.name }}')">
+                    Delete
+                </button>
             </td>
         </tr>
         {% else %}
@@ -38,4 +43,175 @@
         </tbody>
     </table>
 </div>
+
+<!-- ── ADD / EDIT MODAL ─────────────────────────────────────────────────── -->
+<div id="catModal" class="mp-modal-backdrop" onclick="closeCatModal(event)">
+    <div class="mp-modal">
+        <div class="mp-modal-header">
+            <h3 id="catModalTitle">Add Category</h3>
+            <button class="mp-modal-close" onclick="closeCatModal()">&times;</button>
+        </div>
+        <form id="catForm" method="POST" enctype="multipart/form-data">
+            <div class="mp-modal-body">
+
+                <div class="fg">
+                    <label>Category Name <span style="color:#ef4444">*</span></label>
+                    <input type="text" name="name" id="catName" required
+                           placeholder="e.g. electronics">
+                    <small>Stored lowercase. Must match product category values.</small>
+                </div>
+
+                <div class="fg">
+                    <label>Category Image</label>
+                    <div id="currentImgWrap" style="display:none;align-items:center;gap:.6rem;margin-bottom:.5rem;">
+                        <img id="currentImg" src="" alt="Current"
+                             style="width:56px;height:56px;object-fit:cover;border-radius:7px;border:1px solid #e2e8f0;">
+                        <span class="modal-img-hint" style="font-size:.78rem;">Current image — upload to replace</span>
+                    </div>
+                    <div class="upload-box" id="uploadBox">
+                        <input type="file" name="image" id="imageInput"
+                               accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml"
+                               onchange="previewImg(this)">
+                        <div class="upload-ph" id="uploadPh">
+                            <div style="font-size:1.8rem;">🖼️</div>
+                            <div>Click or drag an image here</div>
+                            <small>PNG, JPG, GIF, WEBP, SVG</small>
+                        </div>
+                        <img id="previewImg" style="display:none;max-height:140px;max-width:100%;border-radius:7px;display:block;margin:0 auto;" alt="Preview">
+                    </div>
+                </div>
+
+            </div>
+            <div class="mp-modal-footer">
+                <button type="button" class="btn" onclick="closeCatModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="catSubmitBtn">Add Category</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ── DELETE CONFIRM MODAL ─────────────────────────────────────────────── -->
+<div id="deleteModal" class="mp-modal-backdrop" onclick="closeDeleteModal(event)">
+    <div class="mp-modal" style="max-width:420px;">
+        <div class="mp-modal-header">
+            <h3>Delete Category</h3>
+            <button class="mp-modal-close" onclick="closeDeleteModal()">&times;</button>
+        </div>
+        <div class="mp-modal-body">
+            <p class="modal-confirm-text">Are you sure you want to delete <strong id="deleteCatName"></strong>?</p>
+            <p class="modal-sub-text" style="font-size:.83rem;margin-top:.4rem;">Products in this category will remain but become uncategorised.</p>
+        </div>
+        <div class="mp-modal-footer">
+            <button type="button" class="btn" onclick="closeDeleteModal()">Cancel</button>
+            <form id="deleteForm" method="POST" style="margin:0;">
+                <button type="submit" class="btn btn-danger">Yes, Delete</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+/* ── Modal base ── */
+.mp-modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.6);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:1000;padding:1rem;}
+.mp-modal-backdrop.open{display:flex;}
+.mp-modal{background:var(--modal-bg);border-radius:14px;width:100%;max-width:500px;box-shadow:0 20px 60px rgba(0,0,0,.22);animation:slideUp .2s ease;border:1px solid var(--border);}
+@keyframes slideUp{from{transform:translateY(24px);opacity:0}to{transform:translateY(0);opacity:1}}
+.mp-modal-header{display:flex;align-items:center;justify-content:space-between;padding:1.2rem 1.5rem;border-bottom:1px solid var(--border);background:var(--modal-bg);}
+.mp-modal-header h3{margin:0;font-size:1rem;font-weight:700;color:var(--text-primary);}
+.mp-modal-close{background:none;border:none;font-size:1.4rem;color:var(--text-muted);cursor:pointer;line-height:1;padding:0;}
+.mp-modal-close:hover{color:var(--text-secondary);}
+.mp-modal-body{padding:1.5rem;display:flex;flex-direction:column;gap:1rem;}
+.mp-modal-footer{display:flex;justify-content:flex-end;gap:.6rem;padding:1rem 1.5rem;border-top:1px solid var(--border);background:var(--modal-bg);}
+/* ── Form elements ── */
+.fg{display:flex;flex-direction:column;gap:.3rem;}
+.fg label{font-size:.83rem;font-weight:600;color:var(--text-primary);}
+.fg input[type=text],.fg input[type=number]{padding:.5rem .75rem;border:1px solid var(--border);border-radius:7px;font-size:.9rem;color:var(--text-primary);background:var(--input-bg);outline:none;width:100%;box-sizing:border-box;}
+.fg input:focus{border-color:#818cf8;box-shadow:0 0 0 3px #818cf820;}
+.fg small{font-size:.75rem;color:var(--text-secondary);}
+/* ── Upload box ── */
+.upload-box{position:relative;border:2px dashed var(--border);border-radius:10px;padding:1.2rem;text-align:center;cursor:pointer;background:var(--surface-2);overflow:hidden;transition:border-color .2s;}
+.upload-box:hover{border-color:#818cf8;background:#f5f3ff;}
+.upload-box input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.upload-ph{color:var(--text-secondary);font-size:.85rem;pointer-events:none;}
+
+/* ── Dark mode inline overrides ── */
+.modal-confirm-text { color: var(--text-primary); }
+.modal-sub-text { color: var(--text-secondary); }
+.modal-img-hint { color: var(--text-secondary); }
+.mp-modal-header h3 { color: var(--text-primary); }
+</style>
+
+<script>
+const ADD_URL  = "{{ url_for('admin.add_category') }}";
+const EDIT_URL = "/admin/categories/{id}/edit";
+
+function openCatModal() {
+    document.getElementById('catModalTitle').textContent = 'Add Category';
+    document.getElementById('catSubmitBtn').textContent  = 'Add Category';
+    document.getElementById('catForm').action = ADD_URL;
+    document.getElementById('catName').value  = '';
+    document.getElementById('currentImgWrap').style.display = 'none';
+    resetUpload();
+    document.getElementById('catModal').classList.add('open');
+}
+
+function openEditModal(id, name, imgSrc) {
+    document.getElementById('catModalTitle').textContent = 'Edit Category';
+    document.getElementById('catSubmitBtn').textContent  = 'Save Changes';
+    document.getElementById('catForm').action = EDIT_URL.replace('{id}', id);
+    document.getElementById('catName').value  = name;
+    const wrap = document.getElementById('currentImgWrap');
+    if (imgSrc) {
+        document.getElementById('currentImg').src = imgSrc;
+        wrap.style.display = 'flex';
+    } else {
+        wrap.style.display = 'none';
+    }
+    resetUpload();
+    document.getElementById('catModal').classList.add('open');
+}
+
+function closeCatModal(e) {
+    if (e && e.target !== document.getElementById('catModal')) return;
+    document.getElementById('catModal').classList.remove('open');
+}
+
+function openDeleteModal(id, name) {
+    document.getElementById('deleteCatName').textContent = name;
+    document.getElementById('deleteForm').action = `/admin/categories/${id}/delete`;
+    document.getElementById('deleteModal').classList.add('open');
+}
+
+function closeDeleteModal(e) {
+    if (e && e.target !== document.getElementById('deleteModal')) return;
+    document.getElementById('deleteModal').classList.remove('open');
+}
+
+function resetUpload() {
+    document.getElementById('imageInput').value = '';
+    document.getElementById('previewImg').style.display = 'none';
+    document.getElementById('uploadPh').style.display   = 'block';
+}
+
+function previewImg(input) {
+    if (!input.files[0]) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+        const img = document.getElementById('previewImg');
+        img.src = e.target.result;
+        img.style.display = 'block';
+        document.getElementById('uploadPh').style.display = 'none';
+    };
+    reader.readAsDataURL(input.files[0]);
+}
+
+// Auto-open edit modal if redirected back with error
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% for cat, msg in messages %}
+  {% if cat == 'error' %}
+  // keep modal open on error — flash handles message display
+  {% endif %}
+{% endfor %}
+{% endwith %}
+</script>
 {% endblock %}

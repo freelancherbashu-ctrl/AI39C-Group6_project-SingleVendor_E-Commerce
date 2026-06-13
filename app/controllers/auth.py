@@ -101,7 +101,7 @@ class AuthController:
                     "profile_picture": full["profile_picture"]
                 }
                 session.modified = True
-                flash(f"Welcome back, {user['full_name']}! 👋", "success")
+                flash(f"{user['full_name']} logged in successfully.", "success")
                 return redirect(url_for("auth.home"))
             flash("Invalid email or password.", "error")
         return render_template("login.html", cart_count=_cart_count())
@@ -128,8 +128,9 @@ class AuthController:
         return render_template("register.html", cart_count=_cart_count())
 
     def logout(self):
+        name = (session.get('user') or {}).get('full_name', 'User')
         session.clear()
-        flash("You have been logged out.", "success")
+        flash(f"{name} logged out successfully.", "success")
         return redirect(url_for("auth.login"))
 
     # ── PROFILE ───────────────────────────────────────────────────────────────
@@ -147,8 +148,8 @@ class AuthController:
             return redirect(url_for("auth.login"))
         if request.method == "POST":
             full_name = request.form.get("full_name", "").strip()
-            email     = request.form.get("email", "").strip()
-            if not full_name or not email:
+            email     = user["email"]  # email is not changeable
+            if not full_name:
                 flash("Name and email are required.", "error")
             else:
                 ok, msg = User.update_profile(mysql, user["id"], full_name, email)
@@ -430,6 +431,9 @@ class AuthController:
         cart[pid] = new_qty
         session["cart"] = cart
         session.modified = True
+        # Remove from wishlist if present
+        if session.get("user"):
+            Wishlist.remove(mysql, session["user"]["id"], product_id)
         flash("Added to cart!", "success")
         return redirect(url_for("auth.view_product", id=product_id))
 
@@ -527,8 +531,16 @@ class AuthController:
             "total":    total,
             "items":    items,
         }
-        order_id, failed = Order.create(mysql, order_data)
 
+        if payment_method in ("esewa", "khalti"):
+            # Don't create order yet — hold data in session until payment code is submitted
+            session["pending_order_data"] = order_data
+            session["last_order_total"]   = total
+            session.modified = True
+            return redirect(url_for("auth.payment", method=payment_method))
+
+        # COD — create order immediately
+        order_id, failed = Order.create(mysql, order_data)
         if failed:
             flash(f"Sorry, the following item(s) are out of stock: {', '.join(failed)}. Please update your cart.", "error")
             return redirect(url_for("auth.cart"))
@@ -536,10 +548,6 @@ class AuthController:
         session.pop("buy_now", None)
         session["cart"] = {}
         session.modified = True
-        session["last_order_total"] = total
-        session["last_order_id"]    = order_id
-        if payment_method in ("esewa", "khalti"):
-            return redirect(url_for("auth.payment", method=payment_method))
         return redirect(url_for("auth.order_confirmed", order_id=order_id))
 
     # ── PAYMENT ───────────────────────────────────────────────────────────────
@@ -552,6 +560,45 @@ class AuthController:
                                qr=qr_codes.get(method), total=total,
                                order_id=order_id,
                                cart_count=_cart_count(), user=_current_user())
+
+    def submit_payment(self):
+        user = _current_user()
+        if not user:
+            return redirect(url_for("auth.login"))
+        transaction_code = request.form.get("transaction_code", "").strip()
+        if not transaction_code:
+            flash("Please enter your transaction code.", "error")
+            return redirect(url_for("auth.view_my_orders"))
+
+        order_data = session.get("pending_order_data")
+        if not order_data:
+            flash("Session expired. Please place your order again.", "error")
+            return redirect(url_for("auth.cart"))
+
+        # Now create the order in DB
+        order_id, failed = Order.create(mysql, order_data)
+        if failed:
+            flash(f"Sorry, the following item(s) are out of stock: {', '.join(failed)}. Please update your cart.", "error")
+            session.pop("pending_order_data", None)
+            session.modified = True
+            return redirect(url_for("auth.cart"))
+
+        # Save transaction code
+        cursor = mysql.connection.cursor()
+        cursor.execute(
+            "UPDATE orders SET transaction_code=%s WHERE id=%s",
+            (transaction_code, order_id)
+        )
+        mysql.connection.commit()
+
+        # Clear session
+        session.pop("pending_order_data", None)
+        session.pop("buy_now", None)
+        session["cart"] = {}
+        session.modified = True
+
+        flash("Payment submitted! We'll verify your transaction code and confirm your order.", "success")
+        return redirect(url_for("auth.order_confirmed", order_id=order_id))
 
     # ── ORDERS ────────────────────────────────────────────────────────────────
 

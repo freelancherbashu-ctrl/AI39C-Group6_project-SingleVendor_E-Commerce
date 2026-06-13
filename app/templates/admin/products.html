@@ -32,6 +32,11 @@
                 {% else %}
                     <span class="badge badge-success">{{ p.available }}</span>
                 {% endif %}
+                {% if p.reserved > 0 %}
+                    <span style="font-size:.75rem;color:var(--text-muted);display:block;margin-top:2px;">
+                        {{ p.reserved }} reserved / {{ p.stock }} total
+                    </span>
+                {% endif %}
                 <form method="POST" action="{{ url_for('admin.update_stock', product_id=p.id) }}"
                       style="display:inline-flex;gap:.3rem;align-items:center;margin-left:.4rem;">
                     <input type="number" name="stock" value="{{ p.stock }}" min="0"

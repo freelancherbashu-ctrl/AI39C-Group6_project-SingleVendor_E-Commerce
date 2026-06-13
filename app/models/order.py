@@ -30,6 +30,7 @@ class Order:
             "ALTER TABLE orders ADD COLUMN items_json TEXT AFTER total_price",
             "ALTER TABLE orders ADD COLUMN user_id INT NOT NULL DEFAULT 0 AFTER id",
             "ALTER TABLE orders ADD COLUMN payment_status VARCHAR(20) DEFAULT 'Pending'",
+            "ALTER TABLE orders ADD COLUMN transaction_code VARCHAR(100) DEFAULT NULL",
         ]:
             try:
                 cursor.execute(sql)

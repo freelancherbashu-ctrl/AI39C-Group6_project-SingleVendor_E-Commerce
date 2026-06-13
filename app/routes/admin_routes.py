@@ -220,9 +220,39 @@ def update_order_status(order_id):
     if new_status not in valid:
         flash("Invalid status.", "error")
         return redirect(url_for("admin.orders"))
+
+    # Fetch current order so we can make the right inventory call
+    order = Order.get_by_id(mysql, order_id)
+    if not order:
+        flash("Order not found.", "error")
+        return redirect(url_for("admin.orders"))
+
+    old_status = order["order_status"]
+
+    # Block processing/completing online payment orders until payment is approved
+    online_methods = ("esewa", "khalti")
+    restricted     = ("Processing", "Completed", "Approved")
+    if (new_status in restricted
+            and order.get("payment_method") in online_methods
+            and order.get("payment_status") != "Approved"):
+        flash("Payment must be approved before changing order to this status.", "error")
+        return redirect(url_for("admin.orders"))
+
+    # Statuses where stock is still reserved (not yet deducted or released)
+    reserved_statuses = ("Pending", "Approved", "Processing")
+
     cursor = mysql.connection.cursor()
     cursor.execute("UPDATE orders SET order_status=%s WHERE id=%s", (new_status, order_id))
     mysql.connection.commit()
+
+    if cursor.rowcount:
+        if new_status == "Completed" and old_status in reserved_statuses:
+            # COD delivered — convert reservations into real deductions
+            Order.confirm_stock(mysql, order_id)
+        elif new_status in ("Cancelled", "Rejected") and old_status in reserved_statuses:
+            # Order aborted — release the reservations back to available
+            Order.release_stock(mysql, order_id)
+
     flash(f"Order #{order_id} marked as {new_status}.", "success")
     return redirect(url_for("admin.orders"))
 
@@ -581,7 +611,7 @@ def payments():
     if status:
         cursor.execute("""
             SELECT o.id, o.customer_name, o.total_price, o.payment_method,
-                   o.payment_status, o.order_status, o.created_at
+                   o.payment_status, o.order_status, o.created_at, o.transaction_code
             FROM orders o
             WHERE o.payment_method IN ('esewa','khalti') AND o.payment_status = %s
             ORDER BY o.created_at DESC
@@ -589,7 +619,7 @@ def payments():
     else:
         cursor.execute("""
             SELECT o.id, o.customer_name, o.total_price, o.payment_method,
-                   o.payment_status, o.order_status, o.created_at
+                   o.payment_status, o.order_status, o.created_at, o.transaction_code
             FROM orders o
             WHERE o.payment_method IN ('esewa','khalti')
             ORDER BY o.created_at DESC

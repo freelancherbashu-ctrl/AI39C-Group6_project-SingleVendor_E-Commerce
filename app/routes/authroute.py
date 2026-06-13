@@ -87,6 +87,9 @@ def order_confirmed(order_id): return controller.order_confirmed(order_id)
 @auth_bp.route("/payment/<method>")
 def payment(method): return controller.payment(method)
 
+@auth_bp.route("/payment/submit", methods=["POST"])
+def submit_payment(): return controller.submit_payment()
+
 @auth_bp.route("/view_my_orders")
 def view_my_orders(): return controller.view_my_orders()
 

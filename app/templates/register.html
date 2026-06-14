@@ -12,10 +12,13 @@
 
     <link rel="stylesheet"
     href="{{ url_for('static', filename='css/regist.css') }}">
+    <link rel="stylesheet"
+    href="{{ url_for('static', filename='css/fla.css') }}">
 
 </head>
 
 <body>
+    {% include "includes/flash_message.html" %}
 
 <div class="register-wrapper">
 

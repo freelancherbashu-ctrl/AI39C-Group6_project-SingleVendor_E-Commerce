@@ -32,13 +32,11 @@ class AuthController(BaseController):
             flash("Email already exists", "danger")
             return redirect(url_for("authroutes.register"))
 
-        hashed_password = generate_password_hash(password)
-
         user = User(
             name=name,
             email=email,
-            password=hashed_password,
-            role="user"
+            password=password,
+            role="customer"
         )
 
         user.save()
@@ -59,13 +57,20 @@ class AuthController(BaseController):
         if not user_data:
             flash("Invalid email or password", "danger")
             return redirect(url_for("authroutes.login"))
-
         user = User.from_db(user_data)
 
-        if user_data["password"] != password:
-            flash("Invalid email or password", "danger")
-            return redirect(url_for("authroutes.login"))
+        if not user.check_password(password):
 
+            flash(
+                "Invalid email or password",
+                "danger"
+            )
+
+            return redirect(
+                 url_for("authroutes.login")
+            )
+
+       
         # SESSION SET
         session.clear()
         session.permanent = True
@@ -192,6 +197,8 @@ class AuthController(BaseController):
                     "reset_password.html"
                 )
 
+            hashed_password = generate_password_hash(password)
+
             db.execute(
 
             """
@@ -201,7 +208,7 @@ class AuthController(BaseController):
             WHERE id=%s
             """,
 
-            (password,user["id"])
+            (hashed_password,user["id"])
 
             )
 

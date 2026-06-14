@@ -1,0 +1,64 @@
+{% extends 'admin/base.html' %}
+{% block title %}Dashboard — MeroPasal Admin{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="stats">
+    <div class="stat-card">
+        <div class="label">Total Orders</div>
+        <div class="value">{{ total_orders }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Pending</div>
+        <div class="value">{{ pending_orders }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Cancelled</div>
+        <div class="value">{{ cancelled_orders }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Total Users</div>
+        <div class="value">{{ total_users }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Revenue (Rs.)</div>
+        <div class="value">{{ "{:,.0f}".format(revenue) }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Products</div>
+        <div class="value">{{ total_products }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Categories</div>
+        <div class="value">{{ total_categories }}</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>Recent Orders</h2>
+        <a href="{{ url_for('admin.orders') }}" class="btn btn-primary btn-sm">View All</a>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>#</th><th>Customer</th><th>Amount</th><th>Status</th><th>Date</th><th></th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for o in recent_orders %}
+        <tr>
+            <td>#{{ o[0] }}</td>
+            <td>{{ o[1] }}</td>
+            <td>Rs. {{ "{:,.0f}".format(o[2]) }}</td>
+            <td><span class="badge badge-{{ o[3]|lower }}">{{ o[3] }}</span></td>
+            <td>{{ o[4].strftime('%Y-%m-%d') if o[4] else '—' }}</td>
+            <td><a href="{{ url_for('admin.order_detail', order_id=o[0]) }}" class="btn btn-sm btn-primary">View</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:2rem">No orders yet.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

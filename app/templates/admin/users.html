@@ -1,0 +1,141 @@
+{% extends 'admin/base.html' %}
+{% block title %}Users — MeroPasal Admin{% endblock %}
+{% block page_title %}Registered Users{% endblock %}
+{% block breadcrumb %}<span class="bc-sep">›</span><span class="bc-current">Users</span>{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2>All Users ({{ users|length }})</h2>
+    </div>
+    <table>
+        <thead>
+            <tr><th>#id</th><th>Name</th><th>Email</th><th>Joined</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+        {% for u in users %}
+        <tr>
+            <td>{{ u.id }}</td>
+            <td>{{ u.full_name }}</td>
+            <td>{{ u.email }}</td>
+            <td>{{ u.created_at.strftime('%Y-%m-%d') if u.created_at else '—' }}</td>
+            <td>
+                {% if u.is_blocked %}
+                    <span class="badge badge-cancelled">Blocked</span>
+                {% else %}
+                    <span class="badge badge-completed">Active</span>
+                {% endif %}
+            </td>
+            <td style="display:flex;gap:.4rem;align-items:center;">
+                {% if u.is_blocked %}
+                <button class="btn btn-sm btn-success"
+                    onclick="openBlockModal({{ u.id }}, '{{ u.full_name|e }}', true)">
+                    Unblock
+                </button>
+                {% else %}
+                <button class="btn btn-sm btn-warning"
+                    onclick="openBlockModal({{ u.id }}, '{{ u.full_name|e }}', false)">
+                    Block
+                </button>
+                {% endif %}
+                <button class="btn btn-sm btn-danger"
+                    onclick="openDeleteModal({{ u.id }}, '{{ u.full_name|e }}')">
+                    Delete
+                </button>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:2rem">No users yet.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Block / Unblock Modal -->
+<div id="blockModal" class="mp-modal-backdrop" onclick="closeBlockModal(event)">
+    <div class="mp-modal" style="max-width:420px;">
+        <div class="mp-modal-header">
+            <h3 id="blockTitle">Block User</h3>
+            <button class="mp-modal-close" onclick="closeBlockModal()">&times;</button>
+        </div>
+        <div class="mp-modal-body">
+            <p id="blockMsg" class="modal-confirm-text" style="font-size:.92rem;"></p>
+        </div>
+        <div class="mp-modal-footer">
+            <button type="button" class="btn" onclick="closeBlockModal()">Cancel</button>
+            <form id="blockForm" method="POST" style="margin:0;">
+                <button type="submit" id="blockSubmitBtn" class="btn btn-warning">Block</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div id="deleteModal" class="mp-modal-backdrop" onclick="closeDeleteModal(event)">
+    <div class="mp-modal" style="max-width:420px;">
+        <div class="mp-modal-header">
+            <h3>Delete User</h3>
+            <button class="mp-modal-close" onclick="closeDeleteModal()">&times;</button>
+        </div>
+        <div class="mp-modal-body">
+            <p id="deleteMsg" class="modal-confirm-text" style="font-size:.92rem;"></p>
+            <p style="font-size:.82rem;color:#ef4444;margin-top:.4rem;font-weight:600;">
+                This action cannot be undone.
+            </p>
+        </div>
+        <div class="mp-modal-footer">
+            <button type="button" class="btn" onclick="closeDeleteModal()">Cancel</button>
+            <form id="deleteForm" method="POST" style="margin:0;">
+                <button type="submit" class="btn btn-danger">Yes, Delete</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.mp-modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.6);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:1000;padding:1rem;}
+.mp-modal-backdrop.open{display:flex;}
+.mp-modal{background:var(--modal-bg);border-radius:14px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.18);animation:slideUp .2s ease;border:1px solid var(--border);}
+@keyframes slideUp{from{transform:translateY(24px);opacity:0}to{transform:translateY(0);opacity:1}}
+.mp-modal-header{display:flex;align-items:center;justify-content:space-between;padding:1.2rem 1.5rem;border-bottom:1px solid var(--border);background:var(--modal-bg);}
+.mp-modal-header h3{margin:0;font-size:1rem;font-weight:700;color:var(--text-primary);}
+.mp-modal-close{background:none;border:none;font-size:1.4rem;color:var(--text-muted);cursor:pointer;line-height:1;padding:0;}
+.mp-modal-close:hover{color:var(--text-secondary);}
+.mp-modal-body{padding:1.4rem 1.5rem;}
+.mp-modal-footer{display:flex;justify-content:flex-end;gap:.6rem;padding:1rem 1.5rem;border-top:1px solid var(--border);background:var(--modal-bg);}
+
+/* ── Dark mode overrides ── */
+.modal-confirm-text { color: var(--text-primary); }
+.mp-modal-body { background: var(--modal-bg); color: var(--text-primary); }
+[data-theme="dark"] .mp-modal strong { color: var(--text-primary); }
+</style>
+
+<script>
+function openBlockModal(id, name, isBlocked) {
+    const action = isBlocked ? 'Unblock' : 'Block';
+    document.getElementById('blockTitle').textContent = action + ' User';
+    document.getElementById('blockMsg').innerHTML =
+        `Are you sure you want to <strong>${action.toLowerCase()}</strong> <strong>${name}</strong>?`;
+    document.getElementById('blockSubmitBtn').textContent = action;
+    document.getElementById('blockSubmitBtn').className =
+        isBlocked ? 'btn btn-success' : 'btn btn-warning';
+    document.getElementById('blockForm').action = `/admin/users/${id}/toggle-block`;
+    document.getElementById('blockModal').classList.add('open');
+}
+function closeBlockModal(e) {
+    if (e && e.target !== document.getElementById('blockModal')) return;
+    document.getElementById('blockModal').classList.remove('open');
+}
+
+function openDeleteModal(id, name) {
+    document.getElementById('deleteMsg').innerHTML =
+        `Permanently delete <strong>${name}</strong> and all their data?`;
+    document.getElementById('deleteForm').action = `/admin/users/${id}/delete`;
+    document.getElementById('deleteModal').classList.add('open');
+}
+function closeDeleteModal(e) {
+    if (e && e.target !== document.getElementById('deleteModal')) return;
+    document.getElementById('deleteModal').classList.remove('open');
+}
+</script>
+{% endblock %}

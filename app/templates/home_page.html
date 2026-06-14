@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+
+{% block title %}Home_Page - MeroPasal{% endblock %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/home_page.css') }}">
+{% endblock %}
+
+{% block content %}
+
+{% set search = request.args.get('search', '') %}
+
+{% if search %}
+<div class="search-header">
+    <h2>Results for "<strong>{{ search }}</strong>"</h2>
+    <a href="{{ url_for('auth.home') }}" class="clear-search">✕ Clear</a>
+</div>
+{% endif %}
+
+{% if search and matching_categories %}
+<div class="search-section">
+    <h3 class="section-label">Categories</h3>
+    <div class="categories-row">
+        {% for category in matching_categories %}
+        <a href="{{ url_for('auth.single_category', category=category.name) }}" class="category-pill">
+            <img src="{{ url_for('static', filename=category.image) }}" alt="{{ category.name }}">
+            {{ category.name.title() }}
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% if search %}
+<div class="search-products-header">
+    <h3 class="section-label">Products</h3>
+    <div class="sort-bar">
+        <a href="{{ url_for('auth.home', search=search, sort='popular') }}"
+           class="sort-btn {% if sort == 'popular' %}active{% endif %}">Popular</a>
+        <a href="{{ url_for('auth.home', search=search, sort='low') }}"
+           class="sort-btn {% if sort == 'low' %}active{% endif %}">Price: Low → High</a>
+        <a href="{{ url_for('auth.home', search=search, sort='high') }}"
+           class="sort-btn {% if sort == 'high' %}active{% endif %}">Price: High → Low</a>
+    </div>
+</div>
+{% endif %}
+
+{% if flash_sales and not search %}
+<section class="flash-sale-section">
+    <div class="flash-sale-header">
+        <span class="flash-sale-badge">⚡ Flash Sale</span>
+        <h2>Today's Deals</h2>
+        <p class="flash-sale-sub">Limited time — grab them before they're gone!</p>
+    </div>
+    <div class="flash-sale-grid">
+        {% for sale in flash_sales %}
+        <div class="flash-card" onclick="openProductModal({{ sale.product_id }})" style="cursor:pointer;">
+            <div class="flash-discount-badge">{{ sale.discount | int }}% OFF</div>
+            <img src="{{ sale.product_image }}" alt="{{ sale.product_name }}">
+            <div class="flash-card-body">
+                <span class="flash-label">{{ sale.label }}</span>
+                <h3>{{ sale.product_name }}</h3>
+                <div class="flash-prices">
+                    <span class="flash-original">Rs. {{ "{:,.0f}".format(sale.original_price) }}</span>
+                    <span class="flash-sale-price">Rs. {{ "{:,.0f}".format(sale.sale_price) }}</span>
+                </div>
+                <div class="flash-timer" data-ends="{{ sale.ends_at.isoformat() }}">
+                    <span class="timer-label">Ends in:</span>
+                    <span class="timer-display">--:--:--</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+{% if products %}
+
+<div class="section-divider">
+    <span>All Products</span>
+</div>
+<section class="products-container">
+    {% for product in products %}
+    <div class="product-card" data-product-id="{{ product.id }}">
+
+        {% if user %}
+            <button class="wishlist-btn"
+                data-product-id="{{ product.id }}"
+                title="Add to Wishlist">♡</button>
+        {% endif %}
+
+        <img src="{{ product.image }}" alt="{{ product.name }}">
+        <h3>{{ product.name }}</h3>
+        {% set sale = sale_map.get(product.id) if sale_map else None %}
+        {% if sale %}
+        <p class="price">
+            <span class="price-original">Rs. {{ "{:,.0f}".format(product.price) }}</span>
+            <span class="price-sale">Rs. {{ "{:,.0f}".format(sale.sale_price) }}</span>
+        </p>
+        {% else %}
+        <p class="price">Rs. {{ "{:,.0f}".format(product.price) }}</p>
+        {% endif %}
+        <button class="btn" onclick="openProductModal({{ product.id }})">View Details</button>
+    </div>
+    {% endfor %}
+</section>
+
+{% elif search and not matching_categories %}
+<div class="no-results">
+    <div class="no-results-icon">🔍</div>
+    <h2>No results found</h2>
+    <p>Try searching a product name or category like <em>electronics</em>, <em>food</em>, or <em>clothes</em>.</p>
+    <a href="{{ url_for('auth.home') }}" class="btn">Back to Home</a>
+</div>
+
+{% elif search %}
+<div class="no-results-soft">
+    <p>No products matched — but we found matching categories above!</p>
+</div>
+{% endif %}
+
+{% if user %}
+<script>
+(async function () {
+    const buttons = document.querySelectorAll(".wishlist-btn[data-product-id]");
+    if (!buttons.length) return;
+    const checks = [...buttons].map(b =>
+        fetch(`/wishlist/status/${b.dataset.productId}`).then(r => r.json()).catch(() => ({ wishlisted: false }))
+    );
+    const results = await Promise.all(checks);
+    buttons.forEach((btn, i) => {
+        if (results[i]?.wishlisted) {
+            btn.classList.add("wishlisted");
+            btn.textContent = "♥";
+            btn.title = "Remove from Wishlist";
+        }
+    });
+    const last = results[results.length - 1];
+    if (last?.wishlist_count !== undefined) updateHeaderWishlistBadge(last.wishlist_count);
+})();
+
+document.addEventListener("click", function (e) {
+    const btn = e.target.closest(".wishlist-btn[data-product-id]");
+    if (!btn) return;
+    const productId = btn.dataset.productId;
+    fetch(`/wishlist/toggle/${productId}`, { method: "POST" })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) { if (data.error === "login_required") window.location.href = "/login"; return; }
+            if (data.wishlisted) { btn.classList.add("wishlisted"); btn.textContent = "♥"; btn.title = "Remove from Wishlist"; }
+            else { btn.classList.remove("wishlisted"); btn.textContent = "♡"; btn.title = "Add to Wishlist"; }
+            updateHeaderWishlistBadge(data.wishlist_count);
+            showToast(data.message, data.wishlisted ? "success" : "info");
+        })
+        .catch(() => showToast("Something went wrong.", "error"));
+});
+
+function showToast(message, type) {
+    document.querySelector(".wishlist-toast")?.remove();
+    const toast = document.createElement("div");
+    toast.className = `wishlist-toast wishlist-toast-${type}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add("show"), 10);
+    setTimeout(() => { toast.classList.remove("show"); setTimeout(() => toast.remove(), 300); }, 2500);
+}
+</script>
+{% endif %}
+
+{% if flash_sales and not search %}
+<script>
+(function () {
+    function updateTimers() {
+        document.querySelectorAll(".flash-timer[data-ends]").forEach(el => {
+            const end  = new Date(el.dataset.ends);
+            const diff = end - new Date();
+            const disp = el.querySelector(".timer-display");
+            if (!disp) return;
+            if (diff <= 0) { disp.textContent = "Expired"; return; }
+            const h = Math.floor(diff / 3600000);
+            const m = Math.floor((diff % 3600000) / 60000);
+            const s = Math.floor((diff % 60000) / 1000);
+            disp.textContent =
+                String(h).padStart(2,"0") + ":" +
+                String(m).padStart(2,"0") + ":" +
+                String(s).padStart(2,"0");
+        });
+    }
+    updateTimers();
+    setInterval(updateTimers, 1000);
+})();
+</script>
+{% endif %}
+
+{% endblock %}

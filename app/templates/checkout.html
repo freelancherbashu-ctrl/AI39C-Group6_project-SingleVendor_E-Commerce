@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block title %}Checkout - MeroPasal{% endblock %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/checkout.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<section class="checkout-page">
+
+    <h1>Checkout</h1>
+
+    <div class="checkout-layout">
+
+        <!-- LEFT: FORM -->
+        <form class="checkout-form"
+            method="POST"
+            action="{{ url_for('auth.place_order') }}"
+            onsubmit="return validateCheckout(event)"
+            autocomplete="off">
+
+            <h2>Delivery Information</h2>
+
+            <input type="text" name="name" placeholder="Full Name" required>
+
+            <input type="text" name="phone" placeholder="Phone Number"
+                   pattern="[0-9]{10}" maxlength="10" required>
+
+            <div class="form-row">
+                <select name="province" id="province" onchange="updateDistricts()" required>
+                    <option value="">Select Province</option>
+                    <option value="Koshi Province">Koshi Province</option>
+                    <option value="Madhesh Province">Madhesh Province</option>
+                    <option value="Bagmati Province">Bagmati Province</option>
+                    <option value="Gandaki Province">Gandaki Province</option>
+                    <option value="Lumbini Province">Lumbini Province</option>
+                    <option value="Karnali Province">Karnali Province</option>
+                    <option value="Sudurpashchim Province">Sudurpashchim Province</option>
+                </select>
+                <select name="district" id="district" required>
+                    <option value="">Select District</option>
+                </select>
+            </div>
+
+            <div class="form-row">
+                <input type="text" name="city"  placeholder="City / Municipality" required>
+                <input type="text" name="area"  placeholder="Area / Ward" required>
+            </div>
+
+            <textarea name="address" placeholder="Full Delivery Address" required></textarea>
+            <input type="text" name="landmark" placeholder="Landmark (Optional)">
+
+            <div class="payment-section">
+                <h2>Select Payment Method</h2>
+                <div class="payment-options">
+                    <label><input type="radio" name="payment" value="cod" required> Cash on Delivery</label>
+                    <label><input type="radio" name="payment" value="esewa"> eSewa</label>
+                    <label><input type="radio" name="payment" value="khalti"> Khalti</label>
+                </div>
+            </div>
+
+            <button type="submit" class="place-order-btn">Place Order</button>
+            <a href="{{ url_for('auth.cart') }}" class="cancel-btn">← Back to Cart</a>
+
+        </form>
+
+        <!-- RIGHT: ORDER SUMMARY -->
+        <div class="order-summary">
+
+            <h2>Order Summary</h2>
+
+            <div class="summary-items">
+                {% for item in items %}
+                <div class="summary-item">
+                    <img src="{{ item.image }}" alt="{{ item.name }}">
+                    <div class="summary-item-info">
+                        <span class="summary-item-name">{{ item.name }}</span>
+                        <span class="summary-item-qty">Qty: {{ item.qty }}</span>
+                    </div>
+                    <span class="summary-item-price">Rs. {{ "{:,.0f}".format(item.subtotal) }}</span>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="summary-total">
+                <span>Total</span>
+                <span class="total-amount">Rs. {{ "{:,.0f}".format(total) }}</span>
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<script>
+const districts = {
+    "Koshi Province":         ["Bhojpur","Dhankuta","Ilam","Jhapa","Morang","Sunsari","Khotang","Okhaldhunga","Panchthar","Sankhuwasabha","Solukhumbu","Taplejung","Terhathum","Udayapur"],
+    "Madhesh Province":       ["Parsa","Bara","Rautahat","Sarlahi","Dhanusha","Mahottari","Saptari","Siraha"],
+    "Bagmati Province":       ["Kathmandu","Lalitpur","Bhaktapur","Chitwan","Makwanpur","Dhading","Nuwakot","Rasuwa","Sindhuli","Ramechhap","Dolakha","Sindhupalchok"],
+    "Gandaki Province":       ["Kaski","Tanahun","Lamjung","Syangja","Gorkha","Manang","Mustang","Myagdi","Nawalpur","Parbat"],
+    "Lumbini Province":       ["Rupandehi","Kapilvastu","Dang","Banke","Bardiya","Arghakhanchi","Gulmi","Palpa","Pyuthan","Rolpa"],
+    "Karnali Province":       ["Surkhet","Jumla","Dolpa","Humla","Kalikot","Mugu","Salyan","Dailekh","Jajarkot"],
+    "Sudurpashchim Province": ["Kailali","Kanchanpur","Doti","Achham","Bajhang","Bajura","Baitadi","Dadeldhura","Darchula"]
+};
+
+function updateDistricts() {
+    const province = document.getElementById("province").value;
+    const districtSelect = document.getElementById("district");
+    districtSelect.innerHTML = '<option value="">Select District</option>';
+    (districts[province] || []).forEach(function(d) {
+        const opt = document.createElement("option");
+        opt.value = d; opt.textContent = d;
+        districtSelect.appendChild(opt);
+    });
+}
+
+function validateCheckout(event) {
+    const payment = document.querySelector('input[name="payment"]:checked');
+    if (!payment) {
+        event.preventDefault();
+        alert("Please select a payment method.");
+        return false;
+    }
+    return true;
+}
+</script>
+
+{% endblock %}

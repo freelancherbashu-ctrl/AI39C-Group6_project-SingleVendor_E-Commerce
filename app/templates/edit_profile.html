@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}Edit Profile - MeroPasal{% endblock %}
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="auth-page">
+<div class="auth-card">
+
+    <div class="auth-logo">✏️</div>
+    <h1>Edit Profile</h1>
+    <p class="auth-sub">Update your name or email address</p>
+
+    <form method="POST" action="{{ url_for('auth.edit_profile') }}">
+
+        <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" name="full_name"
+                   value="{{ user.full_name }}" required>
+        </div>
+
+        <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" name="email" readonly
+                   value="{{ user.email }}" required>
+        </div>
+
+        <button type="submit" class="auth-btn">Save Changes</button>
+
+    </form>
+
+    <p class="auth-switch">
+        <a href="{{ url_for('auth.profile') }}">← Back to Profile</a>
+    </p>
+
+</div>
+</section>
+{% endblock %}

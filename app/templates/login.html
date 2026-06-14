@@ -12,10 +12,14 @@
 
     <link rel="stylesheet"
     href="{{ url_for('static', filename='css/logi.css') }}">
+    <link rel="stylesheet"
+    href="{{ url_for('static', filename='css/fla.css') }}">
 
 </head>
 
 <body>
+    {% include "includes/flash_message.html" %}
+    
 
 <div class="login-wrapper">
 

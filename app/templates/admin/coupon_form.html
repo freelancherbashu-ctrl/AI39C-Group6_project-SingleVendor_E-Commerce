@@ -1,0 +1,106 @@
+{% extends 'admin/base.html' %}
+{% block title %}{{ 'Edit' if coupon else 'Add' }} Coupon — MeroPasal Admin{% endblock %}
+{% block page_title %}{{ 'Edit' if coupon else 'Add' }} Coupon{% endblock %}
+{% block breadcrumb %}
+<span class="bc-sep">›</span>
+<a href="{{ url_for('admin.coupons') }}" class="bc-link">Coupons</a>
+<span class="bc-sep">›</span>
+<span class="bc-current">{{ 'Edit' if coupon else 'New' }}</span>
+{% endblock %}
+
+{% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for cat, msg in messages %}
+  <div style="margin-bottom:1rem;padding:.75rem 1rem;border-radius:8px;background:#fee2e2;color:#991b1b;">{{ msg }}</div>
+  {% endfor %}
+{% endwith %}
+
+<div class="card" style="max-width:600px;">
+    <form method="POST">
+        <div style="display:grid;gap:1.1rem;">
+
+            <div>
+                <label style="display:block;font-size:.82rem;font-weight:600;color:var(--text-secondary);margin-bottom:.35rem;">Coupon Code *</label>
+                <input type="text" name="code" value="{{ coupon.code if coupon else '' }}"
+                       required maxlength="30" placeholder="e.g. SAVE20"
+                       style="width:100%;padding:.55rem .75rem;border:1px solid var(--border);border-radius:8px;background:var(--input-bg);color:var(--text-primary);font-family:monospace;font-size:1rem;text-transform:uppercase;"
+                       oninput="this.value=this.value.toUpperCase()">
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                <div>
+                    <label style="display:block;font-size:.82rem;font-weight:600;color:var(--text-secondary);margin-bottom:.35rem;">Discount Type *</label>
+                    <select name="discount_type" id="discountType" onchange="updateLabel()"
+                            style="width:100%;padding:.55rem .75rem;border:1px solid var(--border);border-radius:8px;background:var(--input-bg);color:var(--text-primary);">
+                        <option value="percent" {{ 'selected' if not coupon or coupon.discount_type=='percent' }}>Percentage (%)</option>
+                        <option value="fixed"   {{ 'selected' if coupon and coupon.discount_type=='fixed' }}>Fixed Amount (Rs.)</option>
+                    </select>
+                </div>
+                <div>
+                    <label id="discountLabel" style="display:block;font-size:.82rem;font-weight:600;color:var(--text-secondary);margin-bottom:.35rem;">Discount Value *</label>
+                    <input type="number" name="discount_value" step="0.01" min="0"
+                           value="{{ coupon.discount_value if coupon else '' }}"
+                           required placeholder="e.g. 20"
+                           style="width:100%;padding:.55rem .75rem;border:1px solid var(--border);border-radius:8px;background:var(--input-bg);color:var(--text-primary);">
+                </div>
+            </div>
+
+            <div>
+                <label style="display:block;font-size:.82rem;font-weight:600;color:var(--text-secondary);margin-bottom:.35rem;">Minimum Order Amount (Rs.)</label>
+                <input type="number" name="min_order_amount" step="1" min="0"
+                       value="{{ coupon.min_order_amount | int if coupon else '0' }}"
+                       placeholder="0 = no minimum"
+                       style="width:100%;padding:.55rem .75rem;border:1px solid var(--border);border-radius:8px;background:var(--input-bg);color:var(--text-primary);">
+            </div>
+
+            <div>
+                <label style="display:block;font-size:.82rem;font-weight:600;color:var(--text-secondary);margin-bottom:.35rem;">Max Total Uses (leave blank for unlimited)</label>
+                <input type="number" name="max_uses" step="1" min="1"
+                       value="{{ coupon.max_uses if coupon and coupon.max_uses else '' }}"
+                       placeholder="e.g. 100"
+                       style="width:100%;padding:.55rem .75rem;border:1px solid var(--border);border-radius:8px;background:var(--input-bg);color:var(--text-primary);">
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                <div>
+                    <label style="display:block;font-size:.82rem;font-weight:600;color:var(--text-secondary);margin-bottom:.35rem;">Valid From *</label>
+                    <input type="datetime-local" name="valid_from" required
+                           value="{{ coupon.valid_from.strftime('%Y-%m-%dT%H:%M') if coupon and coupon.valid_from else '' }}"
+                           style="width:100%;padding:.55rem .75rem;border:1px solid var(--border);border-radius:8px;background:var(--input-bg);color:var(--text-primary);">
+                </div>
+                <div>
+                    <label style="display:block;font-size:.82rem;font-weight:600;color:var(--text-secondary);margin-bottom:.35rem;">Valid Until *</label>
+                    <input type="datetime-local" name="valid_until" required
+                           value="{{ coupon.valid_until.strftime('%Y-%m-%dT%H:%M') if coupon and coupon.valid_until else '' }}"
+                           style="width:100%;padding:.55rem .75rem;border:1px solid var(--border);border-radius:8px;background:var(--input-bg);color:var(--text-primary);">
+                </div>
+            </div>
+
+            {% if coupon %}
+            <div>
+                <label style="display:block;font-size:.82rem;font-weight:600;color:var(--text-secondary);margin-bottom:.35rem;">Status</label>
+                <select name="is_active"
+                        style="width:100%;padding:.55rem .75rem;border:1px solid var(--border);border-radius:8px;background:var(--input-bg);color:var(--text-primary);">
+                    <option value="1" {{ 'selected' if coupon.is_active }}>Active</option>
+                    <option value="0" {{ 'selected' if not coupon.is_active }}>Inactive</option>
+                </select>
+            </div>
+            {% endif %}
+
+            <div style="display:flex;gap:.7rem;padding-top:.5rem;">
+                <button type="submit" class="btn btn-primary">{{ 'Save Changes' if coupon else 'Create Coupon' }}</button>
+                <a href="{{ url_for('admin.coupons') }}" class="btn" style="background:var(--surface-2);color:var(--text-primary);border:1px solid var(--border);">Cancel</a>
+            </div>
+
+        </div>
+    </form>
+</div>
+
+<script>
+function updateLabel() {
+    const type = document.getElementById('discountType').value;
+    document.getElementById('discountLabel').textContent = type === 'percent' ? 'Discount % *' : 'Discount Amount (Rs.) *';
+}
+updateLabel();
+</script>
+{% endblock %}

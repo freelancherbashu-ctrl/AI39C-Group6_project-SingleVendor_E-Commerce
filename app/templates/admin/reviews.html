@@ -1,0 +1,49 @@
+{% extends 'admin/base.html' %}
+{% block title %}Reviews — MeroPasal Admin{% endblock %}
+{% block page_title %}Reviews{% endblock %}
+{% block breadcrumb %}<span class="bc-sep">›</span><span class="bc-current">Reviews</span>{% endblock %}
+
+{% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for cat, msg in messages %}
+  <div style="margin-bottom:1rem;padding:.75rem 1rem;border-radius:8px;background:{% if cat=='success' %}#d1fae5{% else %}#fee2e2{% endif %};color:{% if cat=='success' %}#065f46{% else %}#991b1b{% endif %};">{{ msg }}</div>
+  {% endfor %}
+{% endwith %}
+
+<div class="card">
+    <table>
+        <thead>
+            <tr><th>Product</th><th>Customer</th><th>Rating</th><th>Comment</th><th>Date</th><th></th></tr>
+        </thead>
+        <tbody>
+        {% for r in reviews %}
+        <tr>
+            <td>
+                <a href="{{ url_for('auth.view_product', id=r.product_id) }}" target="_blank"
+                   style="color:var(--accent);">{{ r.product_name }}</a>
+            </td>
+            <td>{{ r.user_name }}</td>
+            <td>
+                <span style="color:#f59e0b;font-size:1rem;">
+                    {% for i in range(r.rating) %}★{% endfor %}{% for i in range(5 - r.rating) %}☆{% endfor %}
+                </span>
+                <span style="font-size:.8rem;color:var(--text-secondary);">({{ r.rating }}/5)</span>
+            </td>
+            <td style="max-width:300px;color:var(--text-secondary);font-size:.85rem;">
+                {{ r.comment[:120] if r.comment else '—' }}{% if r.comment and r.comment|length > 120 %}…{% endif %}
+            </td>
+            <td>{{ r.created_at.strftime('%d %b %Y') if r.created_at else '—' }}</td>
+            <td>
+                <form method="POST" action="{{ url_for('admin.delete_review', review_id=r.id) }}"
+                      onsubmit="return confirm('Delete this review?')">
+                    <button type="submit" class="btn btn-sm" style="background:#fee2e2;color:#991b1b;border:1px solid #fecaca;">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:2rem">No reviews yet.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

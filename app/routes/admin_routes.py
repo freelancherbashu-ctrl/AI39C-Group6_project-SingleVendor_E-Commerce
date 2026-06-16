@@ -715,3 +715,127 @@ def reports():
         this_month_revenue=this_month_revenue,
         admin=session["admin"]
     )
+# ── APPEND TO THE VERY END OF app/routes/admin_routes.py ─────────────────────
+# (after the existing reports() function ends — paste everything below)
+
+
+# ── REFUNDS ───────────────────────────────────────────────────────────────────
+
+@admin_bp.route("/refunds")
+@admin_required
+def refunds():
+    from app.models.refund import Refund
+    status = request.args.get("status")
+    all_refunds = Refund.get_all_admin(mysql, status=status)
+    return render_template("admin/refunds.html", refunds=all_refunds,
+                           active_status=status, admin=session["admin"])
+
+@admin_bp.route("/refunds/<int:refund_id>/update", methods=["POST"])
+@admin_required
+def update_refund(refund_id):
+    from app.models.refund import Refund
+    status     = request.form.get("status")
+    admin_note = request.form.get("admin_note", "").strip()
+    ok = Refund.update_status(mysql, refund_id, status, admin_note or None)
+    if ok:
+        flash(f"Refund #{refund_id} updated to {status}.", "success")
+    else:
+        flash("Failed to update refund.", "error")
+    return redirect(url_for("admin.refunds"))
+
+@admin_bp.route("/refunds/<int:refund_id>/json")
+@admin_required
+def refund_json(refund_id):
+    from flask import jsonify
+    from app.models.refund import Refund
+    refund = Refund.get_by_id(mysql, refund_id)
+    if not refund:
+        return jsonify({"error": "Not found"}), 404
+    refund["created_at"] = str(refund["created_at"]) if refund["created_at"] else None
+    refund["updated_at"] = str(refund["updated_at"]) if refund["updated_at"] else None
+    return jsonify(refund)
+
+
+# ── COUPONS ───────────────────────────────────────────────────────────────────
+
+@admin_bp.route("/coupons")
+@admin_required
+def coupons():
+    from app.models.coupon import Coupon
+    all_coupons = Coupon.get_all(mysql)
+    return render_template("admin/coupons.html", coupons=all_coupons,
+                           admin=session["admin"])
+
+@admin_bp.route("/coupons/add", methods=["GET", "POST"])
+@admin_required
+def add_coupon():
+    from app.models.coupon import Coupon
+    if request.method == "POST":
+        ok, err = Coupon.create(
+            mysql,
+            code=request.form.get("code", ""),
+            discount_type=request.form.get("discount_type", "percent"),
+            discount_value=float(request.form.get("discount_value", 0)),
+            min_order_amount=float(request.form.get("min_order_amount", 0)),
+            max_uses=request.form.get("max_uses") or None,
+            valid_from=request.form.get("valid_from"),
+            valid_until=request.form.get("valid_until"),
+        )
+        if ok:
+            flash("Coupon created successfully.", "success")
+            return redirect(url_for("admin.coupons"))
+        flash(f"Error: {err}", "error")
+    return render_template("admin/coupon_form.html", coupon=None, admin=session["admin"])
+
+@admin_bp.route("/coupons/<int:coupon_id>/edit", methods=["GET", "POST"])
+@admin_required
+def edit_coupon(coupon_id):
+    from app.models.coupon import Coupon
+    coupon = Coupon.get_by_id(mysql, coupon_id)
+    if not coupon:
+        flash("Coupon not found.", "error")
+        return redirect(url_for("admin.coupons"))
+    if request.method == "POST":
+        ok, err = Coupon.update(
+            mysql, coupon_id,
+            code=request.form.get("code", ""),
+            discount_type=request.form.get("discount_type", "percent"),
+            discount_value=float(request.form.get("discount_value", 0)),
+            min_order_amount=float(request.form.get("min_order_amount", 0)),
+            max_uses=request.form.get("max_uses") or None,
+            valid_from=request.form.get("valid_from"),
+            valid_until=request.form.get("valid_until"),
+            is_active=request.form.get("is_active") == "1",
+        )
+        if ok:
+            flash("Coupon updated.", "success")
+            return redirect(url_for("admin.coupons"))
+        flash(f"Error: {err}", "error")
+    return render_template("admin/coupon_form.html", coupon=coupon, admin=session["admin"])
+
+@admin_bp.route("/coupons/<int:coupon_id>/delete", methods=["POST"])
+@admin_required
+def delete_coupon(coupon_id):
+    from app.models.coupon import Coupon
+    Coupon.delete(mysql, coupon_id)
+    flash("Coupon deleted.", "success")
+    return redirect(url_for("admin.coupons"))
+
+
+# ── REVIEWS (moderation) ──────────────────────────────────────────────────────
+
+@admin_bp.route("/reviews")
+@admin_required
+def reviews():
+    from app.models.review import Review
+    all_reviews = Review.get_all_admin(mysql)
+    return render_template("admin/reviews.html", reviews=all_reviews,
+                           admin=session["admin"])
+
+@admin_bp.route("/reviews/<int:review_id>/delete", methods=["POST"])
+@admin_required
+def delete_review(review_id):
+    from app.models.review import Review
+    Review.delete(mysql, review_id)
+    flash("Review deleted.", "success")
+    return redirect(url_for("admin.reviews"))

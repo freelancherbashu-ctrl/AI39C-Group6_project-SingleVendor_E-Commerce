@@ -115,3 +115,22 @@ def toggle_wishlist(product_id): return controller.toggle_wishlist(product_id)
 
 @auth_bp.route("/wishlist/status/<int:product_id>")
 def wishlist_status(product_id): return controller.wishlist_status(product_id)
+
+# OTP
+@auth_bp.route("/verify_otp", methods=["GET", "POST"])
+def verify_otp(): return controller.verify_otp()
+
+# Reviews
+@auth_bp.route("/product/<int:product_id>/review", methods=["POST"])
+def submit_review(product_id): return controller.submit_review(product_id)
+
+# Coupons
+@auth_bp.route("/coupon/validate", methods=["POST"])
+def validate_coupon(): return controller.validate_coupon()
+
+# Refunds
+@auth_bp.route("/order/<int:order_id>/refund", methods=["POST"])
+def request_refund(order_id): return controller.request_refund(order_id)
+
+@auth_bp.route("/my_refunds")
+def my_refunds(): return controller.my_refunds()

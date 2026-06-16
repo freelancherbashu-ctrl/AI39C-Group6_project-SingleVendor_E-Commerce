@@ -211,26 +211,27 @@ class AuthController:
     def forgot_password(self):
         if request.method == "POST":
             email = request.form.get("email", "").strip()
-            token = User.create_reset_token(mysql, email)
-            if token == "google_account":
+            otp, err = User.create_otp(mysql, email)
+            if err == "This account uses Google login — password reset is not available.":
                 flash("This account uses Google login. Please sign in with Google instead.", "error")
                 return redirect(url_for("auth.forgot_password"))
-            if token:
-                reset_url = url_for("auth.reset_password", token=token, _external=True)
+            if otp:
                 from flask_mail import Message
-                msg = Message(subject="MeroPasal — Password Reset Request", recipients=[email])
-                msg.body = f"""Hi,\n\nYou requested a password reset for your MeroPasal account.\n\nClick the link below to reset your password (valid for 1 hour):\n\n{reset_url}\n\nIf you did not request this, you can safely ignore this email.\n\n— MeroPasal Team"""
-                msg.html = f"""<p>Hi,</p><p>You requested a password reset for your <strong>MeroPasal</strong> account.</p>
-<p><a href="{reset_url}" style="background:#4f46e5;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;">Reset My Password</a></p>
-<p>This link is valid for <strong>1 hour</strong>. If you did not request this, ignore this email.</p><p>— MeroPasal Team</p>"""
+                msg = Message(subject="MeroPasal — Your OTP Code", recipients=[email])
+                msg.body = f"Hi,\n\nYour OTP for password reset is: {otp}\n\nThis code is valid for 10 minutes.\n\nIf you did not request this, ignore this email.\n\n— MeroPasal Team"
+                msg.html = f"""<p>Hi,</p><p>Your OTP for resetting your <strong>MeroPasal</strong> password is:</p>
+<p style="font-size:2rem;font-weight:700;letter-spacing:10px;color:#4f46e5;">{otp}</p>
+<p>This code is valid for <strong>10 minutes</strong>. If you did not request this, ignore this email.</p>
+<p>— MeroPasal Team</p>"""
                 try:
                     mail.send(msg)
-                    flash("A password reset link has been sent to your email.", "success")
+                    return render_template("verify_otp.html", email=email, cart_count=_cart_count())
                 except Exception:
                     flash("Could not send email. Please try again later.", "error")
+                    return redirect(url_for("auth.forgot_password"))
             else:
-                flash("If that email exists, a reset link has been sent.", "success")
-            return redirect(url_for("auth.forgot_password"))
+                flash("If that email exists, an OTP has been sent.", "success")
+                return redirect(url_for("auth.forgot_password"))
         return render_template("forgot_password.html", cart_count=_cart_count())
 
     def reset_password(self, token):
@@ -295,11 +296,21 @@ class AuthController:
                                cart_count=_cart_count(), user=_current_user())
 
     def view_product(self, id):
+        from app.models.review import Review
         product  = Product.get_by_id(mysql, id)
         sale_map = _get_sale_map()
         sale     = sale_map.get(product["id"]) if product else None
+        reviews  = Review.get_for_product(mysql, id)
+        avg_rating, review_count = Review.get_avg_rating(mysql, id)
+        user = _current_user()
+        reviewable_order_id = None
+        if user:
+            reviewable_order_id = Review.get_reviewable_orders(mysql, user["id"], id)
         return render_template("view_product.html", product=product, sale=sale,
-                               cart_count=_cart_count(), user=_current_user())
+                               reviews=reviews, avg_rating=avg_rating,
+                               review_count=review_count,
+                               reviewable_order_id=reviewable_order_id,
+                               cart_count=_cart_count(), user=user)
 
     def view_product_json(self, id):
         from flask import jsonify
@@ -517,6 +528,17 @@ class AuthController:
             return redirect(url_for("auth.home"))
         total          = _calc_total(items)
         payment_method = request.form.get("payment")
+
+        # Re-validate coupon server-side (never trust client-submitted discount)
+        coupon_id      = request.form.get("coupon_id", "").strip()
+        discount       = 0.0
+        if coupon_id:
+            from app.models.coupon import Coupon
+            coupon, err = Coupon.validate(mysql, request.form.get("coupon_code", ""),
+                                          session["user"]["id"], total)
+            if coupon:
+                discount = coupon["discount_amount"]
+        grand_total = max(0, round(total - discount, 2))
         order_data = {
             "user_id":  session["user"]["id"],
             "name":     request.form.get("name"),
@@ -528,14 +550,15 @@ class AuthController:
             "address":  request.form.get("address"),
             "landmark": request.form.get("landmark", ""),
             "payment":  payment_method,
-            "total":    total,
+            "total":    grand_total,
             "items":    items,
         }
 
         if payment_method in ("esewa", "khalti"):
-            # Don't create order yet — hold data in session until payment code is submitted
             session["pending_order_data"] = order_data
-            session["last_order_total"]   = total
+            session["last_order_total"]   = grand_total
+            session["pending_coupon_id"]  = coupon_id or None
+            session["pending_coupon_code"] = request.form.get("coupon_code", "")
             session.modified = True
             return redirect(url_for("auth.payment", method=payment_method))
 
@@ -544,6 +567,11 @@ class AuthController:
         if failed:
             flash(f"Sorry, the following item(s) are out of stock: {', '.join(failed)}. Please update your cart.", "error")
             return redirect(url_for("auth.cart"))
+
+        # Apply coupon usage
+        if coupon_id and discount > 0:
+            from app.models.coupon import Coupon
+            Coupon.apply(mysql, int(coupon_id), session["user"]["id"], order_id)
 
         session.pop("buy_now", None)
         session["cart"] = {}
@@ -591,8 +619,20 @@ class AuthController:
         )
         mysql.connection.commit()
 
+        # Apply coupon usage if one was pending
+        pending_coupon_id   = session.get("pending_coupon_id")
+        pending_coupon_code = session.get("pending_coupon_code", "")
+        if pending_coupon_id and pending_coupon_code:
+            from app.models.coupon import Coupon
+            coupon, _ = Coupon.validate(mysql, pending_coupon_code, user["id"],
+                                        order_data.get("total", 0))
+            if coupon:
+                Coupon.apply(mysql, int(pending_coupon_id), user["id"], order_id)
+
         # Clear session
         session.pop("pending_order_data", None)
+        session.pop("pending_coupon_id", None)
+        session.pop("pending_coupon_code", None)
         session.pop("buy_now", None)
         session["cart"] = {}
         session.modified = True
@@ -688,3 +728,82 @@ class AuthController:
             return jsonify({"wishlisted": False, "wishlist_count": count})
         wishlisted = Wishlist.is_wishlisted(mysql, user["id"], product_id)
         return jsonify({"wishlisted": wishlisted, "wishlist_count": count})
+
+    # ── OTP PASSWORD RESET ────────────────────────────────────────────────────
+
+    def verify_otp(self):
+        """Handle OTP submission from forgot_password flow."""
+        if request.method == "POST":
+            email = request.form.get("email", "").strip()
+            otp   = request.form.get("otp", "").strip()
+            user_id = User.verify_otp(mysql, email, otp)
+            if not user_id:
+                flash("Invalid or expired OTP. Please try again.", "error")
+                return render_template("verify_otp.html", email=email, cart_count=_cart_count())
+            # OTP valid — generate a real reset token for the password reset page
+            token = User.create_reset_token(mysql, email)
+            return redirect(url_for("auth.reset_password", token=token))
+        return redirect(url_for("auth.forgot_password"))
+
+    # ── REVIEWS ───────────────────────────────────────────────────────────────
+
+    def submit_review(self, product_id):
+        user = _current_user()
+        if not user:
+            flash("Please log in to submit a review.", "error")
+            return redirect(url_for("auth.login"))
+        from app.models.review import Review
+        rating   = int(request.form.get("rating", 0))
+        comment  = request.form.get("comment", "").strip()
+        order_id = int(request.form.get("order_id", 0))
+        if not (1 <= rating <= 5):
+            flash("Please select a rating between 1 and 5.", "error")
+            return redirect(url_for("auth.view_product", id=product_id))
+        ok, msg = Review.create(mysql, user["id"], product_id, order_id, rating, comment)
+        flash("Review submitted!" if ok else msg, "success" if ok else "error")
+        return redirect(url_for("auth.view_product", id=product_id))
+
+    # ── COUPONS ───────────────────────────────────────────────────────────────
+
+    def validate_coupon(self):
+        """AJAX endpoint — returns JSON with discount info or error."""
+        user = _current_user()
+        if not user:
+            return jsonify({"error": "login_required"}), 401
+        from app.models.coupon import Coupon
+        code       = request.form.get("code", "").strip()
+        cart_total = float(request.form.get("cart_total", 0))
+        coupon, err = Coupon.validate(mysql, code, user["id"], cart_total)
+        if err:
+            return jsonify({"error": err}), 400
+        return jsonify({
+            "coupon_id":       coupon["id"],
+            "code":            coupon["code"],
+            "discount_amount": coupon["discount_amount"],
+            "discount_type":   coupon["discount_type"],
+            "discount_value":  coupon["discount_value"],
+        })
+
+    # ── REFUNDS ───────────────────────────────────────────────────────────────
+
+    def request_refund(self, order_id):
+        user = _current_user()
+        if not user:
+            return redirect(url_for("auth.login"))
+        from app.models.refund import Refund
+        reason = request.form.get("reason", "").strip()
+        if not reason:
+            flash("Please provide a reason for your refund request.", "error")
+            return redirect(url_for("auth.view_my_orders"))
+        ok, msg = Refund.request(mysql, order_id, user["id"], reason)
+        flash("Refund request submitted!" if ok else msg, "success" if ok else "error")
+        return redirect(url_for("auth.view_my_orders"))
+
+    def my_refunds(self):
+        user = _current_user()
+        if not user:
+            return redirect(url_for("auth.login"))
+        from app.models.refund import Refund
+        refunds = Refund.get_by_user(mysql, user["id"])
+        return render_template("my_refunds.html", refunds=refunds,
+                               cart_count=_cart_count(), user=user)

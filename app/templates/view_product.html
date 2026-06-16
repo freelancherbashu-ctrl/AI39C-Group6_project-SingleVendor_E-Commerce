@@ -98,6 +98,74 @@
 
 </section>
 
+<!-- ── REVIEWS ── -->
+<section style="max-width:860px;margin:2.5rem auto;padding:0 1rem;">
+    <h2 style="font-size:1.2rem;font-weight:700;margin-bottom:1.2rem;color:var(--text-primary,#111);">
+        Customer Reviews
+        {% if avg_rating %}
+        <span style="font-size:1rem;font-weight:400;color:#f59e0b;margin-left:.5rem;">
+            ★ {{ avg_rating }} <span style="color:#9ca3af;">({{ review_count }})</span>
+        </span>
+        {% endif %}
+    </h2>
+
+    {% if user and reviewable_order_id %}
+    <div style="background:var(--card-bg,#fff);border:1px solid #e5e7eb;border-radius:12px;padding:1.2rem 1.4rem;margin-bottom:1.5rem;">
+        <h3 style="font-size:1rem;font-weight:600;margin-bottom:.8rem;">Leave a Review</h3>
+        <form method="POST" action="{{ url_for('auth.submit_review', product_id=product.id) }}">
+            <input type="hidden" name="order_id" value="{{ reviewable_order_id }}">
+            <div style="margin-bottom:.7rem;">
+                <label style="font-size:.85rem;font-weight:600;color:#6b7280;display:block;margin-bottom:.3rem;">Rating *</label>
+                <div class="star-rating" style="display:flex;gap:.3rem;font-size:1.6rem;cursor:pointer;">
+                    {% for i in range(1,6) %}
+                    <span class="star" data-val="{{ i }}" style="color:#d1d5db;" onclick="setRating({{ i }})">★</span>
+                    {% endfor %}
+                </div>
+                <input type="hidden" name="rating" id="ratingInput" value="0">
+            </div>
+            <div style="margin-bottom:.8rem;">
+                <label style="font-size:.85rem;font-weight:600;color:#6b7280;display:block;margin-bottom:.3rem;">Comment (optional)</label>
+                <textarea name="comment" rows="3" placeholder="Share your experience…"
+                    style="width:100%;padding:.55rem .75rem;border:1px solid #e5e7eb;border-radius:8px;font-size:.9rem;resize:vertical;"></textarea>
+            </div>
+            <button type="submit" style="padding:.5rem 1.2rem;background:#4f46e5;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;">
+                Submit Review
+            </button>
+        </form>
+    </div>
+    {% endif %}
+
+    {% if reviews %}
+    <div style="display:flex;flex-direction:column;gap:.9rem;">
+        {% for r in reviews %}
+        <div style="background:var(--card-bg,#fff);border:1px solid #e5e7eb;border-radius:12px;padding:1rem 1.3rem;">
+            <div style="display:flex;align-items:center;gap:.7rem;margin-bottom:.4rem;">
+                <div style="width:36px;height:36px;border-radius:50%;background:#e0e7ff;display:flex;align-items:center;justify-content:center;font-weight:700;color:#4f46e5;font-size:.9rem;overflow:hidden;">
+                    {% if r.user_picture %}
+                    <img src="{{ url_for('static', filename='profile_pics/' + r.user_picture) }}" style="width:100%;height:100%;object-fit:cover;">
+                    {% else %}
+                    {{ r.user_name[0].upper() }}
+                    {% endif %}
+                </div>
+                <div>
+                    <div style="font-weight:600;font-size:.9rem;">{{ r.user_name }}</div>
+                    <div style="font-size:.75rem;color:#9ca3af;">{{ r.created_at.strftime('%d %b %Y') if r.created_at else '' }}</div>
+                </div>
+                <div style="margin-left:auto;color:#f59e0b;font-size:1rem;">
+                    {% for i in range(r.rating) %}★{% endfor %}{% for i in range(5 - r.rating) %}<span style="color:#d1d5db;">★</span>{% endfor %}
+                </div>
+            </div>
+            {% if r.comment %}
+            <p style="font-size:.9rem;color:#374151;margin:0;line-height:1.6;">{{ r.comment }}</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p style="color:#9ca3af;font-size:.9rem;">No reviews yet. Be the first to review this product!</p>
+    {% endif %}
+</section>
+
 <div id="wl-toast" class="wishlist-toast" style="display:none;"></div>
 
 <script>
@@ -138,6 +206,13 @@ function showToast(message, type) {
     toast.style.display = "block";
     setTimeout(() => toast.classList.add("show"), 10);
     setTimeout(() => { toast.classList.remove("show"); setTimeout(() => { toast.style.display = "none"; }, 300); }, 2500);
+}
+
+function setRating(val) {
+    document.getElementById("ratingInput").value = val;
+    document.querySelectorAll(".star").forEach(s => {
+        s.style.color = parseInt(s.dataset.val) <= val ? "#f59e0b" : "#d1d5db";
+    });
 }
 </script>
 

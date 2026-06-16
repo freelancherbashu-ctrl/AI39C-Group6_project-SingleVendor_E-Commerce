@@ -64,6 +64,12 @@
                 <button class="cancel-order-btn"
                     onclick="openCancelModal({{ order.id }})">Cancel Order</button>
                 {% endif %}
+
+                {% if order.order_status == 'Completed' %}
+                <button class="cancel-order-btn"
+                    onclick="openRefundModal({{ order.id }})"
+                    style="background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;">Request Refund</button>
+                {% endif %}
             </div>
 
         </div>
@@ -114,8 +120,38 @@
     </div>
 </div>
 
+<!-- ── REFUND REQUEST MODAL ────────────────────────────────────────────────── -->
+<div id="refundModal" class="mp-backdrop" onclick="closeRefundModal(event)">
+    <div class="mp-box" style="max-width:460px;">
+        <div class="mp-head">
+            <h3>Request Refund</h3>
+            <button class="mp-x" onclick="closeRefundModal()">&times;</button>
+        </div>
+        <div class="mp-body">
+            <p>Order <strong id="refundOrderLabel"></strong></p>
+            <p style="font-size:.83rem;color:var(--text-muted,#6b7280);margin-top:.3rem;">
+                Please describe the reason for your refund request.
+            </p>
+            <textarea id="refundReason" rows="4" placeholder="e.g. Item was damaged on arrival…"
+                style="width:100%;margin-top:.7rem;padding:.55rem .75rem;border:1px solid #e5e7eb;
+                       border-radius:8px;font-size:.88rem;resize:vertical;
+                       background:var(--input-bg,#fff);color:var(--text-primary,#111);"></textarea>
+        </div>
+        <div class="mp-foot">
+            <button class="mp-btn" onclick="closeRefundModal()">Cancel</button>
+            <form id="refundForm" method="POST" style="margin:0;" onsubmit="return validateRefund()">
+                <input type="hidden" name="reason" id="refundReasonInput">
+                <button type="submit" class="mp-btn danger" style="background:#1d4ed8;border-color:#1d4ed8;">
+                    Submit Request
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
 <style>
-/* ── View details btn ── */
+.refund-link{font-size:.82rem;color:var(--mp-blue,#2563eb);text-decoration:none;margin-left:.5rem;}
+.refund-link:hover{text-decoration:underline;}
 .view-details-btn{background:none;border:1px solid var(--border,#e2e8f0);border-radius:7px;padding:.35rem .8rem;font-size:.82rem;color:var(--text-secondary,#374151);cursor:pointer;margin-left:auto;transition:all .15s;}
 .view-details-btn:hover{background:var(--bg-2,#f1f5f9);border-color:var(--mp-blue,#2563eb);color:var(--mp-blue,#2563eb);}
 
@@ -268,8 +304,26 @@ function closeCancelModal(e) {
     document.getElementById('cancelModal').classList.remove('open');
 }
 
+// ── Refund Modal ─────────────────────────────────────────────────────────────
+function openRefundModal(orderId) {
+    document.getElementById('refundOrderLabel').textContent = 'Order #' + orderId;
+    document.getElementById('refundForm').action = `/order/${orderId}/refund`;
+    document.getElementById('refundReason').value = '';
+    document.getElementById('refundModal').classList.add('open');
+}
+function closeRefundModal(e) {
+    if (e && e.target !== document.getElementById('refundModal')) return;
+    document.getElementById('refundModal').classList.remove('open');
+}
+function validateRefund() {
+    const reason = document.getElementById('refundReason').value.trim();
+    if (!reason) { alert('Please enter a reason for your refund request.'); return false; }
+    document.getElementById('refundReasonInput').value = reason;
+    return true;
+}
+
 document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { closeOrderModal(); closeCancelModal(); }
+    if (e.key === 'Escape') { closeOrderModal(); closeCancelModal(); closeRefundModal(); }
 });
 </script>
 {% endblock %}

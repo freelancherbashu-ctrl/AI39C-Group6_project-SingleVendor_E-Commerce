@@ -60,7 +60,9 @@
             <button class="profile-btn logged-in">
                 {% if user.profile_picture %}
                 <img src="{{ url_for('static', filename='profile_pics/' + user.profile_picture) }}"
-                     class="header-avatar" alt="{{ user.full_name }}">
+                     class="header-avatar" alt="{{ user.full_name }}"
+                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                <span class="header-avatar-initial" style="display:none;">{{ user.full_name[0].upper() }}</span>
                 {% else %}
                 <span class="header-avatar-initial">{{ user.full_name[0].upper() }}</span>
                 {% endif %}

@@ -245,3 +245,39 @@ class User:
         )
         mysql.connection.commit()
         return {"id": cursor.lastrowid, "full_name": full_name, "email": email}
+
+    @staticmethod
+    def create_otp(mysql, email):
+        """Generate a 6-digit OTP, store it in reset_token (expires in 10 min).
+        Returns (otp, None) on success or (None, error_message) on failure."""
+        cursor = mysql.connection.cursor()
+        cursor.execute(
+            "SELECT id, password_hash, google_id FROM users WHERE email=%s",
+            (email,)
+        )
+        row = cursor.fetchone()
+        if not row:
+            return None, "No account found with that email."
+        if row[2] and not row[1]:
+            return None, "This account uses Google login — password reset is not available."
+        import random
+        otp = str(random.randint(100000, 999999))
+        cursor.execute("""
+        UPDATE users
+        SET reset_token=%s,
+            reset_token_expiry = DATE_ADD(NOW(), INTERVAL 10 MINUTE)
+        WHERE email=%s
+        """, (otp, email))
+        mysql.connection.commit()
+        return otp, None
+
+    @staticmethod
+    def verify_otp(mysql, email, otp):
+        """Check OTP is correct and not expired. Returns user_id or None."""
+        cursor = mysql.connection.cursor()
+        cursor.execute("""
+        SELECT id FROM users
+        WHERE email=%s AND reset_token=%s AND reset_token_expiry > NOW()
+        """, (email, otp))
+        row = cursor.fetchone()
+        return row[0] if row else None

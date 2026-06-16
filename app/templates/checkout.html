@@ -61,6 +61,10 @@
                 </div>
             </div>
 
+            <input type="hidden" name="coupon_id"       id="couponId"       value="">
+            <input type="hidden" name="coupon_code"     id="couponCode"     value="">
+            <input type="hidden" name="discount_amount" id="discountAmount" value="0">
+
             <button type="submit" class="place-order-btn">Place Order</button>
             <a href="{{ url_for('auth.cart') }}" class="cancel-btn">← Back to Cart</a>
 
@@ -86,7 +90,20 @@
 
             <div class="summary-total">
                 <span>Total</span>
-                <span class="total-amount">Rs. {{ "{:,.0f}".format(total) }}</span>
+                <span class="total-amount" id="displayTotal">Rs. {{ "{:,.0f}".format(total) }}</span>
+            </div>
+
+            <!-- Coupon -->
+            <div style="margin-top:1rem;">
+                <div style="display:flex;gap:.5rem;">
+                    <input type="text" id="couponInput" placeholder="Coupon code"
+                           style="flex:1;padding:.5rem .75rem;border:1px solid #e5e7eb;border-radius:8px;font-size:.9rem;">
+                    <button type="button" onclick="applyCoupon()"
+                            style="padding:.5rem 1rem;background:#4f46e5;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;">
+                        Apply
+                    </button>
+                </div>
+                <div id="couponMsg" style="font-size:.82rem;margin-top:.4rem;"></div>
             </div>
 
         </div>
@@ -125,6 +142,39 @@ function validateCheckout(event) {
         return false;
     }
     return true;
+}
+
+const BASE_TOTAL = {{ total }};
+
+function applyCoupon() {
+    const code = document.getElementById("couponInput").value.trim();
+    const msg  = document.getElementById("couponMsg");
+    if (!code) { msg.style.color = "#ef4444"; msg.textContent = "Please enter a coupon code."; return; }
+    fetch("/coupon/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `code=${encodeURIComponent(code)}&cart_total=${BASE_TOTAL}`
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) {
+            msg.style.color = "#ef4444"; msg.textContent = data.error;
+            document.getElementById("couponId").value       = "";
+            document.getElementById("couponCode").value     = "";
+            document.getElementById("discountAmount").value = "0";
+            document.getElementById("displayTotal").textContent = "Rs. " + BASE_TOTAL.toLocaleString("en-IN", {maximumFractionDigits:0});
+        } else {
+            const discount  = parseFloat(data.discount_amount);
+            const newTotal  = Math.max(0, BASE_TOTAL - discount);
+            msg.style.color = "#16a34a";
+            msg.textContent = `✓ "${data.code}" applied — Rs. ${discount.toLocaleString("en-IN",{maximumFractionDigits:0})} off!`;
+            document.getElementById("couponId").value       = data.coupon_id;
+            document.getElementById("couponCode").value     = data.code;
+            document.getElementById("discountAmount").value = discount;
+            document.getElementById("displayTotal").textContent = "Rs. " + newTotal.toLocaleString("en-IN", {maximumFractionDigits:0});
+        }
+    })
+    .catch(() => { msg.style.color = "#ef4444"; msg.textContent = "Could not validate coupon. Try again."; });
 }
 </script>
 

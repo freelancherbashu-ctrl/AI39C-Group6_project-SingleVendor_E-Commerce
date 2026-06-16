@@ -13,7 +13,9 @@
         <div class="avatar-wrapper">
             {% if user.profile_picture %}
                 <img src="{{ url_for('static', filename='profile_pics/' + user.profile_picture) }}"
-                     class="avatar-img" alt="Profile Picture">
+                     class="avatar-img" alt="Profile Picture"
+                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                <div class="avatar-initials" style="display:none;">{{ user.full_name[0].upper() }}</div>
             {% else %}
                 <div class="avatar-initials">{{ user.full_name[0].upper() }}</div>
             {% endif %}

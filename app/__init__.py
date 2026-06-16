@@ -32,6 +32,9 @@ def create_app():
         from app.models.product import Product
         from app.models.category import Category
         from app.models.flash_sale import FlashSale
+        from app.models.review import Review
+        from app.models.coupon import Coupon
+        from app.models.refund import Refund
 
         User.init_table(mysql)
         Order.init_table(mysql)
@@ -40,6 +43,9 @@ def create_app():
         Product.init_table(mysql)
         Category.init_table(mysql)
         FlashSale.init_table(mysql)
+        Review.init_table(mysql)
+        Coupon.init_table(mysql)
+        Refund.init_table(mysql)
 
         # Seed default data on first run
         Category.seed(mysql)

@@ -37,6 +37,13 @@
 
             <img src="{{ product.image }}" alt="{{ product.name }}">
             <h3>{{ product.name }}</h3>
+            {% set rating_info = rating_map.get(product.id) if rating_map is defined and rating_map else None %}
+            {% if rating_info %}
+            <div style="display:flex;align-items:center;gap:.3rem;font-size:.8rem;margin:.2rem 0;">
+                <span style="color:#f59e0b;">{% for i in range(rating_info[0]|int) %}★{% endfor %}{% for i in range(5-(rating_info[0]+0.49)|int) %}☆{% endfor %}</span>
+                <span style="color:#9ca3af;">{{ rating_info[0] }} ({{ rating_info[1] }})</span>
+            </div>
+            {% endif %}
             {% set sale = sale_map.get(product.id) if sale_map else None %}
             {% if sale %}
             <p class="price">

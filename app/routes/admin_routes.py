@@ -123,7 +123,11 @@ def dashboard():
     cancelled_orders = cursor.fetchone()[0]
     cursor.execute("SELECT COUNT(*) FROM users")
     total_users = cursor.fetchone()[0]
-    cursor.execute("SELECT SUM(total_price) FROM orders WHERE order_status != 'Cancelled'")
+    cursor.execute("""
+        SELECT SUM(total_price) FROM orders
+        WHERE (payment_method IN ('esewa','khalti') AND payment_status = 'Approved')
+           OR (payment_method = 'cod' AND order_status = 'Completed')
+    """)
     revenue = cursor.fetchone()[0] or 0
     cursor.execute("""
         SELECT id, customer_name, total_price, order_status, created_at
@@ -155,12 +159,12 @@ def orders():
     cursor = mysql.connection.cursor()
     if status:
         cursor.execute("""
-            SELECT id, customer_name, phone, total_price, order_status, payment_method, created_at
+            SELECT id, customer_name, phone, total_price, order_status, payment_method, created_at, user_id
             FROM orders WHERE order_status = %s ORDER BY created_at DESC
         """, (status,))
     else:
         cursor.execute("""
-            SELECT id, customer_name, phone, total_price, order_status, payment_method, created_at
+            SELECT id, customer_name, phone, total_price, order_status, payment_method, created_at, user_id
             FROM orders ORDER BY created_at DESC
         """)
     rows = cursor.fetchall()
@@ -611,7 +615,7 @@ def payments():
     if status:
         cursor.execute("""
             SELECT o.id, o.customer_name, o.total_price, o.payment_method,
-                   o.payment_status, o.order_status, o.created_at, o.transaction_code
+                   o.payment_status, o.order_status, o.created_at, o.transaction_code, o.user_id
             FROM orders o
             WHERE o.payment_method IN ('esewa','khalti') AND o.payment_status = %s
             ORDER BY o.created_at DESC
@@ -619,7 +623,7 @@ def payments():
     else:
         cursor.execute("""
             SELECT o.id, o.customer_name, o.total_price, o.payment_method,
-                   o.payment_status, o.order_status, o.created_at, o.transaction_code
+                   o.payment_status, o.order_status, o.created_at, o.transaction_code, o.user_id
             FROM orders o
             WHERE o.payment_method IN ('esewa','khalti')
             ORDER BY o.created_at DESC
@@ -673,8 +677,9 @@ def reports():
                COUNT(*) AS total_orders,
                SUM(total_price) AS revenue
         FROM orders
-        WHERE order_status NOT IN ('Cancelled', 'Rejected')
-          AND created_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
+        WHERE created_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
+          AND ((payment_method IN ('esewa','khalti') AND payment_status = 'Approved')
+           OR  (payment_method = 'cod' AND order_status = 'Completed'))
         GROUP BY month
         ORDER BY month ASC
     """)
@@ -699,11 +704,20 @@ def reports():
     # Summary stats
     cursor.execute("SELECT COUNT(*) FROM orders WHERE order_status NOT IN ('Cancelled','Rejected')")
     total_orders = cursor.fetchone()[0]
-    cursor.execute("SELECT SUM(total_price) FROM orders WHERE order_status NOT IN ('Cancelled','Rejected')")
+    cursor.execute("""
+        SELECT SUM(total_price) FROM orders
+        WHERE (payment_method IN ('esewa','khalti') AND payment_status = 'Approved')
+           OR (payment_method = 'cod' AND order_status = 'Completed')
+    """)
     total_revenue = cursor.fetchone()[0] or 0
     cursor.execute("SELECT COUNT(*) FROM orders WHERE MONTH(created_at)=MONTH(NOW()) AND YEAR(created_at)=YEAR(NOW()) AND order_status NOT IN ('Cancelled','Rejected')")
     this_month_orders = cursor.fetchone()[0]
-    cursor.execute("SELECT SUM(total_price) FROM orders WHERE MONTH(created_at)=MONTH(NOW()) AND YEAR(created_at)=YEAR(NOW()) AND order_status NOT IN ('Cancelled','Rejected')")
+    cursor.execute("""
+        SELECT SUM(total_price) FROM orders
+        WHERE MONTH(created_at)=MONTH(NOW()) AND YEAR(created_at)=YEAR(NOW())
+          AND ((payment_method IN ('esewa','khalti') AND payment_status = 'Approved')
+           OR  (payment_method = 'cod' AND order_status = 'Completed'))
+    """)
     this_month_revenue = cursor.fetchone()[0] or 0
 
     return render_template("admin/reports.html",
@@ -715,3 +729,124 @@ def reports():
         this_month_revenue=this_month_revenue,
         admin=session["admin"]
     )
+
+# ── REFUNDS ───────────────────────────────────────────────────────────────────
+
+@admin_bp.route("/refunds")
+@admin_required
+def refunds():
+    from app.models.refund import Refund
+    status = request.args.get("status")
+    all_refunds = Refund.get_all_admin(mysql, status=status)
+    return render_template("admin/refunds.html", refunds=all_refunds,
+                           active_status=status, admin=session["admin"])
+
+@admin_bp.route("/refunds/<int:refund_id>/update", methods=["POST"])
+@admin_required
+def update_refund(refund_id):
+    from app.models.refund import Refund
+    status     = request.form.get("status")
+    admin_note = request.form.get("admin_note", "").strip()
+    ok = Refund.update_status(mysql, refund_id, status, admin_note or None)
+    if ok:
+        flash(f"Refund #{refund_id} updated to {status}.", "success")
+    else:
+        flash("Failed to update refund.", "error")
+    return redirect(url_for("admin.refunds"))
+
+@admin_bp.route("/refunds/<int:refund_id>/json")
+@admin_required
+def refund_json(refund_id):
+    from flask import jsonify
+    from app.models.refund import Refund
+    refund = Refund.get_by_id(mysql, refund_id)
+    if not refund:
+        return jsonify({"error": "Not found"}), 404
+    refund["created_at"] = str(refund["created_at"]) if refund["created_at"] else None
+    refund["updated_at"] = str(refund["updated_at"]) if refund["updated_at"] else None
+    return jsonify(refund)
+
+
+# ── COUPONS ───────────────────────────────────────────────────────────────────
+
+@admin_bp.route("/coupons")
+@admin_required
+def coupons():
+    from app.models.coupon import Coupon
+    all_coupons = Coupon.get_all(mysql)
+    return render_template("admin/coupons.html", coupons=all_coupons,
+                           admin=session["admin"])
+
+@admin_bp.route("/coupons/add", methods=["GET", "POST"])
+@admin_required
+def add_coupon():
+    from app.models.coupon import Coupon
+    if request.method == "POST":
+        ok, err = Coupon.create(
+            mysql,
+            code=request.form.get("code", ""),
+            discount_type=request.form.get("discount_type", "percent"),
+            discount_value=float(request.form.get("discount_value", 0)),
+            min_order_amount=float(request.form.get("min_order_amount", 0)),
+            max_uses=request.form.get("max_uses") or None,
+            valid_from=request.form.get("valid_from"),
+            valid_until=request.form.get("valid_until"),
+        )
+        if ok:
+            flash("Coupon created successfully.", "success")
+            return redirect(url_for("admin.coupons"))
+        flash(f"Error: {err}", "error")
+    return render_template("admin/coupon_form.html", coupon=None, admin=session["admin"])
+
+@admin_bp.route("/coupons/<int:coupon_id>/edit", methods=["GET", "POST"])
+@admin_required
+def edit_coupon(coupon_id):
+    from app.models.coupon import Coupon
+    coupon = Coupon.get_by_id(mysql, coupon_id)
+    if not coupon:
+        flash("Coupon not found.", "error")
+        return redirect(url_for("admin.coupons"))
+    if request.method == "POST":
+        ok, err = Coupon.update(
+            mysql, coupon_id,
+            code=request.form.get("code", ""),
+            discount_type=request.form.get("discount_type", "percent"),
+            discount_value=float(request.form.get("discount_value", 0)),
+            min_order_amount=float(request.form.get("min_order_amount", 0)),
+            max_uses=request.form.get("max_uses") or None,
+            valid_from=request.form.get("valid_from"),
+            valid_until=request.form.get("valid_until"),
+            is_active=request.form.get("is_active") == "1",
+        )
+        if ok:
+            flash("Coupon updated.", "success")
+            return redirect(url_for("admin.coupons"))
+        flash(f"Error: {err}", "error")
+    return render_template("admin/coupon_form.html", coupon=coupon, admin=session["admin"])
+
+@admin_bp.route("/coupons/<int:coupon_id>/delete", methods=["POST"])
+@admin_required
+def delete_coupon(coupon_id):
+    from app.models.coupon import Coupon
+    Coupon.delete(mysql, coupon_id)
+    flash("Coupon deleted.", "success")
+    return redirect(url_for("admin.coupons"))
+
+
+# ── REVIEWS (moderation) ──────────────────────────────────────────────────────
+
+@admin_bp.route("/reviews")
+@admin_required
+def reviews():
+    from app.models.review import Review
+    all_reviews = Review.get_all_admin(mysql)
+    return render_template("admin/reviews.html", reviews=all_reviews,
+                           admin=session["admin"])
+
+@admin_bp.route("/reviews/<int:review_id>/delete", methods=["POST"])
+@admin_required
+def delete_review(review_id):
+    from app.models.review import Review
+    Review.delete(mysql, review_id)
+    flash("Review deleted.", "success")
+    return redirect(url_for("admin.reviews"))

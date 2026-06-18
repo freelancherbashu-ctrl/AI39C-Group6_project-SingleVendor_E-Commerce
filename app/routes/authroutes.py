@@ -1,6 +1,56 @@
+# from flask import Blueprint
+# from app.controllers.auth import AuthController
+
+# from app.helpers.auth_helper import login_required
+
+# class AuthRoutes:
+
+#     def __init__(self):
+
+#         self.bp = Blueprint("authroutes", __name__)
+#         self.controller = AuthController()
+
+#     def register(self):
+
+#         # ---------------- AUTH ROUTES ----------------
+#         self.bp.route("/login", methods=["GET", "POST"])(
+#             self.controller.login
+#         )
+
+#         self.bp.route("/register", methods=["GET", "POST"])(
+#             self.controller.register
+#         )
+
+#         self.bp.route("/logout")(
+#             self.controller.logout
+#         )
+
+        
+
+#         # ---------------- RESET FLOW ----------------
+#         self.bp.route("/forgot-password", methods=["GET", "POST"])(
+#             self.controller.forgot_password
+#         )
+
+#         self.bp.route("/reset_password/<token>", methods=["GET", "POST"])(
+#             self.controller.reset_password
+#         )
+
+#         # ---------------- OTHER PAGES ----------------
+#         self.bp.route("/home")(
+#             self.controller.home
+#         )
+
+#         self.bp.route("/contact")(
+#             self.controller.contact
+#         )
+#         self.bp.route('/logout')(self.controller.logout)
+#         self.bp.route('/admin_dashboard')(self.controller.admin_dashboard)
+#         self.bp.route('/customer_dashboard')(self.controller.customer_dashboard)
+#         return self.bp
+
 from flask import Blueprint
 from app.controllers.auth import AuthController
-
 from app.helpers.auth_helper import login_required
 
 class AuthRoutes:
@@ -13,6 +63,7 @@ class AuthRoutes:
     def register(self):
 
         # ---------------- AUTH ROUTES ----------------
+
         self.bp.route("/login", methods=["GET", "POST"])(
             self.controller.login
         )
@@ -25,9 +76,8 @@ class AuthRoutes:
             self.controller.logout
         )
 
-        
-
         # ---------------- RESET FLOW ----------------
+
         self.bp.route("/forgot-password", methods=["GET", "POST"])(
             self.controller.forgot_password
         )
@@ -37,6 +87,7 @@ class AuthRoutes:
         )
 
         # ---------------- OTHER PAGES ----------------
+
         self.bp.route("/home")(
             self.controller.home
         )
@@ -44,7 +95,29 @@ class AuthRoutes:
         self.bp.route("/contact")(
             self.controller.contact
         )
-        self.bp.route('/logout')(self.controller.logout)
-        self.bp.route('/admin_dashboard')(self.controller.admin_dashboard)
-        self.bp.route('/customer_dashboard')(self.controller.customer_dashboard)
+
+        self.bp.route("/admin_dashboard")(
+            self.controller.admin_dashboard
+        )
+
+        self.bp.route("/customer_dashboard")(
+            self.controller.customer_dashboard
+        )
+        # ---------------- PROFILE ROUTES ----------------
+
+        self.bp.route("/profile", methods=["GET"])(
+            self.controller.profile
+)
+
+        self.bp.route("/edit-profile", methods=["GET", "POST"])(
+            self.controller.edit_profile
+)
+
+        self.bp.route("/change-password", methods=["GET", "POST"])(
+            self.controller.change_password
+)
+
+        self.bp.route("/upload-photo", methods=["POST"])(
+            self.controller.upload_photo
+)
         return self.bp

@@ -21,3 +21,4 @@ User Story 2: View Profile
 
 ## Routes
 - /change-password (GET, POST)
+- /upload-photo (POST)

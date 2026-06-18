@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 from flask import render_template, request, redirect, url_for, session, flash
 from werkzeug.security import generate_password_hash
 from app.controllers.base_controller import BaseController
@@ -127,7 +126,6 @@ class AuthController(BaseController):
             token = str(uuid.uuid4())
 
             db = Database()
-
             db.execute(
 
                 "UPDATE users SET reset_token=%s WHERE email=%s",
@@ -233,7 +231,6 @@ class AuthController(BaseController):
     # ================= CONTACT =================
     def contact(self):
         return render_template("contact.html")
-=======
 import os
 from functools import wraps
 from flask import render_template, session, request, redirect, url_for, flash, jsonify
@@ -924,4 +921,3 @@ class AuthController:
             return jsonify({"wishlisted": False, "wishlist_count": count})
         wishlisted = Wishlist.is_wishlisted(mysql, user["id"], product_id)
         return jsonify({"wishlisted": wishlisted, "wishlist_count": count})
->>>>>>> 339f6d51fc6700d7bc61af782186f4ccfaac1b31

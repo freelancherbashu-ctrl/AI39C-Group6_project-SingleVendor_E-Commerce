@@ -1,40 +1,4 @@
 <!DOCTYPE html>
-<<<<<<< HEAD
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>MeroPasal</title>
-
-    <!-- GOOGLE FONT -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-    <!-- GLOBAL CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/nav.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/foot.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/fla.css') }}">
-
-    {% block extra_css %}{% endblock %}
-
-</head>
-
-<body>
-
-    <!-- NAVBAR -->
-    {% include "includes/navbar.html" %}
-
-    <!-- FLASH MESSAGES -->
-    {% include "includes/flash_message.html" %}
-
-    <!-- PAGE CONTENT -->
-    <main>
-        {% block content %}{% endblock %}
-    </main>
-
-    <!-- FOOTER -->
-    {% include "includes/footer.html" %}
-=======
 <html data-theme="light">
 <head>
     <title>{% block title %}MeroPasal{% endblock %}</title>
@@ -201,7 +165,6 @@ document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closePDModal();
 });
 </script>
->>>>>>> 339f6d51fc6700d7bc61af782186f4ccfaac1b31
 
 </body>
 </html>

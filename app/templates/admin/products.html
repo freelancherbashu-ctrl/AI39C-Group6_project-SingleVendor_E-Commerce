@@ -57,7 +57,13 @@
         <td><strong>{{ p.name }}</strong></td>
         <td>{{ p.category.name if p.category else '-' }}</td>
         <td>Rs. {{ '%.2f'|format(p.price) }}</td>
-        <td class="{% if p.stock <= 5 %}prod-stock-low{% endif %}">{{ p.stock }}</td>
+        <td class="{% if p.stock <= 5 %}prod-stock-low{% endif %}">
+          {{ p.stock }}
+          <span class="prod-stock-quick">
+            <a href="#" class="prod-stock-btn" data-pid="{{ p.id }}" data-delta="1" title="+1">+</a>
+            <a href="#" class="prod-stock-btn" data-pid="{{ p.id }}" data-delta="-1" title="-1">-</a>
+          </span>
+        </td>
         <td>
           {% if p.is_active %}
             <span class="prod-badge prod-badge-active">Active</span>
@@ -93,6 +99,13 @@
   {% endif %}
 </div>
 </form>
+
+{# Hidden stock-adjust forms, submitted via JS #}
+{% for p in products %}
+<form method="post" action="{{ url_for('admin.adjust_stock', pid=p.id) }}" id="prodStock{{ p.id }}" style="display:none">
+  <input type="hidden" name="delta" value="0">
+</form>
+{% endfor %}
 {% endblock %}
 
 {% block page_js %}

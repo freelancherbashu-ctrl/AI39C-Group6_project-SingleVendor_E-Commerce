@@ -20,3 +20,4 @@ User Story 2: View Profile
 - AC4: Data matches database
 
 ## Routes
+- /change-password (GET, POST)

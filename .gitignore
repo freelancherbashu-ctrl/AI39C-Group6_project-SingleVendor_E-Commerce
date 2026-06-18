@@ -49,3 +49,8 @@ env/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Logs and database
+*.log
+*.sqlite
+*.db

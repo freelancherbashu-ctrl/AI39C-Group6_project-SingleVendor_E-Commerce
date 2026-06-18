@@ -66,5 +66,24 @@
       }
     });
   }
+  
+  // Bulk: select-all + confirm
+  const checkAll = document.getElementById("prodCheckAll");
+  if (checkAll) {
+    checkAll.addEventListener("change", () => {
+      document.querySelectorAll(".prod-row-check").forEach(c => { c.checked = checkAll.checked; });
+    });
+  }
+  const bulkForm = document.getElementById("prodBulkForm");
+  if (bulkForm) {
+    bulkForm.addEventListener("submit", (e) => {
+      const checked = bulkForm.querySelectorAll(".prod-row-check:checked").length;
+      if (checked === 0) { e.preventDefault(); alert("Select at least one product."); return; }
+      const action = bulkForm.querySelector("[name=action]").value;
+      if (action === "delete" && !confirm("Delete " + checked + " product(s)?")) {
+        e.preventDefault();
+      }
+    });
+  }
 
 })();

@@ -124,6 +124,39 @@ def delete_product(pid):
     flash("Product deleted.", "info")
     return redirect(url_for("admin.products"))
 
+@admin_bp.route("/products/bulk", methods=["POST"])
+def bulk_products():
+    action = request.form.get("action")
+    ids = request.form.getlist("ids", type=int)
+    if not ids:
+        flash("No products selected.", "warning")
+        return redirect(url_for("admin.products"))
+
+    items = Product.query.filter(Product.id.in_(ids)).all()
+    count = 0
+    if action == "activate":
+        for p in items:
+            p.is_active = True
+            count += 1
+        msg = f"Activated {count} product(s)."
+    elif action == "deactivate":
+        for p in items:
+            p.is_active = False
+            count += 1
+        msg = f"Deactivated {count} product(s)."
+    elif action == "delete":
+        for p in items:
+            delete_product_image(p.image)
+            db.session.delete(p)
+            count += 1
+        msg = f"Deleted {count} product(s)."
+    else:
+        flash("Unknown action.", "danger")
+        return redirect(url_for("admin.products"))
+
+    db.session.commit()
+    flash(msg, "success")
+    return redirect(url_for("admin.products"))
 
 # ===== CATEGORIES =====
 @admin_bp.route("/categories", methods=["GET", "POST"])

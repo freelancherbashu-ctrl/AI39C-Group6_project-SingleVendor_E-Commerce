@@ -88,3 +88,10 @@
 
 /* Small logo in topbar */
 .admin-user-logo { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; background: #111827; padding: 2px; }
+
+/* Loading spinner on buttons */
+.btn-loading { position: relative; pointer-events: none; opacity: 0.7; }
+.btn-loading::after { content: ''; position: absolute; right: 12px; top: 50%; width: 14px; height: 14px; margin-top: -7px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: btnSpin 0.6s linear infinite; }
+.btn-loading-light::after { border: 2px solid rgba(0,0,0,0.15); border-top-color: #374151; }
+@keyframes btnSpin { to { transform: rotate(360deg); } }
+.btn-loading { padding-right: 36px !important; }

@@ -38,25 +38,25 @@
     <!-- ACTION CARDS -->
     <div class="profile-actions-grid">
         <button class="profile-action-card" onclick="openEditModal()">
-            <span class="action-icon">✏️</span>
+            <span class="action-icon"></span>
             <span class="action-label">Edit Profile</span>
             <span class="action-sub">Update name &amp; email</span>
         </button>
 
         <button class="profile-action-card" onclick="openPwdModal()">
-            <span class="action-icon">🔒</span>
+            <span class="action-icon"></span>
             <span class="action-label">Change Password</span>
             <span class="action-sub">Update your password</span>
         </button>
 
         <a href="{{ url_for('auth.view_my_orders') }}" class="profile-action-card">
-            <span class="action-icon">📦</span>
+            <span class="action-icon"></span>
             <span class="action-label">My Orders</span>
             <span class="action-sub">View order history</span>
         </a>
 
         <a href="{{ url_for('auth.logout') }}" class="profile-action-card danger">
-            <span class="action-icon">🚪</span>
+            <span class="action-icon"></span>
             <span class="action-label">Log Out</span>
             <span class="action-sub">Sign out of account</span>
         </a>
@@ -69,7 +69,7 @@
 <div id="editModal" class="pmp-backdrop" onclick="closeEditModal(event)">
     <div class="pmp-box">
         <div class="pmp-head">
-            <h3>✏️ Edit Profile</h3>
+            <h3> Edit Profile</h3>
             <button class="pmp-x" onclick="closeEditModal()">&times;</button>
         </div>
         <form method="POST" action="{{ url_for('auth.edit_profile') }}">
@@ -95,7 +95,7 @@
 <div id="pwdModal" class="pmp-backdrop" onclick="closePwdModal(event)">
     <div class="pmp-box">
         <div class="pmp-head">
-            <h3>🔒 Change Password</h3>
+            <h3> Change Password</h3>
             <button class="pmp-x" onclick="closePwdModal()">&times;</button>
         </div>
         <form method="POST" action="{{ url_for('auth.change_password') }}">
@@ -126,49 +126,3 @@
 
 <style>
 /* Profile action card as button */
-button.profile-action-card{
-    background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:1.1rem;
-    display:flex;flex-direction:column;align-items:flex-start;gap:.2rem;
-    cursor:pointer;text-align:left;width:100%;transition:box-shadow .15s,border-color .15s;
-}
-button.profile-action-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.08);border-color:#d1d5db;}
-
-/* Modal backdrop */
-.pmp-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.45);backdrop-filter:blur(3px);
-    display:none;align-items:center;justify-content:center;z-index:900;padding:1rem;}
-.pmp-backdrop.open{display:flex;}
-.pmp-box{background:#fff;border-radius:14px;width:100%;max-width:420px;
-    box-shadow:0 20px 60px rgba(0,0,0,.18);animation:pmpUp .2s ease;}
-@keyframes pmpUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
-.pmp-head{display:flex;align-items:center;justify-content:space-between;
-    padding:1.1rem 1.4rem;border-bottom:1px solid #f1f5f9;}
-.pmp-head h3{margin:0;font-size:.97rem;font-weight:700;color:#1e293b;}
-.pmp-x{background:none;border:none;font-size:1.4rem;color:#94a3b8;cursor:pointer;line-height:1;}
-.pmp-x:hover{color:#475569;}
-.pmp-body{padding:1.3rem 1.4rem;display:flex;flex-direction:column;gap:.9rem;}
-.pmp-foot{display:flex;justify-content:flex-end;gap:.5rem;
-    padding:.9rem 1.4rem;border-top:1px solid #f1f5f9;}
-.pmp-btn{padding:.45rem 1.1rem;border:1px solid #e2e8f0;border-radius:7px;
-    background:#fff;font-size:.86rem;cursor:pointer;color:#374151;}
-.pmp-btn:hover{background:#f1f5f9;}
-.pmp-btn.primary{background:#4f46e5;color:#fff;border-color:#4f46e5;font-weight:600;}
-.pmp-btn.primary:hover{background:#4338ca;}
-.pfg{display:flex;flex-direction:column;gap:.3rem;}
-.pfg label{font-size:.82rem;font-weight:600;color:#374151;}
-.pfg input{padding:.5rem .75rem;border:1px solid #e2e8f0;border-radius:7px;
-    font-size:.9rem;color:#1e293b;outline:none;width:100%;box-sizing:border-box;}
-.pfg input:focus{border-color:#818cf8;box-shadow:0 0 0 3px #818cf820;}
-</style>
-
-<script>
-function openEditModal()  { document.getElementById('editModal').classList.add('open'); }
-function closeEditModal(e){ if(e && e.target !== document.getElementById('editModal')) return;
-                            document.getElementById('editModal').classList.remove('open'); }
-function openPwdModal()   { document.getElementById('pwdModal').classList.add('open'); }
-function closePwdModal(e) { if(e && e.target !== document.getElementById('pwdModal')) return;
-                            document.getElementById('pwdModal').classList.remove('open'); }
-document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { closeEditModal(); closePwdModal(); }
-});
-
-

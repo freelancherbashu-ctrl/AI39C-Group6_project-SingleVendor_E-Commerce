@@ -63,3 +63,10 @@
 .ord-total-row td { border-top:2px solid #ddd; font-size:15px; }
 
 .ord-muted { color:#888; }
+/* Filter bar + pagination */
+.ord-filter-bar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; padding:12px; background:#fff; border-radius:8px; margin-bottom:14px; box-shadow:0 1px 3px rgba(0,0,0,.05); }
+.ord-filter-bar input[type=text] { padding:6px 10px; border:1px solid #d1d5db; border-radius:5px; font-size:13px; min-width:260px; }
+.ord-pagination { display:flex; justify-content:center; align-items:center; gap:14px; padding:14px; font-size:14px; color:#555; }
+.ord-pagination a { color:#1d4ed8; text-decoration:none; padding:5px 10px; border:1px solid #d1d5db; border-radius:5px; }
+.ord-pagination a:hover { background:#eff6ff; }
+.ord-btn-ghost { background:transparent; color:#666; border:1px dashed #ccc; }

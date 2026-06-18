@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from app.models.database import db
 from app.models.product_models import Product, Category, Order, OrderItem
 from app.models.settings_model import Setting
@@ -212,11 +212,28 @@ def delete_category(cid):
 @admin_bp.route("/orders")
 def orders():
     status = request.args.get("status")
+    q = request.args.get("q", "").strip()
+    page = request.args.get("page", 1, type=int)
+
     query = Order.query
     if status in ("pending", "processing", "completed", "cancelled"):
         query = query.filter_by(status=status)
-    items = query.order_by(Order.created_at.desc()).all()
-    return render_template("admin/orders.html", orders=items, active_status=status)
+    if q:
+        like = f"%{q}%"
+        query = query.filter(or_(
+            Order.customer_name.ilike(like),
+            Order.customer_email.ilike(like),
+            Order.customer_phone.ilike(like),
+        ))
+
+    pagination = query.order_by(Order.created_at.desc()).paginate(
+        page=page, per_page=15, error_out=False)
+
+    return render_template("admin/orders.html",
+                           orders=pagination.items,
+                           pagination=pagination,
+                           active_status=status,
+                           q=q)
 
 
 @admin_bp.route("/orders/<int:oid>")

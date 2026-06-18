@@ -9,6 +9,9 @@ def create_app(config_name="default"):
 
     db.init_app(app)
 
+    # Import models so SQLAlchemy knows about them
+    from app.models import settings_model  # noqa: F401
+
     from app.models import user_models
     from app.models import product_models
 

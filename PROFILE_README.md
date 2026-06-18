@@ -14,3 +14,4 @@ User Story 2: View Profile
 - MySQL
 
 ## Acceptance Criteria
+- AC1: Profile shows name, email, photo

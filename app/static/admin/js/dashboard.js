@@ -24,4 +24,39 @@
     requestAnimationFrame(step);
   });
 
+// ---- 7-day sales chart ----
+  const canvas = document.getElementById("dashSalesChart");
+  if (canvas && typeof Chart !== "undefined") {
+    fetch("/admin/api/sales-chart")
+      .then((r) => r.json())
+      .then((data) => {
+        new Chart(canvas, {
+          type: "line",
+          data: {
+            labels: data.labels,
+            datasets: [{
+              label: "Revenue (Rs.)",
+              data: data.values,
+              borderColor: "#1d4ed8",
+              backgroundColor: "rgba(29, 78, 216, 0.12)",
+              borderWidth: 2,
+              tension: 0.3,
+              fill: true,
+              pointRadius: 4,
+              pointBackgroundColor: "#1d4ed8",
+            }],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { beginAtZero: true, ticks: { callback: (v) => "Rs. " + v.toLocaleString() } },
+            },
+          },
+        });
+      })
+      .catch((err) => console.warn("Sales chart load failed:", err));
+  }
+  
 })();

@@ -8,3 +8,5 @@ User Story 2: View Profile
 - Edit Profile
 - Change Password
 - Upload Photo
+
+## Tech Stack

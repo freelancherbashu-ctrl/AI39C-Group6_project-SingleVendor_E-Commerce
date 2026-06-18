@@ -10,3 +10,4 @@ User Story 2: View Profile
 - Upload Photo
 
 ## Tech Stack
+- Flask

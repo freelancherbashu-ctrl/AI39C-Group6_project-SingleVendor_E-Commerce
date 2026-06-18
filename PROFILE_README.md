@@ -2,3 +2,5 @@
 
 User Story 2: View Profile
 
+
+## Features

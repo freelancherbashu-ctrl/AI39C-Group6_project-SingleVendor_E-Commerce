@@ -7,3 +7,4 @@ User Story 2: View Profile
 - View Profile
 - Edit Profile
 - Change Password
+- Upload Photo

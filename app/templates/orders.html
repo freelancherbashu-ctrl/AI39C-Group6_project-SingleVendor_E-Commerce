@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}My Orders - ShopOne{% endblock %}
+
+{% block content %}
+<h1>My Orders</h1>
+
+<div class="card">
+    {% if recent_orders %}
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in recent_orders %}
+                <tr>
+                    <td>#{{ order.id }}</td>
+                    <td>${{ "%.2f"|format(order.total_amount) }}</td>
+                    <td><span class="status status-{{ order.status }}">{{ order.status }}</span></td>
+                    <td>{{ order.created_at }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>You haven't placed any orders yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

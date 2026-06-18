@@ -11,9 +11,9 @@ class Database:
                 database=config.MYSQL_DATABASE,
                 cursorclass=pymysql.cursors.DictCursor
             )
-            print("✅ Database connected successfully")
+            print("Database connected successfully")
         except Exception as e:
-            print(f"❌ Connection failed: {e}")
+            print(f"Connection failed: {e}")
 
     def fetch_one(self, query, params=None):
         with self.connection.cursor() as cursor:

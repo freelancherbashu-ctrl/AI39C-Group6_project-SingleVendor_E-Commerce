@@ -8,18 +8,18 @@
 <section class="auth-page">
     <div class="auth-card">
 
-        <div class="auth-logo">🛍️</div>
+        <div class="auth-logo"></div>
         <h1>Welcome Back</h1>
 
 
         <a href="{{ url_for('google.login') }}" class="google-btn">
             <img src="https://developers.google.com/identity/images/g-logo.png" width="18">
-            Continue with Google
+            Continue with Google:
         </a>
 
         <div class="divider">or</div>
 
-        <p class="auth-sub">Log in to your MeroPasal account</p>
+        <p class="auth-sub">Login to your MeroPasal account</p>
 
         <form method="POST" action="{{ url_for('auth.login') }}">
 

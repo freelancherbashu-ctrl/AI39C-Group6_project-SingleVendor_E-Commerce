@@ -87,3 +87,15 @@
   }
 
 })();
+  // Quick stock +/-
+  document.querySelectorAll(".prod-stock-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      const pid = btn.dataset.pid;
+      const delta = btn.dataset.delta;
+      const form = document.getElementById("prodStock" + pid);
+      if (!form) return;
+      form.querySelector("[name=delta]").value = delta;
+      form.submit();
+    });
+  });

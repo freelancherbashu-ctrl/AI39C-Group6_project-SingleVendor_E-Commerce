@@ -1,3 +1,4 @@
+# Handles all raw SQL connections and queries for the MeroPasal app
 import pymysql
 import config
 

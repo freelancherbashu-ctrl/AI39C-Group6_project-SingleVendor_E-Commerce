@@ -1,39 +1,89 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
 
-{% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/regist.css') }}">
-{% endblock %}
+<head>
 
-{% block content %}
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Register - MeroPasal</title>
+
+    <link rel="stylesheet"
+    href="{{ url_for('static', filename='css/regist.css') }}">
+
+</head>
+
+<body>
 
 <div class="register-wrapper">
 
     <!-- LEFT SIDE -->
+
     <div class="left-panel">
 
-        <img src="{{ url_for('static', filename='images/logo.png') }}" class="logo">
+        <img src="{{ url_for(
+        'static',
+        filename='images/logo.png'
+        ) }}" class="logo">
 
         <h1>MeroPasal</h1>
-        <p>Create your account and start shopping</p>
+
+        <p>
+
+            Create your account and start shopping
+
+        </p>
 
     </div>
 
     <!-- RIGHT SIDE -->
+
     <div class="right-panel">
 
-        <form method="POST" class="register-form">
+        <form method="POST"
+        class="register-form">
 
-            <h2>Create Account</h2>
+            <h2>
 
-            <input type="text" name="name" placeholder="Full Name" required>
-            <input type="email" name="email" placeholder="Email" required>
-            <input type="password" name="password" placeholder="Password (min 6 chars)" required>
+                Create Account
 
-            <button type="submit">Register</button>
+            </h2>
+
+            <input type="text"
+            name="name"
+            placeholder="Full Name"
+            required>
+
+            <input type="email"
+            name="email"
+            placeholder="Email"
+            required>
+
+            <input type="password"
+            name="password"
+            placeholder="Password (min 6 chars)"
+            required>
+
+            <button type="submit">
+
+                Register
+
+            </button>
 
             <div class="login-link">
+
                 Already have an account?
-                <a href="{{ url_for('authroutes.login') }}">Login</a>
+
+                <a href="{{ url_for(
+                'authroutes.login'
+                ) }}">
+
+                    Login
+
+                </a>
+
             </div>
 
         </form>
@@ -42,4 +92,6 @@
 
 </div>
 
-{% endblock %}
+</body>
+
+</html>

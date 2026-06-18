@@ -12,3 +12,5 @@ User Story 2: View Profile
 ## Tech Stack
 - Flask
 - MySQL
+
+## Acceptance Criteria

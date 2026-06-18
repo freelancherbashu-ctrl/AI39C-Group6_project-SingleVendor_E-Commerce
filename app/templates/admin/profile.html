@@ -1,0 +1,68 @@
+{% extends "admin/admin_layout.html" %}
+{% block title %}My Profile - meropasal Admin{% endblock %}
+{% block heading %}My Profile{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='admin/css/profile.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="prof-grid">
+
+  <div class="prof-card prof-avatar-card">
+    <div class="prof-avatar-wrap">
+      {% if profile.photo %}
+        <img src="{{ url_for('static', filename='admin/uploads/' ~ profile.photo) }}" class="prof-avatar">
+      {% else %}
+        <div class="prof-avatar prof-avatar-placeholder">{{ profile.name[0]|upper }}</div>
+      {% endif %}
+    </div>
+    <h3>{{ profile.name }}</h3>
+    <p class="prof-role">{{ profile.role }}</p>
+    <p class="prof-email">{{ profile.email }}</p>
+  </div>
+
+  <div class="prof-card">
+    <h3>Edit Profile</h3>
+    <form method="post" enctype="multipart/form-data" class="prof-form">
+      <div class="prof-row">
+        <label>Profile Photo</label>
+        <input type="file" name="photo" accept="image/*">
+        <small>JPG, PNG, max 2MB</small>
+      </div>
+
+      <div class="prof-row">
+        <label>Full Name</label>
+        <input type="text" name="name" value="{{ profile.name }}" required>
+      </div>
+
+      <div class="prof-row">
+        <label>Email Address</label>
+        <input type="email" name="email" value="{{ profile.email }}" required>
+      </div>
+
+      <h4>Change Password</h4>
+      <div class="prof-row">
+        <label>Current Password</label>
+        <input type="password" name="current_password" placeholder="Enter current password">
+      </div>
+
+      <div class="prof-row">
+        <label>New Password</label>
+        <input type="password" name="new_password" placeholder="Minimum 8 characters">
+      </div>
+
+      <div class="prof-row">
+        <label>Confirm New Password</label>
+        <input type="password" name="confirm_password" placeholder="Re-enter new password">
+      </div>
+
+      <div class="prof-actions">
+        <button class="prof-btn prof-btn-primary">Save Changes</button>
+        <a class="prof-btn prof-btn-light" href="{{ url_for('admin.admin_index') }}">Cancel</a>
+      </div>
+    </form>
+  </div>
+
+</div>
+{% endblock %}

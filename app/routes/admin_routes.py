@@ -341,3 +341,22 @@ def settings():
         "currency":            Setting.get("currency", "Rs."),
     }
     return render_template("admin/settings.html", settings=current)
+
+# =========================================================
+# PROFILE (UI only — teammate's auth module will wire this)
+# =========================================================
+@admin_bp.route("/profile", methods=["GET", "POST"])
+def profile():
+    if request.method == "POST":
+        # TODO: integrate with auth teammate's user model
+        flash("Profile saved. (Auth backend pending teammate's module.)", "success")
+        return redirect(url_for("admin.profile"))
+
+    # Placeholder profile data until auth teammate provides real session user
+    profile_data = {
+        "name": "Bipin Thapa",
+        "email": "admin@meropasal.local",
+        "photo": None,
+        "role": "Administrator",
+    }
+    return render_template("admin/profile.html", profile=profile_data)

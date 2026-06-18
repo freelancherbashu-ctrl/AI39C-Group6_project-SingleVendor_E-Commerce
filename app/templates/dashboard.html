@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - ShopOne{% endblock %}
+
+{% block content %}
+<h1>Welcome back, {{ customer.full_name }}</h1>
+
+<div class="dashboard-grid">
+    <div class="card">
+        <h2>Your Profile</h2>
+        <p><strong>Email:</strong> {{ customer.email }}</p>
+        <p><strong>Phone:</strong> {{ customer.phone or "Not provided" }}</p>
+        <p><strong>Address:</strong> {{ customer.address or "Not provided" }}</p>
+        <a class="btn btn-outline" href="{{ url_for('customer.profile') }}">Edit Profile</a>
+    </div>
+
+    <div class="card">
+        <h2>Order Summary</h2>
+        <p class="stat">{{ order_count }}</p>
+        <p>Total orders placed</p>
+        <a class="btn btn-outline" href="{{ url_for('customer.orders') }}">View All Orders</a>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Recent Orders</h2>
+    {% if recent_orders %}
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in recent_orders %}
+                <tr>
+                    <td>#{{ order.id }}</td>
+                    <td>${{ "%.2f"|format(order.total_amount) }}</td>
+                    <td><span class="status status-{{ order.status }}">{{ order.status }}</span></td>
+                    <td>{{ order.created_at }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>You haven't placed any orders yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

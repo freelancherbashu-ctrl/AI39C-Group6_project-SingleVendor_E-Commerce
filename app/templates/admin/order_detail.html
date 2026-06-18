@@ -1,5 +1,5 @@
 {% extends "admin/admin_layout.html" %}
-{% block title %}Order #{{ order.id }} · meropasal Admin{% endblock %}
+{% block title %}Order #{{ order.id }} - meropasal Admin{% endblock %}
 {% block heading %}Order #{{ order.id }}{% endblock %}
 
 {% block page_css %}
@@ -7,66 +7,74 @@
 {% endblock %}
 
 {% block content %}
-<a class="ord-btn ord-btn-light ord-back-btn" href="{{ url_for('admin.orders') }}">← Back to Orders</a>
-
-<div class="ord-detail-grid">
-
-  <section class="ord-panel">
-    <h3>Customer Information</h3>
-    <dl class="ord-info-list">
-      <dt>Name</dt><dd>{{ order.customer_name }}</dd>
-      <dt>Email</dt><dd>{{ order.customer_email or '—' }}</dd>
-      <dt>Phone</dt><dd>{{ order.customer_phone or '—' }}</dd>
-      <dt>Address</dt><dd>{{ order.address or '—' }}</dd>
-      <dt>Order Date</dt><dd>{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</dd>
-      <dt>Current Status</dt><dd><span class="ord-badge ord-badge-{{ order.status }}">{{ order.status }}</span></dd>
-    </dl>
-  </section>
-
-  <section class="ord-panel">
-    <h3>Update Status</h3>
-    <form method="post" action="{{ url_for('admin.update_order_status', oid=order.id) }}" class="ord-status-form">
-      <select name="status">
-        <option value="pending"    {% if order.status=='pending' %}selected{% endif %}>Pending</option>
-        <option value="processing" {% if order.status=='processing' %}selected{% endif %}>Processing</option>
-        <option value="completed"  {% if order.status=='completed' %}selected{% endif %}>Completed</option>
-        <option value="cancelled"  {% if order.status=='cancelled' %}selected{% endif %}>Cancelled</option>
-      </select>
-      <button class="ord-btn ord-btn-primary">Update Status</button>
-    </form>
-    <hr class="ord-divider">
-    <h4>Danger Zone</h4>
-    <form method="post" action="{{ url_for('admin.delete_order', oid=order.id) }}" class="ord-delete-form" data-order="{{ order.id }}">
-      <button class="ord-btn ord-btn-danger">🗑 Delete Order Permanently</button>
-    </form>
-  </section>
-
+<div class="ord-detail-actions no-print">
+  <a class="ord-btn ord-btn-light" href="{{ url_for('admin.orders') }}">Back to Orders</a>
+ <a class="ord-btn ord-btn-primary" href="{{ url_for('admin.order_print', oid=order.id) }}" target="_blank">Print Receipt</a>
 </div>
 
-<section class="ord-panel">
-  <h3>Order Items</h3>
-  {% if order.items %}
-  <table class="ord-table">
-    <thead><tr><th>Product</th><th>Qty</th><th>Unit Price</th><th>Subtotal</th></tr></thead>
-    <tbody>
-      {% for it in order.items %}
-      <tr>
-        <td>{{ it.product_name or (it.product.name if it.product else '—') }}</td>
-        <td>{{ it.quantity }}</td>
-        <td>Rs. {{ '%.2f'|format(it.price) }}</td>
-        <td>Rs. {{ '%.2f'|format(it.price * it.quantity) }}</td>
-      </tr>
-      {% endfor %}
-      <tr class="ord-total-row">
-        <td colspan="3" style="text-align:right"><strong>Total</strong></td>
-        <td><strong>Rs. {{ '%.2f'|format(order.total_amount) }}</strong></td>
-      </tr>
-    </tbody>
-  </table>
-  {% else %}<p class="ord-muted">No items recorded for this order.</p>{% endif %}
-</section>
-{% endblock %}
+<div class="ord-receipt">
+  <div class="ord-receipt-header">
+    <div>
+      <h2>meropasal</h2>
+      <p class="ord-muted">Order Receipt</p>
+    </div>
+    <div class="ord-receipt-meta">
+      <div><strong>Order #{{ order.id }}</strong></div>
+      <div>{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+      <div><span class="ord-badge ord-badge-{{ order.status }}">{{ order.status|upper }}</span></div>
+    </div>
+  </div>
 
-{% block page_js %}
-<script src="{{ url_for('static', filename='admin/js/orders.js') }}"></script>
+  <div class="ord-receipt-section">
+    <h3>Customer Details</h3>
+    <p><strong>Name:</strong> {{ order.customer_name }}</p>
+    <p><strong>Email:</strong> {{ order.customer_email or '-' }}</p>
+    <p><strong>Phone:</strong> {{ order.customer_phone or '-' }}</p>
+    <p><strong>Address:</strong> {{ order.address or '-' }}</p>
+  </div>
+
+  <div class="ord-receipt-section">
+    <h3>Order Items</h3>
+    <table class="ord-table">
+      <thead>
+        <tr><th>Product</th><th>Quantity</th><th>Unit Price</th><th>Subtotal</th></tr>
+      </thead>
+      <tbody>
+        {% for item in order.items %}
+        <tr>
+          <td>{{ item.product_name }}</td>
+          <td>{{ item.quantity }}</td>
+          <td>Rs. {{ '%.2f'|format(item.price) }}</td>
+          <td>Rs. {{ '%.2f'|format(item.price * item.quantity) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr><td colspan="3" style="text-align:right"><strong>Total</strong></td><td><strong>Rs. {{ '%.2f'|format(order.total_amount) }}</strong></td></tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <div class="ord-receipt-footer">
+    <p class="ord-muted">Thank you for shopping at meropasal!</p>
+  </div>
+</div>
+
+<div class="ord-detail-actions no-print">
+  <form method="post" action="{{ url_for('admin.update_order_status', oid=order.id) }}" class="ord-status-form">
+    <label>Update Status:</label>
+    <select name="status">
+      <option value="pending" {% if order.status=='pending' %}selected{% endif %}>Pending</option>
+      <option value="processing" {% if order.status=='processing' %}selected{% endif %}>Processing</option>
+      <option value="completed" {% if order.status=='completed' %}selected{% endif %}>Completed</option>
+      <option value="cancelled" {% if order.status=='cancelled' %}selected{% endif %}>Cancelled</option>
+    </select>
+    <button class="ord-btn ord-btn-primary">Update</button>
+  </form>
+
+  <form method="post" action="{{ url_for('admin.delete_order', oid=order.id) }}" onsubmit="return confirm('Delete this order? This cannot be undone.')">
+    <button class="ord-btn ord-btn-danger">Delete Order</button>
+  </form>
+</div>
+
 {% endblock %}

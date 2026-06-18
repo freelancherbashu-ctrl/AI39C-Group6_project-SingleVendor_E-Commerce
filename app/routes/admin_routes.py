@@ -300,6 +300,11 @@ def order_detail(oid):
     order = Order.query.get_or_404(oid)
     return render_template("admin/order_detail.html", order=order)
 
+@admin_bp.route("/orders/<int:oid>/print")
+def order_print(oid):
+    order = Order.query.get_or_404(oid)
+    return render_template("admin/order_print.html", order=order)
+
 
 @admin_bp.route("/orders/<int:oid>/status", methods=["POST"])
 def update_order_status(oid):

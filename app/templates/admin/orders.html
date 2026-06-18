@@ -20,6 +20,10 @@
   <input type="text" name="q" value="{{ q }}" placeholder="Search by name / email / phone">
   <button class="ord-btn ord-btn-light">Search</button>
   {% if q %}<a class="ord-btn ord-btn-ghost" href="{{ url_for('admin.orders', status=active_status) }}">Clear</a>{% endif %}
+  <a class="ord-btn ord-btn-primary"
+     href="{{ url_for('admin.orders_export_csv', status=active_status, q=q) }}">
+    Download CSV
+  </a>
 </form>
 
 <div class="ord-panel">
@@ -54,7 +58,7 @@
     {% endif %}
   </div>
   {% endif %}
-  
+
   {% else %}
     <p class="ord-muted">No orders {% if active_status %}with status "{{ active_status }}"{% endif %}.</p>
   {% endif %}

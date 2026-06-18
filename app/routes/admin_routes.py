@@ -1,4 +1,6 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, abort
+import csv
+import io
+from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, Response
 from sqlalchemy import func, or_
 from app.models.database import db
 from app.models.product_models import Product, Category, Order, OrderItem
@@ -234,6 +236,44 @@ def orders():
                            pagination=pagination,
                            active_status=status,
                            q=q)
+
+@admin_bp.route("/orders/export.csv")
+def orders_export_csv():
+    from datetime import datetime
+
+    status = request.args.get("status")
+    q = request.args.get("q", "").strip()
+
+    query = Order.query
+    if status in ("pending", "processing", "completed", "cancelled"):
+        query = query.filter_by(status=status)
+    if q:
+        like = f"%{q}%"
+        query = query.filter(or_(
+            Order.customer_name.ilike(like),
+            Order.customer_email.ilike(like),
+            Order.customer_phone.ilike(like),
+        ))
+
+    rows = query.order_by(Order.created_at.desc()).all()
+
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(["Order ID", "Customer", "Email", "Phone",
+                     "Address", "Amount", "Status", "Created At"])
+    for o in rows:
+        writer.writerow([
+            o.id, o.customer_name, o.customer_email or "", o.customer_phone or "",
+            o.address or "", f"{o.total_amount:.2f}", o.status,
+            o.created_at.strftime("%Y-%m-%d %H:%M"),
+        ])
+
+    filename = f"orders_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.csv"
+    return Response(
+        buf.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
 
 
 @admin_bp.route("/orders/<int:oid>")

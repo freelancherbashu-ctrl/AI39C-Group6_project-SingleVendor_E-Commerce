@@ -18,6 +18,16 @@ def create_app(config_name="default"):
     from app.routes.admin_routes import admin_bp
     app.register_blueprint(admin_bp)
 
+    # Custom admin error pages
+    from flask import render_template
+    @app.errorhandler(404)
+    def admin_not_found(e):
+        return render_template("admin/404.html"), 404
+
+    @app.errorhandler(500)
+    def admin_server_error(e):
+        return render_template("admin/500.html"), 500
+    
     with app.app_context():
         db.create_all()
 

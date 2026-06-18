@@ -1,0 +1,10 @@
+{% extends "admin/admin_layout.html" %}
+{% block title %}Not Found - meropasal Admin{% endblock %}
+{% block heading %}404 - Page Not Found{% endblock %}
+{% block content %}
+<div class="admin-error-page">
+  <h1>404</h1>
+  <p>The admin page you requested does not exist.</p>
+  <a class="prod-btn prod-btn-primary" href="{{ url_for('admin.admin_index') }}">Back to Dashboard</a>
+</div>
+{% endblock %}

@@ -62,4 +62,4 @@ class CategoryController(BaseController):
             flash(f'Category "{category["name"]}" deleted!', 'success')
         else:
             flash('Category not found!', 'danger')
-        return redirect(url_for('category.categories_list'))
+        return redirect(url_for('category.categories_list'))    # Handle error when deleting category with products

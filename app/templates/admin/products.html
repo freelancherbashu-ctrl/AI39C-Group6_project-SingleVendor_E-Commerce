@@ -9,9 +9,15 @@
 {% block content %}
 <div class="prod-action-bar">
   <form method="get" class="prod-search-form">
-    <input type="text" name="q" id="prodSearch" value="{{ q }}" placeholder="🔍 Search products by name...">
-    <button class="prod-btn prod-btn-light">Search</button>
-    {% if q %}<a class="prod-btn prod-btn-ghost" href="{{ url_for('admin.products') }}">Clear</a>{% endif %}
+    <input type="text" name="q" id="prodSearch" value="{{ q }}" placeholder="Search by name...">
+    <select name="category_id">
+      <option value="">All categories</option>
+      {% for c in categories %}
+        <option value="{{ c.id }}" {% if selected_cat==c.id %}selected{% endif %}>{{ c.name }}</option>
+      {% endfor %}
+    </select>
+    <button class="prod-btn prod-btn-light">Filter</button>
+    {% if q or selected_cat %}<a class="prod-btn prod-btn-ghost" href="{{ url_for('admin.products') }}">Clear</a>{% endif %}
   </form>
   <a class="prod-btn prod-btn-primary" href="{{ url_for('admin.add_product') }}">+ Add Product</a>
 </div>
@@ -60,15 +66,15 @@
   {% if pagination and pagination.pages > 1 %}
   <div class="prod-pagination">
     {% if pagination.has_prev %}
-      <a href="{{ url_for('admin.products', page=pagination.prev_num, q=q) }}">Prev</a>
+      <a href="{{ url_for('admin.products', page=pagination.prev_num, q=q, category_id=selected_cat) }}">Prev</a>
     {% endif %}
     <span>Page {{ pagination.page }} of {{ pagination.pages }} ({{ pagination.total }} products)</span>
     {% if pagination.has_next %}
-      <a href="{{ url_for('admin.products', page=pagination.next_num, q=q) }}">Next</a>
+      <a href="{{ url_for('admin.products', page=pagination.next_num, q=q, category_id=selected_cat) }}">Next</a>
     {% endif %}
   </div>
   {% endif %}
-  
+
   {% else %}
     <div class="prod-empty">
       <p>No products found.</p>

@@ -85,3 +85,7 @@
 .prod-pagination { display:flex; justify-content:center; align-items:center; gap:14px; padding:14px; font-size:14px; color:#555; }
 .prod-pagination a { color:#1d4ed8; text-decoration:none; padding:5px 10px; border:1px solid #d1d5db; border-radius:5px; }
 .prod-pagination a:hover { background:#eff6ff; }
+
+/* Filter form */
+.prod-search-form { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.prod-search-form input[type=text], .prod-search-form select { padding:7px 10px; border:1px solid #d1d5db; border-radius:6px; font-size:13px; }

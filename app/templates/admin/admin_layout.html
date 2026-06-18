@@ -36,6 +36,9 @@
       <a href="{{ url_for('admin.settings') }}" class="{% if request.endpoint=='admin.settings' %}active{% endif %}">
         <span>⚙️</span> Settings
       </a>
+      <a href="{{ url_for('admin.profile') }}" class="{% if request.endpoint=='admin.profile' %}active{% endif %}">
+        <span>👤</span> Profile
+      </a>
       <a href="/" class="admin-nav-muted">&larr; Back to Store</a>
     </nav>
   </aside>

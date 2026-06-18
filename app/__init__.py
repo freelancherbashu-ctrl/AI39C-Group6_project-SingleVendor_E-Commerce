@@ -1,23 +1,4 @@
-<<<<<<< HEAD
-from flask import Flask
-import config
 
-from app.models.database import Database
-from app.routes.authroutes import AuthRoutes
-
-def create_app():
-
-    app = Flask(__name__)
-    app.secret_key = config.SECRET_KEY
-
-    # create tables automatically
-    with app.app_context():
-        Database.create_tables()
-
-    # register routes
-    auth_routes = AuthRoutes()
-    app.register_blueprint(auth_routes.register())
-=======
 import os
 from flask import Flask
 from app.extensions import mysql, mail
@@ -64,6 +45,5 @@ def create_app():
         # Seed default data on first run
         Category.seed(mysql)
         Product.seed(mysql)
->>>>>>> 339f6d51fc6700d7bc61af782186f4ccfaac1b31
 
     return app

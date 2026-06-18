@@ -1,14 +1,3 @@
-<<<<<<< HEAD
-SECRET_KEY = 'random-secret-key'
-
-# -----------------------
-# DATABASE CONFIG
-# -----------------------
-MYSQL_HOST = 'localhost'
-MYSQL_USER = 'root'
-MYSQL_PASSWORD = 'root@2'
-MYSQL_DATABASE = 'meropasal'
-=======
 import os
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-change-in-production')
@@ -30,4 +19,3 @@ MAIL_DEFAULT_SENDER = ('MeroPasal', os.environ.get('MAIL_USERNAME', ''))
 # ── Google OAuth ───────────────────────────────────────────────────────────
 GOOGLE_OAUTH_CLIENT_ID     = os.environ.get('GOOGLE_CLIENT_ID',     '')
 GOOGLE_OAUTH_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '')
->>>>>>> 339f6d51fc6700d7bc61af782186f4ccfaac1b31

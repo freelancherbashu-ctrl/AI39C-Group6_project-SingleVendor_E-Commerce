@@ -47,7 +47,19 @@
     <header class="admin-topbar">
       <button class="admin-sidebar-toggle" id="adminSidebarToggle">=</button>
       <h2>{% block heading %}{% endblock %}</h2>
-      <div class="admin-user">Admin</div>
+      <div class="admin-user" id="adminUserMenu">
+        <button class="admin-user-trigger" id="adminUserTrigger">
+          <img src="{{ url_for('static', filename='admin/img/meropasal-logo.png') }}" class="admin-user-logo" alt="meropasal">
+          <span class="admin-user-name">meropasal</span>
+          <span class="admin-user-caret">▾</span>
+        </button>
+        <div class="admin-user-dropdown" id="adminUserDropdown">
+          <a href="{{ url_for('admin.profile') }}">👤 My Profile</a>
+          <a href="{{ url_for('admin.settings') }}">⚙️ Settings</a>
+          <div class="admin-user-divider"></div>
+          <a href="#" class="admin-user-logout">🚪 Logout</a>
+        </div>
+      </div>
     </header>
 
     {% with messages = get_flashed_messages(with_categories=true) %}

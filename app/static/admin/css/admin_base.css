@@ -70,3 +70,21 @@
 .admin-error-page { background:#fff; border-radius:10px; padding:60px 30px; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,.06); }
 .admin-error-page h1 { font-size:72px; margin:0; color:#e63946; }
 .admin-error-page p { font-size:16px; color:#555; margin:14px 0 24px; }
+
+/* Topbar profile dropdown */
+.admin-user { position: relative; }
+.admin-user-trigger { display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #e5e7eb; padding: 6px 12px; border-radius: 30px; cursor: pointer; font-size: 14px; color: #374151; transition: all 0.15s ease; }
+.admin-user-trigger:hover { background: #f9fafb; border-color: #d1d5db; }
+.admin-user-avatar { width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg, #1d4ed8, #3b82f6); color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+.admin-user-name { font-weight: 600; }
+.admin-user-caret { font-size: 11px; color: #6b7280; }
+.admin-user-dropdown { position: absolute; top: 100%; right: 0; margin-top: 6px; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.08); min-width: 200px; display: none; z-index: 1000; overflow: hidden; }
+.admin-user-dropdown.open { display: block; }
+.admin-user-dropdown a { display: block; padding: 10px 14px; color: #374151; text-decoration: none; font-size: 14px; }
+.admin-user-dropdown a:hover { background: #f3f4f6; }
+.admin-user-divider { height: 1px; background: #e5e7eb; margin: 4px 0; }
+.admin-user-logout { color: #dc2626 !important; }
+.admin-user-logout:hover { background: #fef2f2 !important; }
+
+/* Small logo in topbar */
+.admin-user-logo { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; background: #111827; padding: 2px; }

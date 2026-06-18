@@ -126,3 +126,5 @@
     grid-template-columns: 1fr;
   }
 }
+/* Logo as avatar */
+.prof-avatar-logo { background: linear-gradient(135deg, #1f2937, #111827); padding: 8px; object-fit: contain; }

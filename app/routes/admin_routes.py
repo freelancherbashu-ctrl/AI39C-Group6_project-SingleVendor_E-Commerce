@@ -354,9 +354,10 @@ def profile():
 
     # Placeholder profile data until auth teammate provides real session user
     profile_data = {
-        "name": "Bipin Thapa",
+        "name": "meropasal",
         "email": "admin@meropasal.local",
-        "photo": None,
-        "role": "Administrator",
+        "photo": "meropasal-logo.png",
+        "role": "Store Administrator",
     }
+    
     return render_template("admin/profile.html", profile=profile_data)

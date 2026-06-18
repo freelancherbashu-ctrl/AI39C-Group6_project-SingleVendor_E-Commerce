@@ -57,6 +57,18 @@
       {% endfor %}
     </tbody>
   </table>
+  {% if pagination and pagination.pages > 1 %}
+  <div class="prod-pagination">
+    {% if pagination.has_prev %}
+      <a href="{{ url_for('admin.products', page=pagination.prev_num, q=q) }}">Prev</a>
+    {% endif %}
+    <span>Page {{ pagination.page }} of {{ pagination.pages }} ({{ pagination.total }} products)</span>
+    {% if pagination.has_next %}
+      <a href="{{ url_for('admin.products', page=pagination.next_num, q=q) }}">Next</a>
+    {% endif %}
+  </div>
+  {% endif %}
+  
   {% else %}
     <div class="prod-empty">
       <p>No products found.</p>

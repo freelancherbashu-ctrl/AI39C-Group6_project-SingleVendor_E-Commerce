@@ -3,6 +3,7 @@ from sqlalchemy import func
 from app.models.database import db
 from app.models.product_models import Product, Category, Order, OrderItem
 from app.controllers.admin import save_product_image, delete_product_image
+from app.controllers.auth import admin_required
 
 admin_bp = Blueprint(
     "admin", __name__,
@@ -10,6 +11,12 @@ admin_bp = Blueprint(
     template_folder="../templates/admin",
 )
 
+# Apply auth gate to every admin route. No-op until auth teammate's
+# module is ready; flipping admin_required's body turns it on for all routes.
+@admin_bp.before_request
+@admin_required
+def _gate():
+    pass
 
 # ===== ADMIN HOME (admin_index) =====
 @admin_bp.route("/")

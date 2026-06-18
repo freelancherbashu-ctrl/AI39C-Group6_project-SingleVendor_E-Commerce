@@ -56,13 +56,13 @@
                 <span class="order-total-label">Order Total</span>
                 <span class="order-total">Rs. {{ "{:,.0f}".format(order.total_price) }}</span>
 
-                <button class="view-details-btn" onclick="openOrderModal({{ order.id }})">
+                <button class="view-details-btn" onclick="openOrderModal({ order})">
                     View Details →
                 </button>
 
                 {% if order.order_status == 'Pending' %}
                 <button class="cancel-order-btn"
-                    onclick="openCancelModal({{ order.id }})">Cancel Order</button>
+                    onclick="openCancelModal({ order})">Cancel Order</button>
                 {% endif %}
             </div>
 

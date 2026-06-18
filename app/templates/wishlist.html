@@ -25,15 +25,15 @@
         <div class="wishlist-card" id="wl-card-{{ product.id }}">
 
             <button class="wl-remove-btn" title="Remove from Wishlist"
-                    onclick="removeFromWishlist({{ product.id }})">✕</button>
+                    onclick="removeFromWishlist({ product})">✕</button>
 
-            <a href="javascript:void(0)" class="wl-image-link" onclick="openProductModal({{ product.id }})">
+            <a href="javascript:void(0)" class="wl-image-link" onclick="openProductModal({product})">
                 <img src="{{ product.image }}" alt="{{ product.name }}" class="wl-product-img">
             </a>
 
             <div class="wl-product-info">
                 <h3 class="wl-product-name">
-                    <a href="javascript:void(0)" onclick="openProductModal({{ product.id }})">{{ product.name }}</a>
+                    <a href="javascript:void(0)" onclick="openProductModal({ product})">{{ product.name }}</a>
                 </h3>
                 <p class="wl-price">
                     {% set sale = sale_map.get(product.id) if sale_map else None %}
@@ -49,7 +49,7 @@
                         <input type="hidden" name="quantity" value="1">
                         <button type="submit" class="btn wl-add-cart-btn">🛒 Add to Cart</button>
                     </form>
-                    <button class="btn wl-view-btn" onclick="openProductModal({{ product.id }})">View</button>
+                    <button class="btn wl-view-btn" onclick="openProductModal({product})">View</button>
                 </div>
             </div>
 
@@ -102,7 +102,7 @@ function showToast(message, type) {
     setTimeout(() => { toast.classList.remove("show"); setTimeout(() => { toast.style.display = "none"; }, 300); }, 2500);
 }
 
-updateHeaderWishlistBadge({{ wishlist_count }});
+updateHeaderWishlistBadge({ wishlist_count});
 </script>
 
 {% endblock %}

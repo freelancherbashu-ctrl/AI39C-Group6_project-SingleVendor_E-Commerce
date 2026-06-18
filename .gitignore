@@ -23,3 +23,8 @@ config.py
 
 # Logs
 *.log
+
+# Testing files
+.pytest_cache/
+.coverage
+htmlcov/

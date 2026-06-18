@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from flask import render_template, request, redirect, url_for, session, flash
 from werkzeug.security import generate_password_hash
 from app.controllers.base_controller import BaseController
@@ -231,6 +232,8 @@ class AuthController(BaseController):
     # ================= CONTACT =================
     def contact(self):
         return render_template("contact.html")
+=======
+>>>>>>> 09eb7a3dd660d3b5cfab0337a76069a630ad3f40
 import os
 from functools import wraps
 from flask import render_template, session, request, redirect, url_for, flash, jsonify

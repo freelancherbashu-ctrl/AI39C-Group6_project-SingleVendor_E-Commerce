@@ -43,19 +43,26 @@ def admin_index():
 @admin_bp.route("/products")
 def products():
     q = request.args.get("q", "").strip()
+    cat_id = request.args.get("category_id", type=int)
     page = request.args.get("page", 1, type=int)
     per_page = 10
 
     query = Product.query
     if q:
         query = query.filter(Product.name.ilike(f"%{q}%"))
+    if cat_id:
+        query = query.filter(Product.category_id == cat_id)
 
     pagination = (query.order_by(Product.created_at.desc())
                        .paginate(page=page, per_page=per_page, error_out=False))
+    categories = Category.query.order_by(Category.name).all()
+
     return render_template("admin/products.html",
                            products=pagination.items,
                            pagination=pagination,
-                           q=q)
+                           categories=categories,
+                           q=q,
+                           selected_cat=cat_id)
 
 
 @admin_bp.route("/products/add", methods=["GET", "POST"])

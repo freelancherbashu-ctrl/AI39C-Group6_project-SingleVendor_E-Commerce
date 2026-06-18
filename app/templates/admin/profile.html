@@ -11,11 +11,7 @@
 
   <div class="prof-card prof-avatar-card">
     <div class="prof-avatar-wrap">
-      {% if profile.photo %}
-        <img src="{{ url_for('static', filename='admin/uploads/' ~ profile.photo) }}" class="prof-avatar">
-      {% else %}
-        <div class="prof-avatar prof-avatar-placeholder">{{ profile.name[0]|upper }}</div>
-      {% endif %}
+      <img src="{{ url_for('static', filename='admin/img/meropasal-logo.png') }}" class="prof-avatar prof-avatar-logo">
     </div>
     <h3>{{ profile.name }}</h3>
     <p class="prof-role">{{ profile.role }}</p>

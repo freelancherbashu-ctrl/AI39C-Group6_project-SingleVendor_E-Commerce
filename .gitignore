@@ -54,3 +54,8 @@ desktop.ini
 *.log
 *.sqlite
 *.db
+
+# Uploads and temp
+static/uploads/
+temp/
+tmp/

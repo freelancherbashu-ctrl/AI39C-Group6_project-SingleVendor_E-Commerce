@@ -68,3 +68,8 @@ tmp/
 *.bak
 *.backup
 *.old
+
+# Testing files
+.pytest_cache/
+.coverage
+htmlcov/

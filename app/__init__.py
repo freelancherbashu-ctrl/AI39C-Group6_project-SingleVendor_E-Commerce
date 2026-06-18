@@ -1,13 +1,11 @@
 from flask import Flask
 from app.models.database import db
+from config import config
 
 
-def create_app():
+def create_app(config_name="default"):
     app = Flask(__name__)
-    app.config["SECRET_KEY"] = "change-this-secret"
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///meropasal.db"
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024
+    app.config.from_object(config[config_name])
 
     db.init_app(app)
 

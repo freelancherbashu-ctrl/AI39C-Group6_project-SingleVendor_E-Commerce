@@ -1,82 +1,47 @@
-from werkzeug.security import generate_password_hash, check_password_hash
 from app.models.base_model import BaseModel
 from app.models.database import Database
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 class User(BaseModel):
 
-    # ---------------- TABLE NAME ----------------
     @property
     def table(self):
         return "users"
 
-    # ---------------- INIT ----------------
     def __init__(self, name=None, email=None, password=None, role="user"):
-
         self.name = name
         self.email = email
         self.role = role
-        self.__password = None
+        self.password = password
 
-        if password:
-            self.set_password(password)
-
-    # ---------------- PASSWORD SET ----------------
-    def set_password(self, password):
-
-        self.__password = generate_password_hash(password)
-
-    # ---------------- PASSWORD CHECK ----------------
-    def check_password(self, password):
-
-        if not self.__password:
-            return False
-
-        return check_password_hash(self.__password, password)
-
-    # ---------------- SAVE USER ----------------
     def save(self):
-
         db = Database()
-
         db.execute(
-            "INSERT INTO users (name, email, password, role) VALUES (%s, %s, %s, %s)",
-            (self.name, self.email, self.__password, self.role)
+           "INSERT INTO users (name, email, password, role, profile_picture) VALUES (%s, %s, %s, %s, %s)",
+           (self.name, self.email, self.password, self.role, 'default_pp.jpg')
         )
-
         db.close()
 
-    # ---------------- EMAIL EXISTS CHECK ----------------
-    def email_exists(self):
-
+    def find_by(self, field, value):
         db = Database()
-
         result = db.fetch_one(
-            "SELECT id FROM users WHERE email=%s",
-            (self.email,)
+            f"SELECT * FROM users WHERE {field}=%s",
+            (value,)
         )
-
         db.close()
+        return result
 
-        return result is not None
-
-    # ---------------- BUILD OBJECT FROM DB ----------------
     @classmethod
     def from_db(cls, data):
-
         if not data:
             return None
-
         user = cls()
-
         user.name = data["name"]
         user.email = data["email"]
         user.role = data["role"]
-        user.__password = data["password"]
-
+        user.password = data["password"]
         return user
 
-    # ---------------- STRING REPRESENTATION ----------------
     def __str__(self):
-
         return f"User({self.name}, {self.email}, {self.role})"

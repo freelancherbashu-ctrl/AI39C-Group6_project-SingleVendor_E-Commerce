@@ -62,6 +62,13 @@
   </div>
 </section>
 
+<section class="dash-section">
+  <div class="dash-panel">
+    <h3>Sales - Last 7 Days (Completed Orders)</h3>
+    <canvas id="dashSalesChart" height="90"></canvas>
+  </div>
+</section>
+
 <section class="dash-two-col">
   <div class="dash-panel">
     <h3>Recent Orders</h3>
@@ -102,5 +109,6 @@
 {% endblock %}
 
 {% block page_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="{{ url_for('static', filename='admin/js/dashboard.js') }}"></script>
 {% endblock %}

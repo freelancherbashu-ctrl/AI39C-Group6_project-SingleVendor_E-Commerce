@@ -1,6 +1,7 @@
-import csv
+﻿import csv
 import io
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, Response
+from datetime import datetime, timedelta
 from sqlalchemy import func, or_
 from app.models.database import db
 from app.models.product_models import Product, Category, Order, OrderItem
@@ -39,6 +40,24 @@ def admin_index():
     low_stock = Product.query.filter(Product.stock <= 5).limit(5).all()
     return render_template("admin/admin_index.html",
                            stats=stats, recent_orders=recent_orders, low_stock=low_stock)
+
+@admin_bp.route("/api/sales-chart")
+def api_sales_chart():
+    """Returns last 7 days of completed-order revenue as JSON for Chart.js."""
+    from flask import jsonify
+    today = datetime.utcnow().date()
+    labels, values = [], []
+    for i in range(6, -1, -1):
+        day = today - timedelta(days=i)
+        next_day = day + timedelta(days=1)
+        total = (db.session.query(func.coalesce(func.sum(Order.total_amount), 0))
+                 .filter(Order.status == "completed",
+                         Order.created_at >= day,
+                         Order.created_at < next_day)
+                 .scalar() or 0)
+        labels.append(day.strftime("%b %d"))
+        values.append(float(total))
+    return jsonify({"labels": labels, "values": values})
 
 
 # ===== PRODUCTS =====

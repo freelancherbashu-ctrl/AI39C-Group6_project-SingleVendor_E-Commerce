@@ -15,3 +15,4 @@ User Story 2: View Profile
 
 ## Acceptance Criteria
 - AC1: Profile shows name, email, photo
+- AC2: Only logged in users can access

@@ -1,19 +1,11 @@
-<!--
-  Admin shell template.
-  Every admin page extends THIS file (not the customer site's base.html),
-  so the admin UI is fully isolated from the storefront.
--->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>{% block title %}Admin · meropasal{% endblock %}</title>
+  <title>{% block title %}Admin - meropasal{% endblock %}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- Shared admin styles -->
   <link rel="stylesheet" href="{{ url_for('static', filename='admin/css/admin_base.css') }}">
-
-  <!-- Per-page extra stylesheets -->
   {% block page_css %}{% endblock %}
 </head>
 <body class="admin-body">
@@ -41,15 +33,18 @@
       <a href="{{ url_for('admin.orders') }}" class="{% if 'order' in (request.endpoint or '') %}active{% endif %}">
         <span>🛒</span> Orders
       </a>
-      <a href="/" class="admin-nav-muted">← Back to Store</a>
+      <a href="{{ url_for('admin.settings') }}" class="{% if request.endpoint=='admin.settings' %}active{% endif %}">
+        <span>⚙️</span> Settings
+      </a>
+      <a href="/" class="admin-nav-muted">&larr; Back to Store</a>
     </nav>
   </aside>
 
   <main class="admin-content">
     <header class="admin-topbar">
-      <button class="admin-sidebar-toggle" id="adminSidebarToggle">☰</button>
+      <button class="admin-sidebar-toggle" id="adminSidebarToggle">=</button>
       <h2>{% block heading %}{% endblock %}</h2>
-      <div class="admin-user">👤 Admin</div>
+      <div class="admin-user">Admin</div>
     </header>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -67,10 +62,7 @@
 
 </div>
 
-<!-- Shared admin JS -->
 <script src="{{ url_for('static', filename='admin/js/admin_base.js') }}"></script>
-
-<!-- Per-page extra scripts -->
 {% block page_js %}{% endblock %}
 
 </body>

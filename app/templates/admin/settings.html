@@ -1,0 +1,34 @@
+{% extends "admin/admin_layout.html" %}
+{% block title %}Settings - meropasal Admin{% endblock %}
+{% block heading %}Settings{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='admin/css/settings.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="set-panel">
+  <form method="post" class="set-form">
+    <h3>Storefront</h3>
+    <div class="set-row">
+      <label>Site Name</label>
+      <input type="text" name="site_name" value="{{ settings.site_name }}" required>
+    </div>
+    <div class="set-row">
+      <label>Currency Symbol</label>
+      <input type="text" name="currency" value="{{ settings.currency }}" maxlength="6">
+    </div>
+
+    <h3>Inventory</h3>
+    <div class="set-row">
+      <label>Low Stock Threshold</label>
+      <input type="number" min="0" name="low_stock_threshold" value="{{ settings.low_stock_threshold }}" required>
+      <small>Products at or below this stock level appear in the dashboard low-stock alert.</small>
+    </div>
+
+    <div class="set-actions">
+      <button class="set-btn set-btn-primary">Save Settings</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

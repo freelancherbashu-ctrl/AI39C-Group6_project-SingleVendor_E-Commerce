@@ -1,0 +1,25 @@
+/* settings.css - admin settings page */
+.set-panel {
+  background:#fff; border-radius:10px; padding:24px;
+  box-shadow:0 1px 3px rgba(0,0,0,.06); max-width:640px;
+}
+.set-form h3 {
+  margin:18px 0 10px; font-size:15px; color:#374151;
+  text-transform:uppercase; letter-spacing:.5px;
+  border-bottom:1px solid #e5e7eb; padding-bottom:6px;
+}
+.set-form h3:first-child { margin-top:0; }
+.set-row { margin-bottom:14px; display:flex; flex-direction:column; gap:5px; }
+.set-row label { font-size:13px; color:#444; font-weight:600; }
+.set-row input {
+  padding:9px 12px; border:1px solid #d1d5db; border-radius:6px;
+  font-size:14px; max-width:320px;
+}
+.set-row small { color:#6b7280; font-size:12px; }
+.set-actions { margin-top:20px; }
+.set-btn {
+  padding:9px 18px; border:none; border-radius:6px; cursor:pointer;
+  font-size:14px; font-weight:600;
+}
+.set-btn-primary { background:#1d4ed8; color:#fff; }
+.set-btn-primary:hover { background:#1e40af; }

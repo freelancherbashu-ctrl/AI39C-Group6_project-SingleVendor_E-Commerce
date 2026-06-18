@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from sqlalchemy import func
 from app.models.database import db
 from app.models.product_models import Product, Category, Order, OrderItem
+from app.models.settings_model import Setting
 from app.controllers.admin import save_product_image, delete_product_image
 from app.controllers.auth import admin_required
 
@@ -183,3 +184,24 @@ def delete_order(oid):
     db.session.commit()
     flash("Order deleted.", "info")
     return redirect(url_for("admin.orders"))
+
+
+# =========================================================
+# SETTINGS
+# =========================================================
+@admin_bp.route("/settings", methods=["GET", "POST"])
+def settings():
+    if request.method == "POST":
+        Setting.set("site_name", request.form.get("site_name", "meropasal").strip())
+        Setting.set("low_stock_threshold", request.form.get("low_stock_threshold", "5").strip())
+        Setting.set("currency", request.form.get("currency", "Rs.").strip())
+        db.session.commit()
+        flash("Settings saved.", "success")
+        return redirect(url_for("admin.settings"))
+
+    current = {
+        "site_name":           Setting.get("site_name", "meropasal"),
+        "low_stock_threshold": Setting.get("low_stock_threshold", "5"),
+        "currency":            Setting.get("currency", "Rs."),
+    }
+    return render_template("admin/settings.html", settings=current)

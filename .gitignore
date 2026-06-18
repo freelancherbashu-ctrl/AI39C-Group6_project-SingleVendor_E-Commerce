@@ -38,3 +38,9 @@ __pycache__/
 .venv/
 venv/
 env/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo

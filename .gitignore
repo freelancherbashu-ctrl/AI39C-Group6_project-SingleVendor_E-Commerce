@@ -63,3 +63,8 @@ tmp/
 # Environment variables
 .env
 .env.local
+
+# Backup files
+*.bak
+*.backup
+*.old

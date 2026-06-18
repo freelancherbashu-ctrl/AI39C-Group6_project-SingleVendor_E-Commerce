@@ -28,3 +28,8 @@ config.py
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo

@@ -81,3 +81,7 @@
 
 .prod-image-preview-wrap { margin-top:10px; }
 .prod-image-preview { max-width:180px; max-height:180px; border-radius:6px; border:1px solid #eee; display:block; }
+/* Pagination */
+.prod-pagination { display:flex; justify-content:center; align-items:center; gap:14px; padding:14px; font-size:14px; color:#555; }
+.prod-pagination a { color:#1d4ed8; text-decoration:none; padding:5px 10px; border:1px solid #d1d5db; border-radius:5px; }
+.prod-pagination a:hover { background:#eff6ff; }

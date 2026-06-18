@@ -59,3 +59,7 @@ desktop.ini
 static/uploads/
 temp/
 tmp/
+
+# Environment variables
+.env
+.env.local

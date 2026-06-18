@@ -46,7 +46,7 @@
             {% else %}
             <p class="price">Rs. {{ product.price }}</p>
             {% endif %}
-            <button class="btn" onclick="openProductModal({{ product.id }})">View Details</button>
+            <button class="btn" onclick="openProductModal({ product})">View Details</button>
         </div>
         {% endfor %}
     {% else %}

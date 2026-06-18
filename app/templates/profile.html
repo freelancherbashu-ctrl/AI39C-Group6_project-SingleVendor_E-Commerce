@@ -171,13 +171,4 @@ document.addEventListener('keydown', e => {
     if (e.key === 'Escape') { closeEditModal(); closePwdModal(); }
 });
 
-// If server redirected back with a flash error, re-open the relevant modal
-{% with messages = get_flashed_messages(with_categories=true) %}
-{% for cat, msg in messages %}
-  {% if cat == 'error' %}
-  // Could detect which form had error here if needed
-  {% endif %}
-{% endfor %}
-{% endwith %}
-</script>
-{% endblock %}
+

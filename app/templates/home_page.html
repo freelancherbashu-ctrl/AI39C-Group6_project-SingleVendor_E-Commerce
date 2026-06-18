@@ -54,7 +54,7 @@
     </div>
     <div class="flash-sale-grid">
         {% for sale in flash_sales %}
-        <div class="flash-card" onclick="openProductModal({{ sale.product_id }})" style="cursor:pointer;">
+        <div class="flash-card" onclick="openProductModal({sale})" style="cursor:pointer;">
             <div class="flash-discount-badge">{{ sale.discount | int }}% OFF</div>
             <img src="{{ sale.product_image }}" alt="{{ sale.product_name }}">
             <div class="flash-card-body">
@@ -101,7 +101,7 @@
         {% else %}
         <p class="price">Rs. {{ "{:,.0f}".format(product.price) }}</p>
         {% endif %}
-        <button class="btn" onclick="openProductModal({{ product.id }})">View Details</button>
+        <button class="btn" onclick="openProductModal({ product})">View Details</button>
     </div>
     {% endfor %}
 </section>

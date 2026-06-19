@@ -1,4 +1,5 @@
 {% extends 'admin/base.html' %}
+{%- from "macros.html" import csrf -%}
 {% block title %}Flash Sales — MeroPasal Admin{% endblock %}
 {% block page_title %}Flash Sales{% endblock %}
 {% block breadcrumb %}<span class="bc-sep">›</span><span class="bc-current">Flash Sales</span>{% endblock %}
@@ -41,7 +42,9 @@
             <td style="font-size:.82rem;">{{ s.starts_at.strftime('%Y-%m-%d %H:%M') if s.starts_at else '—' }}</td>
             <td style="font-size:.82rem;">{{ s.ends_at.strftime('%Y-%m-%d %H:%M') if s.ends_at else '—' }}</td>
             <td>
-                {% if s.is_active %}
+                {% if s.ends_at and s.ends_at < now %}
+                    <span class="badge badge-expired">Expired</span>
+                {% elif s.is_active %}
                     <span class="badge badge-processing">Active</span>
                 {% else %}
                     <span class="badge badge-cancelled">Inactive</span>
@@ -59,6 +62,7 @@
                 )">Edit</button>
 
                 <form method="POST" action="{{ url_for('admin.toggle_flash_sale', sale_id=s.id) }}" style="margin:0;">
+{{ csrf() }}
                     <button class="btn btn-sm" type="submit">
                         {{ 'Deactivate' if s.is_active else 'Activate' }}
                     </button>
@@ -88,6 +92,7 @@
             <button class="mp-modal-close" onclick="closeSaleModal()">&times;</button>
         </div>
         <form id="saleForm" method="POST">
+{{ csrf() }}
             <div class="mp-modal-body">
 
                 <!-- Product picker + live preview -->
@@ -167,6 +172,7 @@
         <div class="mp-modal-footer">
             <button type="button" class="btn" onclick="closeDeleteSaleModal()">Cancel</button>
             <form id="deleteSaleForm" method="POST" style="margin:0;">
+{{ csrf() }}
                 <button type="submit" class="btn btn-danger">Yes, Delete</button>
             </form>
         </div>

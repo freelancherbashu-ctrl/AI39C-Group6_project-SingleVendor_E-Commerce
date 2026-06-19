@@ -37,9 +37,16 @@ def admin_index():
                               .filter(Order.status == "completed").scalar() or 0,
     }
     recent_orders = Order.query.order_by(Order.created_at.desc()).limit(5).all()
-    low_stock = Product.query.filter(Product.stock <= 5).limit(5).all()
+    low_stock_threshold = Setting.get_int("low_stock_threshold", 5)
+    low_stock = (Product.query
+                 .filter(Product.stock <= low_stock_threshold)
+                 .order_by(Product.stock.asc())
+                 .limit(5).all())
     return render_template("admin/admin_index.html",
-                           stats=stats, recent_orders=recent_orders, low_stock=low_stock)
+                           stats=stats,
+                           recent_orders=recent_orders,
+                           low_stock=low_stock,
+                           low_stock_threshold=low_stock_threshold)
 
 @admin_bp.route("/api/sales-chart")
 def api_sales_chart():

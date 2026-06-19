@@ -94,7 +94,7 @@
   </div>
 
   <div class="dash-panel">
-    <h3>Low Stock Alerts (≤ 5)</h3>
+    <h3>Low Stock Alerts (≤ {{ low_stock_threshold }})</h3>
     {% if low_stock %}
     <table class="dash-table">
       <thead><tr><th>Product</th><th>Stock</th></tr></thead>

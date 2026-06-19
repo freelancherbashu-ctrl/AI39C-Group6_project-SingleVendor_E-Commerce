@@ -4,18 +4,22 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/view_my_orders.css') }}">
 <style>
 .refunds-page { max-width: 860px; margin: 2rem auto; padding: 0 1rem; }
-.refund-card { background: var(--card-bg, #fff); border: 1px solid var(--border-color, #e5e7eb); border-radius: 14px; padding: 1.3rem 1.5rem; margin-bottom: 1.1rem; }
+.refund-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.3rem 1.5rem; margin-bottom: 1.1rem; }
 .refund-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: .8rem; }
-.refund-id { font-weight: 700; color: var(--text-primary, #111); }
-.refund-date { font-size: .82rem; color: #9ca3af; }
+.refund-id { font-weight: 700; color: var(--text-primary); }
+.refund-date { font-size: .82rem; color: var(--text-muted); }
 .refund-status { padding: 3px 12px; border-radius: 20px; font-size: .8rem; font-weight: 700; }
 .status-pending  { background: #fef3c7; color: #92400e; }
 .status-approved { background: #dbeafe; color: #1e40af; }
 .status-rejected { background: #fee2e2; color: #991b1b; }
 .status-completed{ background: #d1fae5; color: #065f46; }
-.refund-info { font-size: .9rem; color: #6b7280; line-height: 1.6; }
-.refund-reason { margin-top: .5rem; font-style: italic; color: #374151; background: #f9fafb; border-left: 3px solid #e5e7eb; padding: .5rem .75rem; border-radius: 0 6px 6px 0; }
-.admin-note { margin-top: .5rem; background: #eff6ff; border-left: 3px solid #93c5fd; padding: .5rem .75rem; border-radius: 0 6px 6px 0; font-size: .88rem; color: #1e40af; }
+[data-theme="dark"] .status-pending   { background: #422006; color: #fcd34d; }
+[data-theme="dark"] .status-approved  { background: #0c1a3a; color: #93c5fd; }
+[data-theme="dark"] .status-rejected  { background: #450a0a; color: #fca5a5; }
+[data-theme="dark"] .status-completed { background: #052e16; color: #86efac; }
+.refund-info { font-size: .9rem; color: var(--text-secondary); line-height: 1.6; }
+.refund-reason { margin-top: .5rem; font-style: italic; color: var(--text-secondary); background: var(--bg-2); border-left: 3px solid var(--border); padding: .5rem .75rem; border-radius: 0 6px 6px 0; }
+.admin-note { margin-top: .5rem; background: var(--bg-2); border-left: 3px solid #93c5fd; padding: .5rem .75rem; border-radius: 0 6px 6px 0; font-size: .88rem; color: var(--text-secondary); }
 </style>
 {% endblock %}
 
@@ -36,7 +40,7 @@
             <div class="refund-header">
                 <div>
                     <span class="refund-id">Refund #{{ r.id }}</span>
-                    <span style="margin-left:.8rem;font-size:.85rem;color:#6b7280;">for Order #{{ r.order_id }}</span>
+                    <span style="margin-left:.8rem;font-size:.85rem;color:var(--text-muted);">for Order #{{ r.order_id }}</span>
                 </div>
                 <span class="refund-status status-{{ r.status|lower }}">{{ r.status }}</span>
             </div>

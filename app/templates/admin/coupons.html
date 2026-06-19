@@ -1,4 +1,5 @@
 {% extends 'admin/base.html' %}
+{%- from "macros.html" import csrf -%}
 {% block title %}Coupons — MeroPasal Admin{% endblock %}
 {% block page_title %}Coupons{% endblock %}
 {% block breadcrumb %}<span class="bc-sep">›</span><span class="bc-current">Coupons</span>{% endblock %}
@@ -41,7 +42,9 @@
             </td>
             <td>{{ c.valid_until.strftime('%d %b %Y') if c.valid_until else '—' }}</td>
             <td>
-                {% if c.is_active %}
+                {% if c.valid_until and c.valid_until < now %}
+                    <span class="badge badge-expired">Expired</span>
+                {% elif c.is_active %}
                     <span class="badge badge-completed">Active</span>
                 {% else %}
                     <span class="badge badge-rejected">Inactive</span>
@@ -51,6 +54,7 @@
                 <a href="{{ url_for('admin.edit_coupon', coupon_id=c.id) }}" class="btn btn-sm btn-primary">Edit</a>
                 <form method="POST" action="{{ url_for('admin.delete_coupon', coupon_id=c.id) }}"
                       onsubmit="return confirm('Delete coupon {{ c.code }}?')">
+{{ csrf() }}
                     <button type="submit" class="btn btn-sm" style="background:#fee2e2;color:#991b1b;border:1px solid #fecaca;">Delete</button>
                 </form>
             </td>

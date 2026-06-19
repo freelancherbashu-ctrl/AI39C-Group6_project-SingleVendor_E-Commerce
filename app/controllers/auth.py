@@ -1,6 +1,6 @@
 import os
 from functools import wraps
-from flask import render_template, session, request, redirect, url_for, flash, jsonify
+from flask import render_template, session, request, redirect, url_for, flash, jsonify, abort
 from werkzeug.utils import secure_filename
 from app.models.product import Product
 from app.models.category import Category
@@ -66,14 +66,6 @@ def _refresh_user_session(user_id):
         }
         session.modified = True
 
-def login_required(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        if not session.get("user"):
-            flash("Please log in to continue.", "error")
-            return redirect(url_for("auth.login"))
-        return f(*args, **kwargs)
-    return decorated
 
 
 # ── controller ────────────────────────────────────────────────────────────────
@@ -150,7 +142,7 @@ class AuthController:
             full_name = request.form.get("full_name", "").strip()
             email     = user["email"]  # email is not changeable
             if not full_name:
-                flash("Name and email are required.", "error")
+                flash("Name is required.", "error")
             else:
                 ok, msg = User.update_profile(mysql, user["id"], full_name, email)
                 flash(msg, "success" if ok else "error")
@@ -191,6 +183,9 @@ class AuthController:
         user = _current_user()
         if not user:
             return redirect(url_for("auth.login"))
+        if User.is_google_only(mysql, user["id"]):
+            flash("Your account signs in with Google and has no password to change. Manage your password through your Google account instead.", "error")
+            return redirect(url_for("auth.profile"))
         if request.method == "POST":
             old_pw  = request.form.get("old_password", "")
             new_pw  = request.form.get("new_password", "")
@@ -280,7 +275,12 @@ class AuthController:
                                cart_count=_cart_count(), user=_current_user())
 
     def all_categories(self):
-        return render_template("all_categories.html", categories=Category.get_all(mysql),
+        cats = Category.get_all(mysql)
+        for c in cats:
+            prods = Product.get_by_category(mysql, c["name"])
+            c["product_count"] = len(prods)
+            c["sample_products"] = [p["name"] for p in prods[:3]]
+        return render_template("all_categories.html", categories=cats,
                                cart_count=_cart_count(), user=_current_user())
 
     def single_category(self, category):
@@ -298,18 +298,23 @@ class AuthController:
     def view_product(self, id):
         from app.models.review import Review
         product  = Product.get_by_id(mysql, id)
+        if not product:
+            abort(404)
         sale_map = _get_sale_map()
         sale     = sale_map.get(product["id"]) if product else None
         reviews  = Review.get_for_product(mysql, id)
         avg_rating, review_count = Review.get_avg_rating(mysql, id)
         user = _current_user()
-        reviewable_order_id = None
+        my_review = None
+        can_review = False
         if user:
-            reviewable_order_id = Review.get_reviewable_orders(mysql, user["id"], id)
+            my_review = Review.get_user_review_for_product(mysql, user["id"], id)
+            if not my_review:
+                can_review = bool(Review.can_review(mysql, user["id"], id))
         return render_template("view_product.html", product=product, sale=sale,
                                reviews=reviews, avg_rating=avg_rating,
                                review_count=review_count,
-                               reviewable_order_id=reviewable_order_id,
+                               my_review=my_review, can_review=can_review,
                                cart_count=_cart_count(), user=user)
 
     def view_product_json(self, id):
@@ -418,7 +423,12 @@ class AuthController:
             session["cart"] = cart
             session.modified = True
             flash(f"{len(stale_pids)} item(s) were removed from your cart because they are no longer available.", "error")
+        cart_total = sum(
+            (product_map[pid]["sale_price"] if product_map[pid]["on_sale"] else product_map[pid]["price"]) * qty
+            for pid, qty in cart.items() if pid in product_map
+        )
         return render_template("cart.html", cart=cart, products=product_map,
+                               cart_total=cart_total,
                                cart_count=_cart_count(), user=_current_user())
 
     def add_to_cart(self, product_id):
@@ -429,9 +439,12 @@ class AuthController:
         if not product:
             flash("Product not found.", "error")
             return redirect(url_for("auth.home"))
+        # Stay on whichever page the user added from (wishlist, category, home, etc.)
+        # instead of always yanking them to the product detail page.
+        back_to = request.referrer if request.referrer and request.host_url.rstrip("/") in request.referrer else url_for("auth.view_product", id=product_id)
         if product["available"] == 0:
             flash(f"Sorry, {product['name']} is out of stock.", "error")
-            return redirect(url_for("auth.view_product", id=product_id))
+            return redirect(back_to)
         cart    = session.get("cart", {})
         pid     = str(product_id)
         qty     = int(request.form.get("quantity", 1))
@@ -446,7 +459,7 @@ class AuthController:
         if session.get("user"):
             Wishlist.remove(mysql, session["user"]["id"], product_id)
         flash("Added to cart!", "success")
-        return redirect(url_for("auth.view_product", id=product_id))
+        return redirect(back_to)
 
     def update_cart(self, product_id):
         cart   = session.get("cart", {})
@@ -454,6 +467,13 @@ class AuthController:
         action = request.form.get("action")
         if pid in cart:
             if action == "increase":
+                p = Product.get_by_id(mysql, product_id)
+                if not p:
+                    flash("Product not found.", "error")
+                    return redirect(url_for("auth.cart"))
+                if cart[pid] >= p["available"]:
+                    flash(f"Only {p['available']} unit(s) of {p['name']} available.", "error")
+                    return redirect(url_for("auth.cart"))
                 cart[pid] += 1
             elif action == "decrease":
                 cart[pid] -= 1
@@ -481,10 +501,16 @@ class AuthController:
         if not p:
             flash("Product not found.", "error")
             return redirect(url_for("auth.home"))
+        if p["available"] == 0:
+            flash(f"Sorry, {p['name']} is out of stock.", "error")
+            return redirect(url_for("auth.view_product", id=product_id))
         sale_map = _get_sale_map()
         sale = sale_map.get(p["id"])
         price = sale["sale_price"] if sale else p["price"]
         qty = int(request.form.get("quantity", 1))
+        if qty > p["available"]:
+            flash(f"Only {p['available']} unit(s) of {p['name']} available.", "error")
+            qty = p["available"]
         session["buy_now"] = {
             "id": p["id"], "name": p["name"], "price": price,
             "original_price": p["price"], "on_sale": bool(sale),
@@ -557,6 +583,7 @@ class AuthController:
         if payment_method in ("esewa", "khalti"):
             session["pending_order_data"] = order_data
             session["last_order_total"]   = grand_total
+            session["last_order_id"]      = order_data.get("id")
             session["pending_coupon_id"]  = coupon_id or None
             session["pending_coupon_code"] = request.form.get("coupon_code", "")
             session.modified = True
@@ -755,12 +782,17 @@ class AuthController:
         from app.models.review import Review
         rating   = int(request.form.get("rating", 0))
         comment  = request.form.get("comment", "").strip()
-        order_id = int(request.form.get("order_id", 0))
         if not (1 <= rating <= 5):
             flash("Please select a rating between 1 and 5.", "error")
             return redirect(url_for("auth.view_product", id=product_id))
-        ok, msg = Review.create(mysql, user["id"], product_id, order_id, rating, comment)
-        flash("Review submitted!" if ok else msg, "success" if ok else "error")
+        existing = Review.get_user_review_for_product(mysql, user["id"], product_id)
+        if existing:
+            ok, msg = Review.update(mysql, existing["id"], user["id"], rating, comment)
+            flash("Review updated!" if ok else msg, "success" if ok else "error")
+        else:
+            order_id = int(request.form.get("order_id", 0)) or None
+            ok, msg = Review.create(mysql, user["id"], product_id, order_id, rating, comment)
+            flash("Review submitted!" if ok else msg, "success" if ok else "error")
         return redirect(url_for("auth.view_product", id=product_id))
 
     # ── COUPONS ───────────────────────────────────────────────────────────────

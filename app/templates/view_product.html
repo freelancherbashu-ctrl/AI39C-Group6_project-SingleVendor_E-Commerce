@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{%- from "macros.html" import csrf -%}
 
 {% block title %}{{ product.name }} - MeroPasal{% endblock %}
 
@@ -82,10 +83,12 @@
             <button class="btn buy"  disabled style="opacity:.5;cursor:not-allowed;">⚡ Unavailable</button>
             {% else %}
             <form id="cartForm" action="{{ url_for('auth.add_to_cart', product_id=product.id) }}" method="POST">
+{{ csrf() }}
                 <input type="hidden" name="quantity" id="cartQty" value="1">
                 <button type="submit" class="btn cart">🛒 Add to Cart</button>
             </form>
             <form id="buyNowForm" action="{{ url_for('auth.buy_now', product_id=product.id) }}" method="POST">
+{{ csrf() }}
                 <input type="hidden" name="quantity" id="buyQty" value="1">
                 <button type="submit" class="btn buy">⚡ Buy Now</button>
             </form>
@@ -104,43 +107,49 @@
         Customer Reviews
         {% if avg_rating %}
         <span style="font-size:1rem;font-weight:400;color:#f59e0b;margin-left:.5rem;">
-            ★ {{ avg_rating }} <span style="color:#9ca3af;">({{ review_count }})</span>
+            ★ {{ avg_rating }} <span style="color:var(--text-muted);">({{ review_count }})</span>
         </span>
         {% endif %}
     </h2>
 
-    {% if user and reviewable_order_id %}
-    <div style="background:var(--card-bg,#fff);border:1px solid #e5e7eb;border-radius:12px;padding:1.2rem 1.4rem;margin-bottom:1.5rem;">
-        <h3 style="font-size:1rem;font-weight:600;margin-bottom:.8rem;">Leave a Review</h3>
+    {% if user and (can_review or my_review) %}
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.2rem 1.4rem;margin-bottom:1.5rem;">
+        <h3 style="font-size:1rem;font-weight:600;margin-bottom:.8rem;color:var(--text-primary);">
+            {{ "Edit Your Review" if my_review else "Leave a Review" }}
+        </h3>
         <form method="POST" action="{{ url_for('auth.submit_review', product_id=product.id) }}">
-            <input type="hidden" name="order_id" value="{{ reviewable_order_id }}">
+{{ csrf() }}
             <div style="margin-bottom:.7rem;">
-                <label style="font-size:.85rem;font-weight:600;color:#6b7280;display:block;margin-bottom:.3rem;">Rating *</label>
+                <label style="font-size:.85rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:.3rem;">Rating *</label>
                 <div class="star-rating" style="display:flex;gap:.3rem;font-size:1.6rem;cursor:pointer;">
                     {% for i in range(1,6) %}
                     <span class="star" data-val="{{ i }}" style="color:#d1d5db;" onclick="setRating({{ i }})">★</span>
                     {% endfor %}
                 </div>
-                <input type="hidden" name="rating" id="ratingInput" value="0">
+                <input type="hidden" name="rating" id="ratingInput" value="{{ my_review.rating if my_review else 0 }}">
             </div>
             <div style="margin-bottom:.8rem;">
-                <label style="font-size:.85rem;font-weight:600;color:#6b7280;display:block;margin-bottom:.3rem;">Comment (optional)</label>
+                <label style="font-size:.85rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:.3rem;">Comment (optional)</label>
                 <textarea name="comment" rows="3" placeholder="Share your experience…"
-                    style="width:100%;padding:.55rem .75rem;border:1px solid #e5e7eb;border-radius:8px;font-size:.9rem;resize:vertical;"></textarea>
+                    style="width:100%;padding:.55rem .75rem;border:1px solid var(--border);border-radius:8px;font-size:.9rem;resize:vertical;background:var(--surface);color:var(--text-primary);">{{ my_review.comment if my_review else "" }}</textarea>
             </div>
             <button type="submit" style="padding:.5rem 1.2rem;background:#4f46e5;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;">
-                Submit Review
+                {{ "Update Review" if my_review else "Submit Review" }}
             </button>
         </form>
     </div>
+    {% elif user %}
+    <p style="color:var(--text-muted);font-size:.85rem;margin-bottom:1.5rem;">
+        You can review this product once you've bought it and the order is completed.
+    </p>
     {% endif %}
 
     {% if reviews %}
     <div style="display:flex;flex-direction:column;gap:.9rem;">
         {% for r in reviews %}
-        <div style="background:var(--card-bg,#fff);border:1px solid #e5e7eb;border-radius:12px;padding:1rem 1.3rem;">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem 1.3rem;">
             <div style="display:flex;align-items:center;gap:.7rem;margin-bottom:.4rem;">
-                <div style="width:36px;height:36px;border-radius:50%;background:#e0e7ff;display:flex;align-items:center;justify-content:center;font-weight:700;color:#4f46e5;font-size:.9rem;overflow:hidden;">
+                <div style="width:36px;height:36px;border-radius:50%;background:#e0e7ff;display:flex;align-items:center;justify-content:center;font-weight:700;color:#4f46e5;font-size:.9rem;overflow:hidden;flex-shrink:0;">
                     {% if r.user_picture %}
                     <img src="{{ url_for('static', filename='profile_pics/' + r.user_picture) }}" style="width:100%;height:100%;object-fit:cover;">
                     {% else %}
@@ -148,21 +157,24 @@
                     {% endif %}
                 </div>
                 <div>
-                    <div style="font-weight:600;font-size:.9rem;">{{ r.user_name }}</div>
-                    <div style="font-size:.75rem;color:#9ca3af;">{{ r.created_at.strftime('%d %b %Y') if r.created_at else '' }}</div>
+                    <div style="font-weight:600;font-size:.9rem;color:var(--text-primary);">{{ r.user_name }}</div>
+                    <div style="font-size:.75rem;color:var(--text-muted);">
+                        {{ r.created_at.strftime('%d %b %Y') if r.created_at else '' }}
+                        {% if r.updated_at %}<em>(edited)</em>{% endif %}
+                    </div>
                 </div>
                 <div style="margin-left:auto;color:#f59e0b;font-size:1rem;">
                     {% for i in range(r.rating) %}★{% endfor %}{% for i in range(5 - r.rating) %}<span style="color:#d1d5db;">★</span>{% endfor %}
                 </div>
             </div>
             {% if r.comment %}
-            <p style="font-size:.9rem;color:#374151;margin:0;line-height:1.6;">{{ r.comment }}</p>
+            <p style="font-size:.9rem;color:var(--text-secondary);margin:0;line-height:1.6;">{{ r.comment }}</p>
             {% endif %}
         </div>
         {% endfor %}
     </div>
     {% else %}
-    <p style="color:#9ca3af;font-size:.9rem;">No reviews yet. Be the first to review this product!</p>
+    <p style="color:var(--text-muted);font-size:.9rem;">No reviews yet. Be the first to review this product!</p>
     {% endif %}
 </section>
 
@@ -187,7 +199,10 @@ if (wishlistBtn) {
         }).catch(() => {});
 
     wishlistBtn.addEventListener("click", function () {
-        fetch(`/wishlist/toggle/${this.dataset.productId}`, { method: "POST" })
+        fetch(`/wishlist/toggle/${this.dataset.productId}`, {
+                method: "POST",
+                headers: { "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').content }
+            })
             .then(r => r.json())
             .then(data => {
                 if (!data.success) { if (data.error === "login_required") window.location.href = "/login"; return; }
@@ -214,6 +229,9 @@ function setRating(val) {
         s.style.color = parseInt(s.dataset.val) <= val ? "#f59e0b" : "#d1d5db";
     });
 }
+{% if my_review %}
+setRating({{ my_review.rating }});
+{% endif %}
 </script>
 
 {% endblock %}

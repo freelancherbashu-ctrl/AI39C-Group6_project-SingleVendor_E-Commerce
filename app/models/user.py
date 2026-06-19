@@ -43,11 +43,6 @@ class User:
 
     @staticmethod
     def _verify_hash(password, password_hash):
-        # Handle legacy SHA-256 hashes that may still be in the DB
-        import hashlib
-        sha256 = hashlib.sha256(password.encode()).hexdigest()
-        if password_hash == sha256:
-            return True
         return check_password_hash(password_hash, password)
 
     @staticmethod
@@ -86,7 +81,8 @@ class User:
     def get_by_id(mysql, user_id):
         cursor = mysql.connection.cursor()
         cursor.execute("""
-        SELECT id, full_name, email, profile_picture, created_at, is_blocked
+        SELECT id, full_name, email, profile_picture, created_at, is_blocked,
+               (google_id IS NOT NULL AND password_hash IS NULL) AS google_only
         FROM users WHERE id = %s
         """, (user_id,))
         row = cursor.fetchone()
@@ -94,9 +90,22 @@ class User:
             return {
                 "id": row[0], "full_name": row[1], "email": row[2],
                 "profile_picture": row[3], "created_at": row[4],
-                "is_blocked": bool(row[5])
+                "is_blocked": bool(row[5]),
+                "is_google_only": bool(row[6]) if len(row) > 6 else False,
             }
         return None
+
+    @staticmethod
+    def is_google_only(mysql, user_id):
+        """True if this account signed up via Google and has never set a password —
+        there is nothing to verify/change, so password features should be hidden."""
+        cursor = mysql.connection.cursor()
+        cursor.execute(
+            "SELECT (google_id IS NOT NULL AND password_hash IS NULL) FROM users WHERE id=%s",
+            (user_id,)
+        )
+        row = cursor.fetchone()
+        return bool(row[0]) if row else False
 
     @staticmethod
     def get_all(mysql):
@@ -260,8 +269,7 @@ class User:
             return None, "No account found with that email."
         if row[2] and not row[1]:
             return None, "This account uses Google login — password reset is not available."
-        import random
-        otp = str(random.randint(100000, 999999))
+        otp = str(secrets.randbelow(900000) + 100000)
         cursor.execute("""
         UPDATE users
         SET reset_token=%s,

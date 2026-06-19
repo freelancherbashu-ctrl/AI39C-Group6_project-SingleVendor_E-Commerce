@@ -1,19 +1,17 @@
-/* =====================================================
-   products.js — Behaviour for products.html & product_form.html
-   ===================================================== */
+/* products.js - Behaviour for products.html and product_form.html */
 
 (function () {
   "use strict";
 
-  // ---- Delete confirm (per product, uses data-name) ----
+  // ---- Delete confirm (per product) ----
   document.querySelectorAll(".prod-delete-form").forEach((form) => {
     form.addEventListener("submit", (e) => {
       const name = form.dataset.name || "this product";
-      if (!confirm(`Delete "${name}"? This cannot be undone.`)) e.preventDefault();
+      if (!confirm("Delete \"" + name + "\"? This cannot be undone.")) e.preventDefault();
     });
   });
 
-  // ---- Live image preview on file select (product_form.html) ----
+  // ---- Live image preview on file select ----
   const fileInput = document.getElementById("prodImageInput");
   const preview = document.getElementById("prodImagePreview");
   if (fileInput && preview) {
@@ -39,7 +37,7 @@
     });
   }
 
-  // ---- Search auto-submit after typing pause (optional UX) ----
+  // ---- Search auto-submit after typing pause ----
   const search = document.getElementById("prodSearch");
   if (search) {
     let t;
@@ -49,12 +47,12 @@
     });
   }
 
-  // ---- Form validation hint ----
-  const form = document.getElementById("prodForm");
-  if (form) {
-    form.addEventListener("submit", (e) => {
-      const price = form.querySelector("[name=price]");
-      const stock = form.querySelector("[name=stock]");
+  // ---- Form validation ----
+  const prodForm = document.getElementById("prodForm");
+  if (prodForm) {
+    prodForm.addEventListener("submit", (e) => {
+      const price = prodForm.querySelector("[name=price]");
+      const stock = prodForm.querySelector("[name=stock]");
       if (price && parseFloat(price.value) < 0) {
         alert("Price cannot be negative.");
         e.preventDefault();
@@ -66,8 +64,8 @@
       }
     });
   }
-  
-  // Bulk: select-all + confirm
+
+  // ---- Bulk: select-all + confirm ----
   const checkAll = document.getElementById("prodCheckAll");
   if (checkAll) {
     checkAll.addEventListener("change", () => {
@@ -86,8 +84,7 @@
     });
   }
 
-})();
-  // Quick stock +/-
+  // ---- Quick stock +/- buttons ----
   document.querySelectorAll(".prod-stock-btn").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       e.preventDefault();
@@ -99,3 +96,5 @@
       form.submit();
     });
   });
+
+})();

@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{%- from "macros.html" import csrf -%}
 
 {% block title %}My Cart - MeroPasal{% endblock %}
 
@@ -30,12 +31,13 @@
                     <h3>{{ products[product_id].name }}</h3>
                     {% if products[product_id].on_sale %}
                     <p>
-                        <span style="text-decoration:line-through;color:#9ca3af;font-size:.85rem;">Rs. {{ "{:,.0f}".format(products[product_id].price) }}</span>
+                        <span class="cart-line-label">Unit price</span>
+                        <span style="text-decoration:line-through;color:var(--text-muted);font-size:.85rem;">Rs. {{ "{:,.0f}".format(products[product_id].price) }}</span>
                         <span style="color:#ef4444;font-weight:700;"> Rs. {{ "{:,.0f}".format(products[product_id].sale_price) }}</span>
                         <span style="background:#ef4444;color:#fff;font-size:0.7rem;padding:1px 6px;border-radius:10px;margin-left:4px;">{{ products[product_id].discount | int }}% OFF</span>
                     </p>
                     {% else %}
-                    <p>Rs. {{ products[product_id].price }}</p>
+                    <p><span class="cart-line-label">Unit price</span> Rs. {{ "{:,.0f}".format(products[product_id].price) }}</p>
                     {% endif %}
                 </div>
 
@@ -43,10 +45,11 @@
 
             <!-- QUANTITY -->
             <div class="cart-qty">
-
+                <span class="cart-line-label">Qty</span>
                 <form action="{{ url_for('auth.update_cart',
                 product_id=product_id) }}"
                 method="POST">
+{{ csrf() }}
 
                     <button name="action" value="decrease">-</button>
 
@@ -60,10 +63,11 @@
 
             <!-- TOTAL -->
             <div class="cart-total">
+                <span class="cart-line-label">Subtotal</span>
                 {% if products[product_id].on_sale %}
                 Rs. {{ "{:,.0f}".format(products[product_id].sale_price * qty) }}
                 {% else %}
-                Rs. {{ products[product_id].price * qty }}
+                Rs. {{ "{:,.0f}".format(products[product_id].price * qty) }}
                 {% endif %}
             </div>
 
@@ -78,6 +82,7 @@
                 <!-- REMOVE -->
                 <form action="{{ url_for('auth.remove_from_cart', product_id=product_id) }}"
                       method="POST">
+{{ csrf() }}
 
                     <button type="submit" class="btn remove">
                         Remove
@@ -95,6 +100,11 @@
 
     <!-- CHECKOUT BUTTON -->
     <div class="checkout-box">
+
+        <div class="checkout-total">
+            Total ({{ cart|length }} item{{ 's' if cart|length != 1 else '' }}):
+            <span>Rs. {{ "{:,.0f}".format(cart_total) }}</span>
+        </div>
 
         <a href="{{ url_for('auth.checkout') }}"
            class="checkout-btn">

@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{%- from "macros.html" import csrf -%}
 
 {% block title %}Checkout - MeroPasal{% endblock %}
 
@@ -20,6 +21,7 @@
             action="{{ url_for('auth.place_order') }}"
             onsubmit="return validateCheckout(event)"
             autocomplete="off">
+{{ csrf() }}
 
             <h2>Delivery Information</h2>
 

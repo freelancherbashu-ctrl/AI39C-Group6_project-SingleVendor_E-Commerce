@@ -56,3 +56,10 @@
 
 .dash-stock-low { color:#c0392b; font-weight:700; }
 .dash-muted { color:#888; }
+/* Sales chart height limit */
+.dash-panel canvas { max-height: 280px !important; width: 100% !important; }
+
+/* Dashboard greeting */
+.dash-greeting { background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%); color: #fff; padding: 24px 28px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(29,78,216,0.2); }
+.dash-greeting h2 { margin: 0 0 6px; font-size: 24px; font-weight: 700; }
+.dash-greeting p { margin: 0; opacity: 0.9; font-size: 14px; }

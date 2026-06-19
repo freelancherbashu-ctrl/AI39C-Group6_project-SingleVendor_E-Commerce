@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Admin – Products{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Product Management</h1>
+    <a href="/admin/products/new" class="btn btn-primary">+ Add Product</a>
+</div>
+
+<table class="data-table">
+    <thead>
+        <tr><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Actions</th></tr>
+    </thead>
+    <tbody>
+        {% for p in products %}
+        <tr>
+            <td>{{ p.name }}</td>
+            <td>{{ p.category or '–' }}</td>
+            <td>Rs. {{ "%.2f"|format(p.price) }}</td>
+            <td>{{ p.stock }}</td>
+            <td>
+                <a href="/admin/products/{{ p.id }}/edit" class="btn btn-sm btn-secondary">Edit</a>
+                <form method="post" action="/admin/products/{{ p.id }}/delete" style="display:inline">
+                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this product?')">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -88,4 +88,16 @@
       .catch((err) => console.warn("Sales chart load failed:", err));
   }
 
+  // Time-based greeting
+  const greetingEl = document.getElementById("dashGreeting");
+  if (greetingEl) {
+    const hour = new Date().getHours();
+    let greeting = "Good evening";
+    let emoji = "🌙";
+    if (hour < 12) { greeting = "Good morning"; emoji = "🌅"; }
+    else if (hour < 17) { greeting = "Good afternoon"; emoji = "☀️"; }
+    else if (hour < 21) { greeting = "Good evening"; emoji = "🌆"; }
+    greetingEl.querySelector("h2").innerHTML = `${emoji} ${greeting}, meropasal!`;
+  }
+  
 })();

@@ -1,4 +1,5 @@
 {% extends 'admin/base.html' %}
+{%- from "macros.html" import csrf -%}
 {% block title %}Categories — MeroPasal Admin{% endblock %}
 {% block page_title %}Categories{% endblock %}
 {% block breadcrumb %}<span class="bc-sep">›</span><span class="bc-current">Categories</span>{% endblock %}
@@ -52,6 +53,7 @@
             <button class="mp-modal-close" onclick="closeCatModal()">&times;</button>
         </div>
         <form id="catForm" method="POST" enctype="multipart/form-data">
+{{ csrf() }}
             <div class="mp-modal-body">
 
                 <div class="fg">
@@ -104,6 +106,7 @@
         <div class="mp-modal-footer">
             <button type="button" class="btn" onclick="closeDeleteModal()">Cancel</button>
             <form id="deleteForm" method="POST" style="margin:0;">
+{{ csrf() }}
                 <button type="submit" class="btn btn-danger">Yes, Delete</button>
             </form>
         </div>

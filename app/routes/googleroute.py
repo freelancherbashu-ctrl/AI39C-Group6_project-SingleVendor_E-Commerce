@@ -37,6 +37,11 @@ def after_google_login():
     # Fetch full user so profile_picture is included in session
     from app.models.user import User as UserModel
     full = UserModel.get_by_id(mysql, user["id"])
+
+    if full.get("is_blocked"):
+        flash("Your account has been suspended. Please contact support.", "error")
+        return redirect(url_for("auth.login"))
+
     session["user"] = {
         "id":              full["id"],
         "full_name":       full["full_name"],

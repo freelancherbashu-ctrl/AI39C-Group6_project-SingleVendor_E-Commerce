@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{%- from "macros.html" import csrf -%}
 {% block title %}My Orders - MeroPasal{% endblock %}
 {% block style %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/view_my_orders.css') }}">
@@ -114,6 +115,7 @@
         <div class="mp-foot">
             <button class="mp-btn" onclick="closeCancelModal()">Keep Order</button>
             <form id="cancelForm" method="POST" style="margin:0;">
+{{ csrf() }}
                 <button type="submit" class="mp-btn danger">Yes, Cancel</button>
             </form>
         </div>
@@ -133,13 +135,14 @@
                 Please describe the reason for your refund request.
             </p>
             <textarea id="refundReason" rows="4" placeholder="e.g. Item was damaged on arrival…"
-                style="width:100%;margin-top:.7rem;padding:.55rem .75rem;border:1px solid #e5e7eb;
+                style="width:100%;margin-top:.7rem;padding:.55rem .75rem;border:1px solid var(--border,#e5e7eb);
                        border-radius:8px;font-size:.88rem;resize:vertical;
-                       background:var(--input-bg,#fff);color:var(--text-primary,#111);"></textarea>
+                       background:var(--surface,#fff);color:var(--text-primary,#111);"></textarea>
         </div>
         <div class="mp-foot">
             <button class="mp-btn" onclick="closeRefundModal()">Cancel</button>
             <form id="refundForm" method="POST" style="margin:0;" onsubmit="return validateRefund()">
+{{ csrf() }}
                 <input type="hidden" name="reason" id="refundReasonInput">
                 <button type="submit" class="mp-btn danger" style="background:#1d4ed8;border-color:#1d4ed8;">
                     Submit Request

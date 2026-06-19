@@ -12,10 +12,23 @@ class Review:
             rating TINYINT NOT NULL CHECK (rating BETWEEN 1 AND 5),
             comment TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE KEY one_review_per_order_item (user_id, product_id, order_id)
+            updated_at TIMESTAMP NULL DEFAULT NULL,
+            UNIQUE KEY one_review_per_product (user_id, product_id)
         )
         """)
         mysql.connection.commit()
+        # Safe upgrades for existing tables: one review per product (not per order),
+        # editable instead of duplicated when the same product is bought again.
+        for sql in [
+            "ALTER TABLE reviews ADD COLUMN updated_at TIMESTAMP NULL DEFAULT NULL",
+            "ALTER TABLE reviews DROP INDEX one_review_per_order_item",
+            "ALTER TABLE reviews ADD UNIQUE KEY one_review_per_product (user_id, product_id)",
+        ]:
+            try:
+                cursor.execute(sql)
+                mysql.connection.commit()
+            except Exception:
+                mysql.connection.rollback()
 
     # ── READ ──────────────────────────────────────────────────────────────────
 
@@ -24,7 +37,7 @@ class Review:
         cursor = mysql.connection.cursor()
         cursor.execute("""
             SELECT r.id, r.rating, r.comment, r.created_at,
-                   u.full_name, u.profile_picture
+                   u.full_name, u.profile_picture, r.updated_at
             FROM reviews r
             JOIN users u ON u.id = r.user_id
             WHERE r.product_id = %s
@@ -39,6 +52,7 @@ class Review:
                 "created_at": row[3],
                 "user_name": row[4],
                 "user_picture": row[5],
+                "updated_at": row[6] if len(row) > 6 else None,
             }
             for row in rows
         ]
@@ -73,58 +87,78 @@ class Review:
         }
 
     @staticmethod
-    def can_review(mysql, user_id, product_id, order_id):
-        """True if the user has a completed order containing this product
-        and has NOT already left a review for this order+product."""
+    def get_user_review_for_product(mysql, user_id, product_id):
+        """Return this user's existing review for a product (for editing), or None."""
         cursor = mysql.connection.cursor()
-        # Check existing review
         cursor.execute("""
-            SELECT id FROM reviews
-            WHERE user_id=%s AND product_id=%s AND order_id=%s
-        """, (user_id, product_id, order_id))
-        if cursor.fetchone():
-            return False
-        # Check that the order belongs to the user and is Completed
-        cursor.execute("""
-            SELECT id FROM orders
-            WHERE id=%s AND user_id=%s AND order_status='Completed'
-        """, (order_id, user_id))
-        return cursor.fetchone() is not None
+            SELECT id, rating, comment, order_id
+            FROM reviews WHERE user_id=%s AND product_id=%s
+        """, (user_id, product_id))
+        row = cursor.fetchone()
+        if not row:
+            return None
+        return {"id": row[0], "rating": row[1], "comment": row[2], "order_id": row[3]}
 
     @staticmethod
-    def get_reviewable_orders(mysql, user_id, product_id):
-        """Return completed order IDs for this user+product that have no review yet."""
+    def can_review(mysql, user_id, product_id):
+        """True if the user has at least one completed order containing this product.
+        One review per product per user — buying it again doesn't grant a second review,
+        it just lets you keep your existing one (or write your first one if you hadn't)."""
         cursor = mysql.connection.cursor()
         cursor.execute("""
             SELECT o.id FROM orders o
             WHERE o.user_id = %s
               AND o.order_status = 'Completed'
               AND JSON_CONTAINS(o.items_json, JSON_OBJECT('id', %s), '$')
-              AND NOT EXISTS (
-                  SELECT 1 FROM reviews r
-                  WHERE r.user_id = %s AND r.product_id = %s AND r.order_id = o.id
-              )
             ORDER BY o.created_at DESC
             LIMIT 1
-        """, (user_id, product_id, user_id, product_id))
+        """, (user_id, product_id))
         row = cursor.fetchone()
         return row[0] if row else None
+
+    @staticmethod
+    def get_reviewable_orders(mysql, user_id, product_id):
+        """Return a qualifying completed order id for this user+product, or None
+        if the user has never completed a purchase of it."""
+        return Review.can_review(mysql, user_id, product_id)
 
     # ── WRITE ─────────────────────────────────────────────────────────────────
 
     @staticmethod
     def create(mysql, user_id, product_id, order_id, rating, comment):
-        """Returns (True, None) on success or (False, error_msg)."""
-        if not Review.can_review(mysql, user_id, product_id, order_id):
-            return False, "You can only review products from a completed order, once per order."
+        """Returns (True, None) on success or (False, error_msg).
+        Requires a completed order containing the product; fails if a review
+        already exists (use Review.update to edit it instead)."""
+        if Review.get_user_review_for_product(mysql, user_id, product_id):
+            return False, "You've already reviewed this product. Edit your existing review instead."
+        qualifying_order_id = order_id if order_id else Review.can_review(mysql, user_id, product_id)
+        if not qualifying_order_id:
+            return False, "You can only review products you've bought, once your order is completed."
         cursor = mysql.connection.cursor()
         try:
             cursor.execute("""
                 INSERT INTO reviews (product_id, user_id, order_id, rating, comment)
                 VALUES (%s, %s, %s, %s, %s)
-            """, (product_id, user_id, order_id, rating, comment))
+            """, (product_id, user_id, qualifying_order_id, rating, comment))
             mysql.connection.commit()
             return True, None
+        except Exception as e:
+            mysql.connection.rollback()
+            return False, str(e)
+
+    @staticmethod
+    def update(mysql, review_id, user_id, rating, comment):
+        """Edit your own existing review. Returns (True, None) or (False, error_msg)."""
+        cursor = mysql.connection.cursor()
+        try:
+            cursor.execute("""
+                UPDATE reviews SET rating=%s, comment=%s, updated_at=NOW()
+                WHERE id=%s AND user_id=%s
+            """, (rating, comment, review_id, user_id))
+            mysql.connection.commit()
+            if cursor.rowcount:
+                return True, None
+            return False, "Review not found."
         except Exception as e:
             mysql.connection.rollback()
             return False, str(e)

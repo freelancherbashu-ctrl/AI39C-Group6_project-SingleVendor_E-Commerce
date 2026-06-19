@@ -6,8 +6,26 @@ category_bp = Blueprint('category', __name__)
 @category_bp.route('/')
 @category_bp.route('/categories')
 def categories_list():
+    # Search
+    search = request.args.get('search', '')
+    filter_status = request.args.get('filter', 'all')
+    
     categories = Category.get_all()
-    return render_template('list.html', categories=categories)
+    
+    # Search filter
+    if search:
+        categories = [c for c in categories if search.lower() in c['name'].lower()]
+    
+    # Status filter
+    if filter_status == 'active':
+        categories = [c for c in categories if c.get('is_active', 1)]
+    elif filter_status == 'inactive':
+        categories = [c for c in categories if not c.get('is_active', 1)]
+    
+    return render_template('list.html', 
+                          categories=categories, 
+                          search=search, 
+                          filter_status=filter_status)
 
 @category_bp.route('/add-category', methods=['GET', 'POST'])
 def add_category():

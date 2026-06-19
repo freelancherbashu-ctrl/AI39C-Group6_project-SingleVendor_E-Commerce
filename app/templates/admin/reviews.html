@@ -1,4 +1,5 @@
 {% extends 'admin/base.html' %}
+{%- from "macros.html" import csrf -%}
 {% block title %}Reviews — MeroPasal Admin{% endblock %}
 {% block page_title %}Reviews{% endblock %}
 {% block breadcrumb %}<span class="bc-sep">›</span><span class="bc-current">Reviews</span>{% endblock %}
@@ -36,6 +37,7 @@
             <td>
                 <form method="POST" action="{{ url_for('admin.delete_review', review_id=r.id) }}"
                       onsubmit="return confirm('Delete this review?')">
+{{ csrf() }}
                     <button type="submit" class="btn btn-sm" style="background:#fee2e2;color:#991b1b;border:1px solid #fecaca;">Delete</button>
                 </form>
             </td>

@@ -152,18 +152,6 @@ def bulk_products():
     if not ids:
         flash("No products selected.", "warning")
         return redirect(url_for("admin.products"))
-    
-@admin_bp.route("/products/<int:pid>/stock", methods=["POST"])
-def adjust_stock(pid):
-    product = Product.query.get_or_404(pid)
-    try:
-        delta = int(request.form.get("delta", 0))
-    except ValueError:
-        delta = 0
-    product.stock = max(0, product.stock + delta)
-    db.session.commit()
-    flash(f"Stock for '{product.name}' is now {product.stock}.", "success")
-    return redirect(request.referrer or url_for("admin.products"))
 
     items = Product.query.filter(Product.id.in_(ids)).all()
     count = 0
@@ -190,6 +178,19 @@ def adjust_stock(pid):
     db.session.commit()
     flash(msg, "success")
     return redirect(url_for("admin.products"))
+
+
+@admin_bp.route("/products/<int:pid>/stock", methods=["POST"])
+def adjust_stock(pid):
+    product = Product.query.get_or_404(pid)
+    try:
+        delta = int(request.form.get("delta", 0))
+    except ValueError:
+        delta = 0
+    product.stock = max(0, product.stock + delta)
+    db.session.commit()
+    flash(f"Stock for '{product.name}' is now {product.stock}.", "success")
+    return redirect(request.referrer or url_for("admin.products"))
 
 # ===== CATEGORIES =====
 @admin_bp.route("/categories", methods=["GET", "POST"])

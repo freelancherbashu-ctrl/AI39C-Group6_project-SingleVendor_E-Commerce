@@ -1,4 +1,5 @@
 {% extends 'admin/base.html' %}
+{%- from "macros.html" import csrf -%}
 {% block title %}Order #{{ order.id }} — MeroPasal Admin{% endblock %}
 {% block page_title %}Order #{{ order.id }}{% endblock %}
 {% block breadcrumb %}<span class="bc-sep">›</span><a href="{{ url_for('admin.orders') }}" class="bc-item">Orders</a><span class="bc-sep">›</span><span class="bc-current">Order #{{ order.id }}</span>{% endblock %}
@@ -25,19 +26,26 @@
         <h3 style="margin-bottom:1rem;color:var(--text-primary);">Update Order Status</h3>
         <p style="margin-bottom:1rem;">Current: <span class="badge badge-{{ order.order_status|lower }}">{{ order.order_status }}</span></p>
 
+        {% if order.order_status in ('Cancelled', 'Rejected', 'Completed') %}
+        <p style="font-size:0.85rem;color:var(--text-secondary);padding:0.6rem;background:var(--surface-2);border-radius:6px;">
+            This order is <strong>{{ order.order_status }}</strong> and can't be changed further.
+        </p>
+        {% else %}
         <div style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:1rem;padding:0.6rem;background:var(--surface-2);border-radius:6px;">
             Flow: <strong>Pending → Approved → Processing → Completed</strong><br>
-            Or: <strong>Pending → Rejected</strong>
+            Or: <strong>Pending → Rejected</strong> (only while payment isn't approved yet)
         </div>
 
         <form method="POST" action="{{ url_for('admin.update_order_status', order_id=order.id) }}">
+{{ csrf() }}
             <select name="status" style="width:100%;padding:0.6rem;border:1px solid var(--border);border-radius:8px;margin-bottom:0.8rem;font-size:0.9rem;background:var(--input-bg);color:var(--text-primary);">
-                {% for s in ['Pending','Approved','Processing','Completed','Rejected','Cancelled'] %}
+                {% for s in ['Pending','Approved','Processing','Completed'] + ([] if order.payment_status == 'Approved' else ['Rejected']) %}
                 <option value="{{ s }}" {{ 'selected' if order.order_status == s }}>{{ s }}</option>
                 {% endfor %}
             </select>
             <button type="submit" class="btn btn-primary" style="width:100%">Update Status</button>
         </form>
+        {% endif %}
     </div>
 </div>
 

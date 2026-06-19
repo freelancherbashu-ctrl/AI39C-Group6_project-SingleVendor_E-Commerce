@@ -1,4 +1,5 @@
 {% extends 'admin/base.html' %}
+{%- from "macros.html" import csrf -%}
 {% block title %}Orders — MeroPasal Admin{% endblock %}
 {% block page_title %}Orders{% endblock %}
 {% block breadcrumb %}<span class="bc-sep">›</span><span class="bc-current">Orders</span>{% endblock %}
@@ -17,7 +18,7 @@
 <div class="card">
     <table>
         <thead>
-            <tr><th>#Order</th><th>Customer</th><th>Phone</th><th>Amount</th><th>Payment</th><th>Status</th><th>Date</th><th></th></tr>
+            <tr><th>#Order</th><th>User ID</th><th>Phone</th><th>Amount</th><th>Payment</th><th>Status</th><th>Date</th><th></th></tr>
         </thead>
         <tbody>
         {% for o in orders %}
@@ -130,7 +131,9 @@ function renderDrawer(o) {
         </tr>`;
     });
 
-    const statusOptions = ['Pending','Approved','Processing','Completed','Rejected','Cancelled']
+    const baseStatuses = ['Pending','Approved','Processing','Completed']
+        .concat(o.payment_status === 'Approved' ? [] : ['Rejected']);
+    const statusOptions = baseStatuses
         .map(s => `<option value="${s}" ${s === o.order_status ? 'selected' : ''}>${s}</option>`)
         .join('');
 
@@ -160,14 +163,22 @@ function renderDrawer(o) {
 
     <div class="dsec">
         <h4>Update Status</h4>
+        ${['Cancelled','Rejected','Completed'].includes(o.order_status) ? `
+        <p style="font-size:.8rem;color:#9ca3af;">
+            This order is <strong>${o.order_status}</strong> and can't be changed further.
+        </p>
+        ` : `
         <p style="font-size:.75rem;color:#64748b;margin-bottom:.5rem;">
-            Flow: <strong>Pending → Approved → Processing → Completed</strong>
+            Flow: <strong>Pending → Approved → Processing → Completed</strong><br>
+            Or: <strong>Pending → Rejected</strong> (only while payment isn't approved yet)
         </p>
         <form method="POST" action="/admin/orders/${o.id}/status" class="status-form"
               onsubmit="handleStatusUpdate(event, ${o.id})">
+{{ csrf() }}
             <select name="status">${statusOptions}</select>
             <button type="submit" class="btn btn-primary btn-sm">Update</button>
         </form>
+        `}
     </div>`;
 }
 

@@ -1,7 +1,9 @@
+{%- from "macros.html" import csrf -%}
 <!DOCTYPE html>
 <html data-theme="light">
 <head>
     <title>{% block title %}MeroPasal{% endblock %}</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     {% block style %}{% endblock %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
@@ -133,10 +135,12 @@ function renderPDModal(p) {
             </div>
             <div class="pdm-actions">
                 <form action="/cart/add/${p.id}" method="POST" onsubmit="pdmInjectQty(this)">
+{{ csrf() }}
                     <input type="hidden" name="quantity" id="pdmCartQty" value="1">
                     <button type="submit" class="pdm-btn pdm-btn-cart">🛒 Add to Cart</button>
                 </form>
                 <form action="/buy_now/${p.id}" method="POST" onsubmit="pdmInjectQty(this)">
+{{ csrf() }}
                     <input type="hidden" name="quantity" id="pdmBuyQty" value="1">
                     <button type="submit" class="pdm-btn pdm-btn-buy">⚡ Buy Now</button>
                 </form>
@@ -156,7 +160,7 @@ function pdmQty(delta) {
 function pdmInjectQty(form) {
     const qty = document.getElementById('pdmQty');
     if (qty) {
-        const qtyInput = form.querySelector('input[type=hidden]');
+        const qtyInput = form.querySelector('input[type=hidden][name=quantity]');
         if (qtyInput) qtyInput.value = qty.value;
     }
 }

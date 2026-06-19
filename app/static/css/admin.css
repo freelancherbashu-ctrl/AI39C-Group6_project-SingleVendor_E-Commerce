@@ -504,10 +504,12 @@ tr:hover td { background: var(--tr-hover); }
 .badge-cancelled  { background: #fee2e2; color: #991b1b; }
 .badge-approved   { background: #d1fae5; color: #065f46; }
 .badge-rejected   { background: #fee2e2; color: #991b1b; }
+.badge-expired    { background: #f3f4f6; color: #4b5563; }
 [data-theme="dark"] .badge-pending    { background: #422006; color: #fcd34d; }
 [data-theme="dark"] .badge-processing { background: #0c1a3a; color: #93c5fd; }
 [data-theme="dark"] .badge-completed  { background: #052e16; color: #86efac; }
 [data-theme="dark"] .badge-cancelled  { background: #450a0a; color: #fca5a5; }
+[data-theme="dark"] .badge-expired    { background: #27272a; color: #a1a1aa; }
 
 /* ── Buttons ── */
 .btn {

@@ -6,7 +6,45 @@
   "use strict";
 
   // ---- Mobile sidebar toggle ----
+  // ---- Mobile sidebar toggle ----
+(function () {
   const toggle = document.getElementById("adminSidebarToggle");
+  const sidebar = document.querySelector(".admin-sidebar");
+  const overlay = document.getElementById("adminMobileOverlay");
+  if (!toggle || !sidebar) return;
+
+  function openSidebar() {
+    sidebar.classList.add("mobile-open");
+    if (overlay) overlay.classList.add("active");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeSidebar() {
+    sidebar.classList.remove("mobile-open");
+    if (overlay) overlay.classList.remove("active");
+    document.body.style.overflow = "";
+  }
+
+  toggle.addEventListener("click", () => {
+    if (sidebar.classList.contains("mobile-open")) {
+      closeSidebar();
+    } else {
+      openSidebar();
+    }
+  });
+
+  // Close when clicking overlay
+  if (overlay) {
+    overlay.addEventListener("click", closeSidebar);
+  }
+
+  // Close when clicking a nav link on mobile
+  sidebar.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", () => {
+      if (window.innerWidth <= 768) closeSidebar();
+    });
+  });
+})();
   const sidebar = document.querySelector(".admin-sidebar");
   if (toggle && sidebar) {
     toggle.addEventListener("click", () => sidebar.classList.toggle("open"));

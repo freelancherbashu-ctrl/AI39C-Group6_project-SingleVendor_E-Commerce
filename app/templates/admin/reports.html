@@ -5,6 +5,11 @@
 
 {% block content %}
 
+<div class="report-toolbar" style="display:flex;justify-content:flex-end;gap:0.6rem;margin-bottom:1.2rem;">
+    <button class="btn btn-secondary no-print" onclick="window.print()">📄 Download PDF</button>
+    <a class="btn btn-secondary no-print" href="{{ url_for('admin.export_reports_csv') }}">📊 Download CSV</a>
+</div>
+
 <!-- Summary Stats -->
 <div class="stats" style="margin-bottom:2rem;">
     <div class="stat-card">
@@ -23,6 +28,18 @@
         <div class="label">This Month Revenue</div>
         <div class="value" style="font-size:1.3rem;">Rs. {{ "{:,.0f}".format(this_month_revenue) }}</div>
     </div>
+</div>
+
+<!-- Income Graph -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header"><h2>📈 Income Over Time (Last 12 Months)</h2></div>
+    {% if monthly_sales %}
+    <div style="padding:1.2rem;">
+        <canvas id="incomeChart" height="90"></canvas>
+    </div>
+    {% else %}
+    <p style="padding:2rem;text-align:center;color:#9ca3af;">No sales data yet.</p>
+    {% endif %}
 </div>
 
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
@@ -82,4 +99,46 @@
     </div>
 
 </div>
+
+<style>
+@media print {
+    .sidebar, .topbar, .no-print { display: none !important; }
+    .main-content, body { background: #fff !important; }
+    .card { box-shadow: none !important; border: 1px solid #ccc !important; }
+}
+</style>
+
+{% endblock %}
+
+{% block scripts %}
+{% if monthly_sales %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+const incomeCtx = document.getElementById('incomeChart');
+new Chart(incomeCtx, {
+    type: 'line',
+    data: {
+        labels: [{% for row in monthly_sales %}"{{ row[0] }}",{% endfor %}],
+        datasets: [{
+            label: 'Revenue (Rs.)',
+            data: [{% for row in monthly_sales %}{{ row[2] }},{% endfor %}],
+            borderColor: '#4f46e5',
+            backgroundColor: 'rgba(79,70,229,0.12)',
+            fill: true,
+            tension: 0.3,
+            pointBackgroundColor: '#4f46e5',
+            pointRadius: 4,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { beginAtZero: true, ticks: { callback: v => 'Rs. ' + v.toLocaleString('en-IN') } }
+        }
+    }
+});
+</script>
+{% endif %}
+
 {% endblock %}

@@ -95,3 +95,17 @@
 .btn-loading-light::after { border: 2px solid rgba(0,0,0,0.15); border-top-color: #374151; }
 @keyframes btnSpin { to { transform: rotate(360deg); } }
 .btn-loading { padding-right: 36px !important; }
+
+/* Delete confirmation modal */
+.admin-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
+.admin-modal { background: #fff; border-radius: 14px; padding: 32px 28px; max-width: 420px; width: 90%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.2); animation: modalIn 0.2s ease; }
+@keyframes modalIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.admin-modal-icon { font-size: 48px; margin-bottom: 12px; }
+.admin-modal-title { margin: 0 0 8px; font-size: 20px; color: #111827; }
+.admin-modal-msg { margin: 0 0 24px; color: #6b7280; font-size: 14px; line-height: 1.5; }
+.admin-modal-actions { display: flex; gap: 10px; justify-content: center; }
+.admin-modal-btn { padding: 10px 24px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+.admin-modal-cancel { background: #f3f4f6; color: #374151; }
+.admin-modal-cancel:hover { background: #e5e7eb; }
+.admin-modal-confirm { background: #dc2626; color: #fff; }
+.admin-modal-confirm:hover { background: #b91c1c; }

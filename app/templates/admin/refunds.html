@@ -1,4 +1,5 @@
 {% extends 'admin/base.html' %}
+{%- from "macros.html" import csrf -%}
 {% block title %}Refunds — MeroPasal Admin{% endblock %}
 {% block page_title %}Refunds{% endblock %}
 {% block breadcrumb %}<span class="bc-sep">›</span><span class="bc-current">Refunds</span>{% endblock %}
@@ -113,6 +114,7 @@ function renderRefundDrawer(r) {
     <div class="dsec" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem;">
         <h4 style="margin:0 0 .7rem;font-size:.82rem;text-transform:uppercase;letter-spacing:.07em;color:var(--text-secondary);font-weight:700;">Update Status</h4>
         <form method="POST" action="/admin/refunds/${r.id}/update">
+{{ csrf() }}
             <div style="display:flex;flex-direction:column;gap:.6rem;">
                 <select name="status" style="padding:.5rem;border:1px solid var(--border);border-radius:7px;background:var(--input-bg);color:var(--text-primary);">${statusOptions}</select>
                 <textarea name="admin_note" placeholder="Note to customer (optional)" rows="3" style="padding:.5rem;border:1px solid var(--border);border-radius:7px;background:var(--input-bg);color:var(--text-primary);resize:vertical;font-size:.85rem;">${r.admin_note||''}</textarea>

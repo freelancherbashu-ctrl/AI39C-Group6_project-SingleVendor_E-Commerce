@@ -6,29 +6,58 @@
     <a href="/add-category" class="btn btn-primary">➕ Add Category</a>
 </div>
 
+<!-- Search & Filter -->
+<div class="search-bar">
+    <form method="GET" style="display:flex;gap:10px;flex:1;flex-wrap:wrap;align-items:center;">
+        <input type="text" name="search" placeholder="🔍 Search categories..." value="{{ search }}">
+        
+        <select name="filter">
+            <option value="all" {% if filter_status == 'all' %}selected{% endif %}>📋 All</option>
+            <option value="active" {% if filter_status == 'active' %}selected{% endif %}>✅ Active</option>
+            <option value="inactive" {% if filter_status == 'inactive' %}selected{% endif %}>⛔ Inactive</option>
+        </select>
+        
+        <button type="submit" class="btn-search">🔍 Search</button>
+        <a href="/categories" class="btn-reset">🔄 Reset</a>
+    </form>
+</div>
+
+<!-- Stats -->
+<div class="stats-bar">
+    <span class="stat-item total">📊 Total: {{ categories|length }}</span>
+    <span class="stat-item active">✅ Active: {{ categories|selectattr('is_active')|list|length }}</span>
+    <span class="stat-item inactive">⛔ Inactive: {{ categories|rejectattr('is_active')|list|length }}</span>
+    <span class="stat-item image">📸 With Images: {{ categories|selectattr('image')|list|length }}</span>
+</div>
+
+<!-- Flash Messages -->
 {% with messages = get_flashed_messages(with_categories=true) %}
     {% for category, message in messages %}
         <div class="alert alert-{{ category }}">{{ message }}</div>
     {% endfor %}
 {% endwith %}
 
+<!-- Categories Grid -->
 {% if categories %}
     <div class="category-grid">
         {% for cat in categories %}
         <div class="category-card">
-            <!-- ✅ Image Show -->
             <div class="card-image">
                 {% if cat.image %}
                     <img src="{{ url_for('static', filename=cat.image) }}" alt="{{ cat.name }}">
                 {% else %}
                     <div class="no-image">📁</div>
                 {% endif %}
+                <span class="status-badge {% if cat.is_active %}active{% else %}inactive{% endif %}">
+                    {% if cat.is_active %}✅ Active{% else %}⛔ Inactive{% endif %}
+                </span>
             </div>
             <div class="card-info">
                 <h3>{{ cat.name }}</h3>
                 {% if cat.description %}
                     <p class="description">{{ cat.description }}</p>
                 {% endif %}
+                <p class="slug">📸 {{ cat.image or 'No image' }}</p>
             </div>
             <div class="card-actions">
                 <a href="/edit-category/{{ cat.id }}" class="btn-edit">✏️ Edit</a>
@@ -40,7 +69,7 @@
 {% else %}
     <div class="empty-state">
         <h3>📭 No Categories Found</h3>
-        <p>Start by creating your first category.</p>
+        <p>{% if search %}No results for "{{ search }}"{% else %}Start by creating your first category.{% endif %}</p>
         <a href="/add-category" class="btn btn-primary">➕ Create First Category</a>
     </div>
 {% endif %}

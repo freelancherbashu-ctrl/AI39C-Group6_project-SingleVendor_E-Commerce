@@ -306,3 +306,7 @@
 .stock-in  { background: #EAF3DE; color: #3B6D11; }
 .stock-low { background: #FAEEDA; color: #854F0B; }
 .stock-out { background: #FCEBEB; color: #A32D2D; }
+
+[data-theme="dark"] .stock-in  { background: #14241a; color: #86efac; }
+[data-theme="dark"] .stock-low { background: #2a1d0c; color: #fcd34d; }
+[data-theme="dark"] .stock-out { background: #2a1313; color: #fca5a5; }

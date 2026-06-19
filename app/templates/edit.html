@@ -1,0 +1,89 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<div class="form-container">
+    <div class="form-card">
+        <h1>✏️ <span>Edit</span> Category</h1>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <form method="POST" enctype="multipart/form-data">
+
+            <div class="form-group">
+                <label>Category Name <span class="required">*</span></label>
+                <input type="text" name="name" value="{{ category.name }}" required>
+            </div>
+
+            <div class="form-group">
+                <label>Description</label>
+                <textarea name="description">{{ category.description or '' }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Parent Category</label>
+                <select name="parent_id">
+                    <option value="">None — Main Category</option>
+                    {% for cat in main_cats %}
+                        <option value="{{ cat.id }}" {% if category.parent_id == cat.id %}selected{% endif %}>
+                            {{ cat.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <div class="help-text">Select parent to create a sub-category</div>
+            </div>
+
+            <!-- Current Images -->
+            <div class="form-group">
+                <label>Current Images</label>
+                <div class="current-images">
+                    {% if category.image %}
+                    <div class="current-image-box">
+                        <img src="{{ url_for('static', filename=category.image) }}" alt="Category">
+                        <div class="img-label">Category Image</div>
+                        <div class="delete-check">
+                            <input type="checkbox" name="delete_image" value="yes" id="delCat">
+                            <label for="delCat">Delete</label>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if category.team_image %}
+                    <div class="current-image-box">
+                        <img src="{{ url_for('static', filename=category.team_image) }}" alt="Team">
+                        <div class="img-label">Team Image</div>
+                        <div class="delete-check">
+                            <input type="checkbox" name="delete_team_image" value="yes" id="delTeam">
+                            <label for="delTeam">Delete</label>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- New Images -->
+            <div class="form-group">
+                <label>📸 Change Category Image</label>
+                <input type="file" name="image" accept="image/*">
+                <div class="help-text">Upload new image to replace current</div>
+            </div>
+
+            <div class="form-group">
+                <label>👥 Change Team Image</label>
+                <input type="file" name="team_image" accept="image/*">
+                <div class="help-text">Upload new team image to replace current</div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">💾 Update Category</button>
+                <a href="{{ url_for('category.categories_list') }}" class="btn btn-secondary">↩️ Cancel</a>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+{% endblock %}

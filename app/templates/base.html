@@ -3,46 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}ShopOne{% endblock %}</title>
+    <title>{% block title %}ShopNow{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <header class="site-header">
-        <div class="container header-inner">
-            <a class="brand" href="{{ url_for('customer.dashboard') }}">ShopOne</a>
-            <nav class="main-nav">
-                {% if session.get('customer_id') %}
-                    <a href="{{ url_for('customer.dashboard') }}">Dashboard</a>
-                    <a href="{{ url_for('customer.profile') }}">Profile</a>
-                    <a href="{{ url_for('customer.orders') }}">Orders</a>
-                    <a href="{{ url_for('auth.logout') }}">Logout</a>
-                {% else %}
-                    <a href="{{ url_for('auth.login') }}">Login</a>
-                    <a href="{{ url_for('auth.register') }}">Register</a>
-                {% endif %}
-            </nav>
-        </div>
-    </header>
-
-    <main class="container page-content">
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                <div class="flash-messages">
-                    {% for message in messages %}
-                        <div class="flash">{{ message }}</div>
-                    {% endfor %}
-                </div>
+    <nav class="navbar">
+        <a class="nav-brand" href="/dashboard">ShopNow</a>
+        <ul class="nav-links">
+            <li><a href="/products">Shop</a></li>
+            {% if session.get('customer_id') %}
+            <li><a href="/cart">🛒 Cart</a></li>
+            <li><a href="/orders">Orders</a></li>
+            <li><a href="/profile">Profile</a></li>
+            <li><a href="/logout">Logout</a></li>
+            {% else %}
+            <li><a href="/login">Login</a></li>
+            <li><a href="/register">Register</a></li>
             {% endif %}
+            {% if session.get('is_admin') %}
+            <li><a href="/admin/products">Admin</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+
+    <div class="container">
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div class="flash-messages">
+            {% for message in messages %}
+            <div class="flash">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
         {% endwith %}
 
         {% block content %}{% endblock %}
-    </main>
+    </div>
 
-    <footer class="site-footer">
-        <div class="container">
-            <p>&copy; 2026 ShopOne. All rights reserved.</p>
-        </div>
+    <footer class="footer">
+        <p>&copy; 2025 ShopNow. All rights reserved.</p>
     </footer>
 </body>
 </html>

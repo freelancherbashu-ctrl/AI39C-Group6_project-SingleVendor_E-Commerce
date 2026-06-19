@@ -1,20 +1,10 @@
-:root{
-    --primary-blue:#2563eb;
-    --primary-red:#ef4444;
-    --primary-white:#ffffff;
-    --light-bg:#f8fafc;
-}
-
-body{
-    margin:0;
-    font-family:Arial,sans-serif;
-    background:var(--light-bg);
-}
+/* MeroPasal — Single Category page (theme-aware) */
 
 /* CATEGORY PAGE */
 
 .category-page{
     padding:40px;
+    min-height:70vh;
 }
 
 /* HEADER */
@@ -24,11 +14,14 @@ body{
     justify-content:space-between;
     align-items:center;
     margin-bottom:40px;
+    flex-wrap:wrap;
+    gap:15px;
 }
 
 .category-header h1{
-    font-size:36px;
-    color:var(--primary-blue);
+    font-size:32px;
+    color:var(--text-primary);
+    text-transform:capitalize;
 }
 
 /* SORT */
@@ -42,7 +35,9 @@ body{
 .sort-section select{
     padding:10px;
     border-radius:5px;
-    border:1px solid #ccc;
+    border:1px solid var(--border);
+    background:var(--surface);
+    color:var(--text-primary);
     outline:none;
 }
 
@@ -52,68 +47,100 @@ body{
     display:grid;
     grid-template-columns:repeat(3, 1fr);
     gap:25px;
-    padding:30px;
+    padding:30px 0;
+}
+
+@media (max-width: 900px){
+    .products-container{ grid-template-columns:repeat(2, 1fr); }
+}
+@media (max-width: 600px){
+    .products-container{ grid-template-columns:1fr; }
 }
 
 /* PRODUCT CARD */
 
 .product-card{
-    background:white;
+    position:relative;
+    background:var(--surface);
+    border:1px solid var(--border);
     padding:20px;
     border-radius:12px;
     text-align:center;
-    box-shadow:0 2px 10px rgba(0,0,0,0.1);
-    transition:0.3s;
+    box-shadow:var(--shadow-sm);
+    transition:transform .2s, box-shadow .2s;
 }
 
 .product-card:hover{
     transform:translateY(-5px);
+    box-shadow:var(--shadow-md);
+}
+
+.product-card h3{
+    color:var(--text-primary);
 }
 
 .product-card img{
     width:220px;
     height:180px;
     object-fit:contain;
+    background:var(--bg-2);
+    border-radius:8px;
 }
 
 /* PRICE */
 
 .price{
-    color:green;
+    color:#16a34a;
     font-weight:bold;
     margin:10px 0;
 }
+
+.price-original{
+    text-decoration:line-through;
+    color:var(--text-muted);
+    font-weight:400;
+    margin-right:6px;
+}
+
+.price-sale{
+    color:var(--mp-red, #ef4444);
+}
+
+[data-theme="dark"] .price{ color:#4ade80; }
 
 /* BUTTON */
 
 .btn{
     display:inline-block;
     padding:10px 15px;
-    background:var(--primary-blue);
+    background:var(--mp-blue, #2563eb);
     color:white;
     text-decoration:none;
     border-radius:5px;
-    transition:0.3s;
+    border:none;
+    cursor:pointer;
+    transition:background .2s;
 }
 
 .btn:hover{
-    background:var(--primary-red);
+    background:var(--mp-red, #ef4444);
 }
 
 .no-products{
     width:100%;
     text-align:center;
     padding:60px 20px;
-    background:white;
+    background:var(--surface);
+    border:1px solid var(--border);
     border-radius:10px;
-    box-shadow:0 2px 10px rgba(0,0,0,0.1);
+    box-shadow:var(--shadow-sm);
 }
 
 .no-products h2{
-    color:var(--primary-blue);
+    color:var(--text-primary);
     margin-bottom:10px;
 }
 
 .no-products p{
-    color:gray;
+    color:var(--text-muted);
 }

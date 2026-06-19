@@ -1,3 +1,4 @@
+{%- from "macros.html" import csrf -%}
 <header class="topbar">
 
     <div class="logo-section">
@@ -72,6 +73,7 @@
                 <a href="{{ url_for('auth.cart') }}">My Cart</a>
                 <a href="{{ url_for('auth.wishlist') }}">My Wishlist</a>
                 <a href="{{ url_for('auth.view_my_orders') }}">My Orders</a>
+                <a href="{{ url_for('auth.my_refunds') }}">My Refunds</a>
                 <a href="{{ url_for('auth.profile') }}">My Profile</a>
                 <div class="dropdown-divider"></div>
                 <a href="{{ url_for('auth.logout') }}" class="logout-link">🚪 Log Out</a>
@@ -304,7 +306,7 @@ function loadCategories() {
             }
             grid.innerHTML = cats.map(c => {
                 const imgHtml = c.image
-                    ? `<img class="cat-mega-thumb" src="${c.image}" alt="${c.name}" onerror="this.parentElement.innerHTML='<div class=cat-mega-thumb-placeholder>🗂️</div>'">`
+                    ? `<img class="cat-mega-thumb" src="${c.image}" alt="${c.name}" onerror="this.outerHTML='<div class=cat-mega-thumb-placeholder>🗂️</div>'">`
                     : `<div class="cat-mega-thumb-placeholder">🗂️</div>`;
                 return `<a class="cat-mega-item" href="/single_category/${encodeURIComponent(c.name)}" onclick="closeCatMenu()">
                     ${imgHtml}

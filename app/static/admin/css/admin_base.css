@@ -109,3 +109,13 @@
 .admin-modal-cancel:hover { background: #e5e7eb; }
 .admin-modal-confirm { background: #dc2626; color: #fff; }
 .admin-modal-confirm:hover { background: #b91c1c; }
+
+/* Mobile responsive sidebar */
+@media (max-width: 768px) {
+  .admin-sidebar { position: fixed; left: -260px; top: 0; height: 100vh; z-index: 999; transition: left 0.3s ease; box-shadow: none; }
+  .admin-sidebar.mobile-open { left: 0; box-shadow: 4px 0 20px rgba(0,0,0,0.3); }
+  .admin-content { margin-left: 0 !important; width: 100% !important; }
+  .admin-sidebar-toggle { display: block !important; }
+  .admin-mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 998; }
+  .admin-mobile-overlay.active { display: block; }
+}

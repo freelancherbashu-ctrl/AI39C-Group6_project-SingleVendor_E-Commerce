@@ -1,6 +1,6 @@
 import os
 from flask import Flask
-from app.extensions import mysql, mail
+from app.extensions import mysql, mail, csrf
 
 def create_app():
     app = Flask(__name__)
@@ -12,6 +12,7 @@ def create_app():
 
     mysql.init_app(app)
     mail.init_app(app)
+    csrf.init_app(app)
 
     from app.routes.authroute import auth_bp
     from app.routes.googleroute import create_google_blueprint, google_callback_bp

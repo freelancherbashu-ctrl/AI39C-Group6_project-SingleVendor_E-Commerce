@@ -262,7 +262,9 @@ def orders():
                            orders=pagination.items,
                            pagination=pagination,
                            active_status=status,
-                           q=q)
+                           q=q,
+                           filter_total=0,
+                           filter_count=pagination.total)
 
 @admin_bp.route("/orders/export.csv")
 def orders_export_csv():

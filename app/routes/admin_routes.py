@@ -1,5 +1,6 @@
 import os
 import uuid
+from datetime import datetime
 from functools import wraps
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app
 from werkzeug.utils import secure_filename
@@ -27,7 +28,7 @@ def inject_pending_orders():
             pass
     return {"pending_orders": 0}
 
-ALLOWED_EXT = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'}
+ALLOWED_EXT = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 def _allowed(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXT
@@ -155,12 +156,12 @@ def orders():
     cursor = mysql.connection.cursor()
     if status:
         cursor.execute("""
-            SELECT id, customer_name, phone, total_price, order_status, payment_method, created_at
+            SELECT id, user_id, phone, total_price, order_status, payment_method, created_at
             FROM orders WHERE order_status = %s ORDER BY created_at DESC
         """, (status,))
     else:
         cursor.execute("""
-            SELECT id, customer_name, phone, total_price, order_status, payment_method, created_at
+            SELECT id, user_id, phone, total_price, order_status, payment_method, created_at
             FROM orders ORDER BY created_at DESC
         """)
     rows = cursor.fetchall()
@@ -216,7 +217,10 @@ def order_detail_json(order_id):
 @admin_required
 def update_order_status(order_id):
     new_status = request.form.get("status")
-    valid = ("Pending", "Approved", "Processing", "Completed", "Rejected", "Cancelled")
+    # Admin can Reject an order, but never Cancel one — cancelling is a
+    # customer-only action. "Cancelled" orders only ever arrive via the
+    # customer-facing cancel flow or an auto-cancel on payment rejection.
+    valid = ("Pending", "Approved", "Processing", "Completed", "Rejected")
     if new_status not in valid:
         flash("Invalid status.", "error")
         return redirect(url_for("admin.orders"))
@@ -229,6 +233,14 @@ def update_order_status(order_id):
 
     old_status = order["order_status"]
 
+    # Terminal states can't be reopened or changed further — most importantly,
+    # a Cancelled order (e.g. the customer cancelled it) must stay cancelled
+    # and never be silently moved forward again.
+    terminal_statuses = ("Cancelled", "Rejected", "Completed")
+    if old_status in terminal_statuses:
+        flash(f"Order #{order_id} is already {old_status} and can't be changed further.", "error")
+        return redirect(url_for("admin.orders"))
+
     # Block processing/completing online payment orders until payment is approved
     online_methods = ("esewa", "khalti")
     restricted     = ("Processing", "Completed", "Approved")
@@ -236,6 +248,12 @@ def update_order_status(order_id):
             and order.get("payment_method") in online_methods
             and order.get("payment_status") != "Approved"):
         flash("Payment must be approved before changing order to this status.", "error")
+        return redirect(url_for("admin.orders"))
+
+    # Reject is only allowed while payment hasn't been approved yet — once
+    # payment is approved, the order has to be fulfilled or completed, not rejected.
+    if new_status == "Rejected" and order.get("payment_status") == "Approved":
+        flash("Can't reject — payment for this order is already approved.", "error")
         return redirect(url_for("admin.orders"))
 
     # Statuses where stock is still reserved (not yet deducted or released)
@@ -516,7 +534,8 @@ def delete_user(user_id):
 def flash_sales():
     sales    = FlashSale.get_all(mysql)
     products = Product.get_all(mysql)
-    return render_template("admin/flash_sales.html", sales=sales, products=products, admin=session["admin"])
+    return render_template("admin/flash_sales.html", sales=sales, products=products,
+                            now=datetime.now(), admin=session["admin"])
 
 @admin_bp.route("/flash-sales/add", methods=["GET", "POST"])
 @admin_required
@@ -610,7 +629,7 @@ def payments():
     cursor = mysql.connection.cursor()
     if status:
         cursor.execute("""
-            SELECT o.id, o.customer_name, o.total_price, o.payment_method,
+            SELECT o.id, o.user_id, o.total_price, o.payment_method,
                    o.payment_status, o.order_status, o.created_at, o.transaction_code
             FROM orders o
             WHERE o.payment_method IN ('esewa','khalti') AND o.payment_status = %s
@@ -618,7 +637,7 @@ def payments():
         """, (status,))
     else:
         cursor.execute("""
-            SELECT o.id, o.customer_name, o.total_price, o.payment_method,
+            SELECT o.id, o.user_id, o.total_price, o.payment_method,
                    o.payment_status, o.order_status, o.created_at, o.transaction_code
             FROM orders o
             WHERE o.payment_method IN ('esewa','khalti')
@@ -634,14 +653,14 @@ def approve_payment(order_id):
     cursor = mysql.connection.cursor()
     cursor.execute("""
         UPDATE orders SET payment_status='Approved', order_status='Approved'
-        WHERE id=%s AND payment_status='Pending'
+        WHERE id=%s AND payment_status='Pending' AND order_status = 'Completed'
     """, (order_id,))
     mysql.connection.commit()
     if cursor.rowcount:
         Order.confirm_stock(mysql, order_id)
         flash(f"Payment for Order #{order_id} approved.", "success")
     else:
-        flash("Could not approve — payment may already be processed.", "error")
+        flash("Could not approve — payment may already be processed, or the order was cancelled.", "error")
     return redirect(url_for("admin.payments"))
 
 @admin_bp.route("/payments/<int:order_id>/reject", methods=["POST"])
@@ -650,14 +669,14 @@ def reject_payment(order_id):
     cursor = mysql.connection.cursor()
     cursor.execute("""
         UPDATE orders SET payment_status='Rejected', order_status='Cancelled'
-        WHERE id=%s AND payment_status='Pending'
+        WHERE id=%s AND payment_status='Pending' AND order_status = 'Completed'
     """, (order_id,))
     mysql.connection.commit()
     if cursor.rowcount:
         Order.release_stock(mysql, order_id)
         flash(f"Payment for Order #{order_id} rejected. Order auto-cancelled.", "error")
     else:
-        flash("Could not reject — payment may already be processed.", "error")
+        flash("Could not reject — payment may already be processed, or the order was already cancelled.", "error")
     return redirect(url_for("admin.payments"))
 
 # ── REPORTS ───────────────────────────────────────────────────────────────────
@@ -673,7 +692,7 @@ def reports():
                COUNT(*) AS total_orders,
                SUM(total_price) AS revenue
         FROM orders
-        WHERE order_status NOT IN ('Cancelled', 'Rejected')
+        WHERE order_status = 'Completed'
           AND created_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
         GROUP BY month
         ORDER BY month ASC
@@ -688,7 +707,7 @@ def reports():
             SUM(JSON_UNQUOTE(JSON_EXTRACT(item.value, '$.subtotal'))) AS total_revenue
         FROM orders o
         JOIN JSON_TABLE(o.items_json, '$[*]' COLUMNS (value JSON PATH '$')) AS item
-        WHERE o.order_status NOT IN ('Cancelled', 'Rejected')
+        WHERE o.order_status = 'Completed'
           AND o.items_json IS NOT NULL AND o.items_json != ''
         GROUP BY product_name
         ORDER BY total_revenue DESC
@@ -697,13 +716,13 @@ def reports():
     top_products = cursor.fetchall()
 
     # Summary stats
-    cursor.execute("SELECT COUNT(*) FROM orders WHERE order_status NOT IN ('Cancelled','Rejected')")
+    cursor.execute("SELECT COUNT(*) FROM orders WHERE order_status = 'Completed'")
     total_orders = cursor.fetchone()[0]
-    cursor.execute("SELECT SUM(total_price) FROM orders WHERE order_status NOT IN ('Cancelled','Rejected')")
+    cursor.execute("SELECT SUM(total_price) FROM orders WHERE order_status = 'Completed'")
     total_revenue = cursor.fetchone()[0] or 0
-    cursor.execute("SELECT COUNT(*) FROM orders WHERE MONTH(created_at)=MONTH(NOW()) AND YEAR(created_at)=YEAR(NOW()) AND order_status NOT IN ('Cancelled','Rejected')")
+    cursor.execute("SELECT COUNT(*) FROM orders WHERE MONTH(created_at)=MONTH(NOW()) AND YEAR(created_at)=YEAR(NOW()) AND order_status = 'Completed'")
     this_month_orders = cursor.fetchone()[0]
-    cursor.execute("SELECT SUM(total_price) FROM orders WHERE MONTH(created_at)=MONTH(NOW()) AND YEAR(created_at)=YEAR(NOW()) AND order_status NOT IN ('Cancelled','Rejected')")
+    cursor.execute("SELECT SUM(total_price) FROM orders WHERE MONTH(created_at)=MONTH(NOW()) AND YEAR(created_at)=YEAR(NOW()) AND order_status = 'Completed'")
     this_month_revenue = cursor.fetchone()[0] or 0
 
     return render_template("admin/reports.html",
@@ -715,8 +734,61 @@ def reports():
         this_month_revenue=this_month_revenue,
         admin=session["admin"]
     )
-# ── APPEND TO THE VERY END OF app/routes/admin_routes.py ─────────────────────
-# (after the existing reports() function ends — paste everything below)
+
+@admin_bp.route("/reports/export.csv")
+@admin_required
+def export_reports_csv():
+    """Downloadable CSV of the same monthly revenue + top products data shown on the reports page."""
+    import csv, io
+    from flask import Response
+
+    cursor = mysql.connection.cursor()
+    cursor.execute("""
+        SELECT DATE_FORMAT(created_at, '%Y-%m') AS month,
+               COUNT(*) AS total_orders,
+               SUM(total_price) AS revenue
+        FROM orders
+        WHERE order_status = 'Completed'
+          AND created_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
+        GROUP BY month
+        ORDER BY month ASC
+    """)
+    monthly_sales = cursor.fetchall()
+
+    cursor.execute("""
+        SELECT
+            JSON_UNQUOTE(JSON_EXTRACT(item.value, '$.name')) AS product_name,
+            SUM(JSON_UNQUOTE(JSON_EXTRACT(item.value, '$.qty'))) AS total_qty,
+            SUM(JSON_UNQUOTE(JSON_EXTRACT(item.value, '$.subtotal'))) AS total_revenue
+        FROM orders o
+        JOIN JSON_TABLE(o.items_json, '$[*]' COLUMNS (value JSON PATH '$')) AS item
+        WHERE o.order_status = 'Completed'
+          AND o.items_json IS NOT NULL AND o.items_json != ''
+        GROUP BY product_name
+        ORDER BY total_revenue DESC
+        LIMIT 10
+    """)
+    top_products = cursor.fetchall()
+
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(["MeroPasal — Sales Report"])
+    writer.writerow([])
+    writer.writerow(["Monthly Revenue (last 12 months)"])
+    writer.writerow(["Month", "Orders", "Revenue (Rs.)"])
+    for month, orders_count, revenue in monthly_sales:
+        writer.writerow([month, orders_count, f"{revenue or 0:.2f}"])
+    writer.writerow([])
+    writer.writerow(["Top Products by Revenue"])
+    writer.writerow(["Product", "Units Sold", "Revenue (Rs.)"])
+    for name, qty, revenue in top_products:
+        writer.writerow([name, qty, f"{revenue or 0:.2f}"])
+
+    return Response(
+        buf.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment; filename=meropasal_sales_report.csv"}
+    )
 
 
 # ── REFUNDS ───────────────────────────────────────────────────────────────────
@@ -764,7 +836,7 @@ def coupons():
     from app.models.coupon import Coupon
     all_coupons = Coupon.get_all(mysql)
     return render_template("admin/coupons.html", coupons=all_coupons,
-                           admin=session["admin"])
+                           now=datetime.now(), admin=session["admin"])
 
 @admin_bp.route("/coupons/add", methods=["GET", "POST"])
 @admin_required

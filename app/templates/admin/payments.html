@@ -1,4 +1,5 @@
 {% extends 'admin/base.html' %}
+{%- from "macros.html" import csrf -%}
 {% block title %}Payments — MeroPasal Admin{% endblock %}
 {% block page_title %}Payment Management{% endblock %}
 {% block breadcrumb %}<span class="bc-sep">›</span><span class="bc-current">Payments</span>{% endblock %}
@@ -20,7 +21,7 @@
         <thead>
             <tr>
                 <th>#Order</th>
-                <th>Customer</th>
+                <th>User ID</th>
                 <th>Amount</th>
                 <th>Method</th>
                 <th>Payment Status</th>
@@ -50,17 +51,23 @@
             </td>
             <td>{{ p[6].strftime('%Y-%m-%d') if p[6] else '—' }}</td>
             <td>
-                {% if (p[4] or 'Pending') == 'Pending' %}
+                {% if (p[4] or 'Pending') == 'Pending' and p[5] not in ('Cancelled', 'Rejected') %}
                 <div style="display:flex;gap:0.4rem;">
                     <form method="POST" action="{{ url_for('admin.approve_payment', order_id=p[0]) }}"
                           onsubmit="return confirm('Approve payment for Order #{{ p[0] }}?')">
+{{ csrf() }}
                         <button type="submit" class="btn btn-sm btn-success">✅ Approve</button>
                     </form>
                     <form method="POST" action="{{ url_for('admin.reject_payment', order_id=p[0]) }}"
                           onsubmit="return confirm('Reject payment? This will auto-cancel the order.')">
+{{ csrf() }}
                         <button type="submit" class="btn btn-sm btn-danger">❌ Reject</button>
                     </form>
                 </div>
+                {% elif (p[4] or 'Pending') == 'Pending' and p[5] == 'Cancelled' %}
+                    <span style="color:#9ca3af;font-size:0.82rem;">Cancelled by customer</span>
+                {% elif (p[4] or 'Pending') == 'Pending' %}
+                    <span style="color:#9ca3af;font-size:0.82rem;">{{ p[5] }}</span>
                 {% else %}
                     <span style="color:#9ca3af;font-size:0.82rem;">Processed</span>
                 {% endif %}

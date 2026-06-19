@@ -96,7 +96,6 @@ class FlashSale:
             cur1 = mysql.connection.cursor()
             cur1.execute("SELECT price FROM products WHERE id=%s", (int(product_id),))
             row = cur1.fetchone()
-            print("DEBUG price row:", row)
             if not row:
                 return None, "Product not found"
             original   = int(row[0])
@@ -110,11 +109,9 @@ class FlashSale:
                 VALUES (%s, %s, %s, %s, %s, %s)
             """, (int(product_id), float(discount), sale_price, starts_at, ends_at, label))
             mysql.connection.commit()
-            print("DEBUG inserted sale id:", cur2.lastrowid)
             return cur2.lastrowid, None
         except Exception as e:
             mysql.connection.rollback()
-            print("FLASH SALE CREATE ERROR:", repr(e))
             return None, str(e)
 
     @staticmethod

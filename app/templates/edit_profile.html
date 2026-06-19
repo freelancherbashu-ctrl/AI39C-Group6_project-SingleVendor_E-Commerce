@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{%- from "macros.html" import csrf -%}
 {% block title %}Edit Profile - MeroPasal{% endblock %}
 {% block style %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
@@ -10,20 +11,15 @@
 
     <div class="auth-logo">✏️</div>
     <h1>Edit Profile</h1>
-    <p class="auth-sub">Update your name or email address</p>
+    <p class="auth-sub">Update your name</p>
 
     <form method="POST" action="{{ url_for('auth.edit_profile') }}">
+{{ csrf() }}
 
         <div class="form-group">
             <label>Full Name</label>
             <input type="text" name="full_name"
                    value="{{ user.full_name }}" required>
-        </div>
-
-        <div class="form-group">
-            <label>Email Address</label>
-            <input type="email" name="email" readonly
-                   value="{{ user.email }}" required>
         </div>
 
         <button type="submit" class="auth-btn">Save Changes</button>

@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{%- from "macros.html" import csrf -%}
 
 {% block title %}Category - MeroPasal{% endblock %}
 
@@ -79,7 +80,10 @@ document.addEventListener("click", function (e) {
     const btn = e.target.closest(".wishlist-btn[data-product-id]");
     if (!btn) return;
     const productId = btn.dataset.productId;
-    fetch(`/wishlist/toggle/${productId}`, { method: "POST" })
+    fetch(`/wishlist/toggle/${productId}`, {
+            method: "POST",
+            headers: { "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').content }
+        })
         .then(r => r.json())
         .then(data => {
             if (!data.success) { if (data.error === "login_required") window.location.href = "/login"; return; }

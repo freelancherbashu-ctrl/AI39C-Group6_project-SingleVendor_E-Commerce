@@ -56,7 +56,9 @@
 /* QUANTITY */
 .cart-qty {
     display: flex;
+    flex-direction: column;
     align-items: center;
+    gap: 4px;
 }
 
 .cart-qty form {
@@ -92,8 +94,22 @@
     font-size: 1rem;
 }
 
+/* Small muted label used to disambiguate unit price / qty / subtotal */
+.cart-line-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--text-muted, #9ca3af);
+}
+
 /* TOTAL */
 .cart-total {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
     font-weight: 700;
     color: var(--text-primary, #1e293b);
     font-size: 1rem;

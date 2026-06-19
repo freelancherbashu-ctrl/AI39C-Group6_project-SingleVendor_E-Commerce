@@ -1,41 +1,46 @@
-import re
-from .base_model import BaseModel
-from .database import Database
+from app.models.database import Database
 
-class CategoryModel(BaseModel):
-    @property
-    def table(self):
-        return "categories"
+class Category:
+    table = "categories"
     
-    def generate_slug(self, name):
-        slug = name.lower().strip()
-        slug = re.sub(r'[^a-z0-9\s-]', '', slug)
-        slug = re.sub(r'[\s-]+', '-', slug)
-        return slug.strip('-')
+    def __init__(self, name=None, description=None, image=None):
+        self.name = name
+        self.description = description
+        self.image = image
     
-    def name_exists(self, name, exclude_id=None):
-        db = Database()
-        if exclude_id:
-            result = db.fetch_one("SELECT id FROM categories WHERE name = %s AND id != %s", (name, exclude_id))
-        else:
-            result = db.fetch_one("SELECT id FROM categories WHERE name = %s", (name,))
-        db.close()
-        return result is not None
-    
-    def slug_exists(self, slug, exclude_id=None):
-        db = Database()
-        if exclude_id:
-            result = db.fetch_one("SELECT id FROM categories WHERE slug = %s AND id != %s", (slug, exclude_id))
-        else:
-            result = db.fetch_one("SELECT id FROM categories WHERE slug = %s", (slug,))
-        db.close()
-        return result is not None
-    
-    def save(self, name, slug, description, image, status='active', parent_id=None):
+    def save(self):
         db = Database()
         db.execute(
-            "INSERT INTO categories (name, slug, description, image, status, parent_id) VALUES (%s, %s, %s, %s, %s, %s)",
-            (name, slug, description, image, status, parent_id)
+            "INSERT INTO categories (name, description, image) VALUES (%s, %s, %s)",
+            (self.name, self.description, self.image)
         )
+        db.close()
+    
+    def update(self, category_id):
+        db = Database()
+        db.execute(
+            "UPDATE categories SET name=%s, description=%s, image=%s WHERE id=%s",
+            (self.name, self.description, self.image, category_id)
+        )
+        db.close()
+    
+    @classmethod
+    def get_all(cls):
+        db = Database()
+        results = db.fetch_all("SELECT * FROM categories ORDER BY name")
+        db.close()
+        return results
+    
+    @classmethod
+    def get_by_id(cls, category_id):
+        db = Database()
+        result = db.fetch_one("SELECT * FROM categories WHERE id = %s", (category_id,))
+        db.close()
+        return result
+    
+    @classmethod
+    def delete(cls, category_id):
+        db = Database()
+        db.execute("DELETE FROM categories WHERE id = %s", (category_id,))
         db.close()
         return True

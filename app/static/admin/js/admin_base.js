@@ -96,9 +96,52 @@
       }, 5000);
     });
   });
+
+  // ---- Delete confirmation modal ----
+(function () {
+  const overlay = document.getElementById("deleteModal");
+  const msgEl = document.getElementById("deleteModalMsg");
+  const cancelBtn = document.getElementById("deleteModalCancel");
+  const confirmBtn = document.getElementById("deleteModalConfirm");
+  if (!overlay) return;
+
+  let pendingForm = null;
+
+  // Find all delete forms and intercept them
+  document.querySelectorAll(".prod-delete-form, .ord-delete-form, [data-confirm]").forEach((form) => {
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      pendingForm = form;
+      const name = form.dataset.name || "this item";
+      msgEl.textContent = `Are you sure you want to delete "${name}"? This cannot be undone.`;
+      overlay.style.display = "flex";
+    });
+  });
+
+  // Cancel button
+  cancelBtn.addEventListener("click", () => {
+    overlay.style.display = "none";
+    pendingForm = null;
+  });
+
+  // Confirm button
+  confirmBtn.addEventListener("click", () => {
+    overlay.style.display = "none";
+    if (pendingForm) {
+      pendingForm.removeEventListener("submit", () => {});
+      pendingForm.submit();
+      pendingForm = null;
+    }
+  });
+
+  // Close on overlay click
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) {
+      overlay.style.display = "none";
+      pendingForm = null;
+    }
+  });
 })();
 })();
-
-
-
+})();
 })();

@@ -4,7 +4,7 @@ from datetime import datetime
 class ActivityLog:
     table = "activity_logs"
     
-    def __init__(self, user_id=None, action=None, details=None):
+    def __init__(self, user_id=None, action=None, details=None,additional=None):
         self.user_id = user_id
         self.action = action
         self.details = details

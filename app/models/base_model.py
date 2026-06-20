@@ -7,9 +7,9 @@ class BaseModel(ABC):
     def table(self):
         pass
     
-    def find_all(self):
+    def find_all(self, order_by='id', order_dir='DESC'):
         db = Database()
-        result = db.fetch_all(f"SELECT * FROM {self.table}")
+        result = db.fetch_all(f"SELECT * FROM {self.table} ORDER BY {order_by} {order_dir}")
         db.close()
         return result
     

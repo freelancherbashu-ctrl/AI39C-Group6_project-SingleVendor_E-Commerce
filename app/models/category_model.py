@@ -1,25 +1,46 @@
-from .base_model import BaseModel
-from .database import Database
+from app.models.database import Database
 
-class CategoryModel(BaseModel):
-    @property
-    def table(self):
-        return "categories"
+class Category:
+    table = "categories"
     
-    def save(self, name, description, image=None):
+    def __init__(self, name=None, description=None, image=None):
+        self.name = name
+        self.description = description
+        self.image = image
+    
+    def save(self):
         db = Database()
         db.execute(
             "INSERT INTO categories (name, description, image) VALUES (%s, %s, %s)",
-            (name, description, image)
+            (self.name, self.description, self.image)
         )
         db.close()
-        return True
     
-    def update(self, id, name, description, image=None):
+    def update(self, category_id):
         db = Database()
         db.execute(
             "UPDATE categories SET name=%s, description=%s, image=%s WHERE id=%s",
-            (name, description, image, id)
+            (self.name, self.description, self.image, category_id)
         )
         db.close()
-        return True 
+    
+    @classmethod
+    def get_all(cls):
+        db = Database()
+        results = db.fetch_all("SELECT * FROM categories ORDER BY name")
+        db.close()
+        return results
+    
+    @classmethod
+    def get_by_id(cls, category_id):
+        db = Database()
+        result = db.fetch_one("SELECT * FROM categories WHERE id = %s", (category_id,))
+        db.close()
+        return result
+    
+    @classmethod
+    def delete(cls, category_id):
+        db = Database()
+        db.execute("DELETE FROM categories WHERE id = %s", (category_id,))
+        db.close()
+        return True

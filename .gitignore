@@ -23,3 +23,53 @@ config.py
 
 # Logs
 *.log
+
+# Testing files
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs and database
+*.log
+*.sqlite
+*.db
+
+# Uploads and temp
+static/uploads/
+temp/
+tmp/
+
+# Environment variables
+.env
+.env.local
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Testing files
+.pytest_cache/
+.coverage
+htmlcov/

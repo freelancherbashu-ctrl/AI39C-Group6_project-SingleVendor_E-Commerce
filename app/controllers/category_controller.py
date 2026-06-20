@@ -1,26 +1,23 @@
-from flask import render_template, request, redirect, url_for, flash
-from app.models.category_model import CategoryModel
+import os
+from datetime import datetime
+from werkzeug.utils import secure_filename
 
-class CategoryController:
-    def __init__(self):
-        self.model = CategoryModel()
+UPLOAD_FOLDER = 'static/uploads/categories'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'}
+
+def save_image(file):
+    if not file or not file.filename:
+        return None
     
-    def add_category(self):
-        if request.method == 'POST':
-            name = request.form.get('name', '').strip()
-            description = request.form.get('description', '').strip()
-            image = request.form.get('image', '').strip()
-            
-            if not name:
-                flash('Category name is required!', 'danger')
-                return redirect(url_for('category.add_category'))
-            
-            self.model.save(name, description, image if image else None)
-            flash(f'Category "{name}" added successfully!', 'success')
-            return redirect(url_for('category.categories_list'))
-        
-        return render_template('add_category.html')
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
     
-    def list_categories(self):
-        categories = self.model.find_all()
-        return render_template('categories.html', categories=categories)
+    ext = file.filename.rsplit('.', 1)[1].lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        return None
+    
+    filename = secure_filename(file.filename)
+    unique = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{filename}"
+    filepath = os.path.join(UPLOAD_FOLDER, unique)
+    file.save(filepath)
+    
+    return f"uploads/categories/{unique}"

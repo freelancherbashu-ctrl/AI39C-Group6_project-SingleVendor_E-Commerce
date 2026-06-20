@@ -1,0 +1,144 @@
+{% extends 'admin/base.html' %}
+{% block title %}Reports — MeroPasal Admin{% endblock %}
+{% block page_title %}Reports & Analytics{% endblock %}
+{% block breadcrumb %}<span class="bc-sep">›</span><span class="bc-current">Reports</span>{% endblock %}
+
+{% block content %}
+
+<div class="report-toolbar" style="display:flex;justify-content:flex-end;gap:0.6rem;margin-bottom:1.2rem;">
+    <button class="btn btn-secondary no-print" onclick="window.print()">📄 Download PDF</button>
+    <a class="btn btn-secondary no-print" href="{{ url_for('admin.export_reports_csv') }}">📊 Download CSV</a>
+</div>
+
+<!-- Summary Stats -->
+<div class="stats" style="margin-bottom:2rem;">
+    <div class="stat-card">
+        <div class="label">Total Orders</div>
+        <div class="value">{{ total_orders }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Total Revenue</div>
+        <div class="value" style="font-size:1.3rem;">Rs. {{ "{:,.0f}".format(total_revenue) }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">This Month Orders</div>
+        <div class="value">{{ this_month_orders }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">This Month Revenue</div>
+        <div class="value" style="font-size:1.3rem;">Rs. {{ "{:,.0f}".format(this_month_revenue) }}</div>
+    </div>
+</div>
+
+<!-- Income Graph -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header"><h2>📈 Income Over Time (Last 12 Months)</h2></div>
+    {% if monthly_sales %}
+    <div style="padding:1.2rem;">
+        <canvas id="incomeChart" height="90"></canvas>
+    </div>
+    {% else %}
+    <p style="padding:2rem;text-align:center;color:#9ca3af;">No sales data yet.</p>
+    {% endif %}
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+
+    <!-- Monthly Sales -->
+    <div class="card">
+        <div class="card-header"><h2>📅 Monthly Sales (Last 12 Months)</h2></div>
+        {% if monthly_sales %}
+        <table>
+            <thead><tr><th>Month</th><th>Orders</th><th>Revenue</th><th>Bar</th></tr></thead>
+            <tbody>
+            {% set max_rev = monthly_sales | map(attribute=2) | max %}
+            {% for row in monthly_sales %}
+            <tr>
+                <td><strong>{{ row[0] }}</strong></td>
+                <td>{{ row[1] }}</td>
+                <td>Rs. {{ "{:,.0f}".format(row[2]) }}</td>
+                <td style="width:120px;">
+                    <div style="height:10px;background:#e2e8f0;border-radius:5px;overflow:hidden;">
+                        <div style="height:100%;width:{{ ((row[2] / max_rev) * 100)|int }}%;background:#4f46e5;border-radius:5px;"></div>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="padding:2rem;text-align:center;color:#9ca3af;">No sales data yet.</p>
+        {% endif %}
+    </div>
+
+    <!-- Top Products -->
+    <div class="card">
+        <div class="card-header"><h2>🏆 Top Products by Revenue</h2></div>
+        {% if top_products %}
+        <table>
+            <thead><tr><th>Rank</th><th>Product</th><th>Qty Sold</th><th>Revenue</th></tr></thead>
+            <tbody>
+            {% for row in top_products %}
+            <tr>
+                <td>
+                    {% if loop.index == 1 %}🥇
+                    {% elif loop.index == 2 %}🥈
+                    {% elif loop.index == 3 %}🥉
+                    {% else %}#{{ loop.index }}{% endif %}
+                </td>
+                <td>{{ row[0] }}</td>
+                <td>{{ row[1]|int }}</td>
+                <td>Rs. {{ "{:,.0f}".format(row[2]|float) }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="padding:2rem;text-align:center;color:#9ca3af;">No product data yet.</p>
+        {% endif %}
+    </div>
+
+</div>
+
+<style>
+@media print {
+    .sidebar, .topbar, .no-print { display: none !important; }
+    .main-content, body { background: #fff !important; }
+    .card { box-shadow: none !important; border: 1px solid #ccc !important; }
+}
+</style>
+
+{% endblock %}
+
+{% block scripts %}
+{% if monthly_sales %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+const incomeCtx = document.getElementById('incomeChart');
+new Chart(incomeCtx, {
+    type: 'line',
+    data: {
+        labels: [{% for row in monthly_sales %}"{{ row[0] }}",{% endfor %}],
+        datasets: [{
+            label: 'Revenue (Rs.)',
+            data: [{% for row in monthly_sales %}{{ row[2] }},{% endfor %}],
+            borderColor: '#4f46e5',
+            backgroundColor: 'rgba(79,70,229,0.12)',
+            fill: true,
+            tension: 0.3,
+            pointBackgroundColor: '#4f46e5',
+            pointRadius: 4,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { beginAtZero: true, ticks: { callback: v => 'Rs. ' + v.toLocaleString('en-IN') } }
+        }
+    }
+});
+</script>
+{% endif %}
+
+{% endblock %}

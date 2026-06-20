@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{%- from "macros.html" import csrf -%}
 
 {% block title %}My Wishlist - MeroPasal{% endblock %}
 
@@ -25,15 +26,15 @@
         <div class="wishlist-card" id="wl-card-{{ product.id }}">
 
             <button class="wl-remove-btn" title="Remove from Wishlist"
-                    onclick="removeFromWishlist({ product})">✕</button>
+                    onclick="removeFromWishlist({{ product.id }})">✕</button>
 
-            <a href="javascript:void(0)" class="wl-image-link" onclick="openProductModal({product})">
+            <a href="javascript:void(0)" class="wl-image-link" onclick="openProductModal({{ product.id }})">
                 <img src="{{ product.image }}" alt="{{ product.name }}" class="wl-product-img">
             </a>
 
             <div class="wl-product-info">
                 <h3 class="wl-product-name">
-                    <a href="javascript:void(0)" onclick="openProductModal({ product})">{{ product.name }}</a>
+                    <a href="javascript:void(0)" onclick="openProductModal({{ product.id }})">{{ product.name }}</a>
                 </h3>
                 <p class="wl-price">
                     {% set sale = sale_map.get(product.id) if sale_map else None %}
@@ -46,10 +47,11 @@
                 </p>
                 <div class="wl-actions">
                     <form action="{{ url_for('auth.add_to_cart', product_id=product.id) }}" method="POST">
+{{ csrf() }}
                         <input type="hidden" name="quantity" value="1">
                         <button type="submit" class="btn wl-add-cart-btn">🛒 Add to Cart</button>
                     </form>
-                    <button class="btn wl-view-btn" onclick="openProductModal({product})">View</button>
+                    <button class="btn wl-view-btn" onclick="openProductModal({{ product.id }})">View</button>
                 </div>
             </div>
 
@@ -72,7 +74,10 @@
 
 <script>
 function removeFromWishlist(productId) {
-    fetch(`/wishlist/toggle/${productId}`, { method: "POST" })
+    fetch(`/wishlist/toggle/${productId}`, {
+            method: "POST",
+            headers: { "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').content }
+        })
         .then(r => r.json())
         .then(data => {
             if (!data.success) return;
@@ -102,7 +107,7 @@ function showToast(message, type) {
     setTimeout(() => { toast.classList.remove("show"); setTimeout(() => { toast.style.display = "none"; }, 300); }, 2500);
 }
 
-updateHeaderWishlistBadge({ wishlist_count});
+updateHeaderWishlistBadge({{ wishlist_count }});
 </script>
 
 {% endblock %}

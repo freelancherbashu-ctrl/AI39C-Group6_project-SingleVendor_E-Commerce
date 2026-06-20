@@ -1,21 +1,25 @@
-from flask import Blueprint
+from flask import Blueprint, make_response
 from app.controllers.auth import AuthController
 
-from app.auth import login_required, admin_required
+auth_bp    = Blueprint("auth", __name__)
+controller = AuthController()
 
-class AuthRoutes:
+# Auth
+@auth_bp.route("/login",    methods=["GET", "POST"])
+def login():      return controller.login()
 
-    def __init__(self):
+@auth_bp.route("/register", methods=["GET", "POST"])
+def register():   return controller.register()
 
-        self.bp = Blueprint("authroutes", __name__)
-        self.controller = AuthController()
+@auth_bp.route("/logout")
+def logout():     return controller.logout()
 
-    def register(self):
+# Profile
+@auth_bp.route("/profile")
+def profile():    return controller.profile()
 
-        # ---------------- AUTH ROUTES ----------------
-        self.bp.route("/login", methods=["GET", "POST"])(
-            self.controller.login
-        )
+@auth_bp.route("/profile/edit",            methods=["GET", "POST"])
+def edit_profile():    return controller.edit_profile()
 
 @auth_bp.route("/profile/upload_picture",  methods=["POST"])
 def upload_picture():  return controller.upload_picture()
@@ -25,9 +29,6 @@ def change_password(): return controller.change_password()
 
 @auth_bp.route("/forgot_password",         methods=["GET", "POST"])
 def forgot_password(): return controller.forgot_password()
-
-@auth_bp.route("/verify_otp",              methods=["GET", "POST"])
-def verify_otp(): return controller.verify_otp()
 
 @auth_bp.route("/reset_password/<token>",  methods=["GET", "POST"])
 def reset_password(token): return controller.reset_password(token)
@@ -102,30 +103,34 @@ def order_details(order_id): return controller.order_details(order_id)
 def search_suggest(): return controller.search_suggest()
 
 
- 
+@auth_bp.route("/order_details/<int:order_id>/json")
+def order_details_json(order_id): return controller.order_details_json(order_id)
 
-        # ---------------- RESET FLOW ----------------
-        self.bp.route("/forgot-password", methods=["GET", "POST"])(
-            self.controller.forgot_password
-        )
+# Wishlist
+@auth_bp.route("/wishlist")
+def wishlist(): return controller.view_wishlist()
 
-        self.bp.route("/reset_password/<token>", methods=["GET", "POST"])(
-            self.controller.reset_password
-        )
+@auth_bp.route("/wishlist/toggle/<int:product_id>", methods=["POST"])
+def toggle_wishlist(product_id): return controller.toggle_wishlist(product_id)
 
 @auth_bp.route("/wishlist/status/<int:product_id>")
 def wishlist_status(product_id): return controller.wishlist_status(product_id)
+
+# OTP
+@auth_bp.route("/verify_otp", methods=["GET", "POST"])
+def verify_otp(): return controller.verify_otp()
+
 # Reviews
 @auth_bp.route("/product/<int:product_id>/review", methods=["POST"])
 def submit_review(product_id): return controller.submit_review(product_id)
 
+# Coupons
+@auth_bp.route("/coupon/validate", methods=["POST"])
+def validate_coupon(): return controller.validate_coupon()
+
 # Refunds
-@auth_bp.route("/orders/<int:order_id>/refund", methods=["POST"])
+@auth_bp.route("/order/<int:order_id>/refund", methods=["POST"])
 def request_refund(order_id): return controller.request_refund(order_id)
 
 @auth_bp.route("/my_refunds")
 def my_refunds(): return controller.my_refunds()
-
-# Coupons
-@auth_bp.route("/coupon/validate", methods=["POST"])
-def validate_coupon(): return controller.validate_coupon()

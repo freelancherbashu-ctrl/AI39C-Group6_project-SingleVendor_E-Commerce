@@ -1,0 +1,68 @@
+{% extends 'admin/base.html' %}
+{%- from "macros.html" import csrf -%}
+{% block title %}Coupons — MeroPasal Admin{% endblock %}
+{% block page_title %}Coupons{% endblock %}
+{% block breadcrumb %}<span class="bc-sep">›</span><span class="bc-current">Coupons</span>{% endblock %}
+
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem;">
+    <p style="color:var(--text-secondary);margin:0;">Manage discount codes for customers.</p>
+    <a href="{{ url_for('admin.add_coupon') }}" class="btn btn-primary">+ New Coupon</a>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for cat, msg in messages %}
+  <div style="margin-bottom:1rem;padding:.75rem 1rem;border-radius:8px;background:{% if cat=='success' %}#d1fae5{% else %}#fee2e2{% endif %};color:{% if cat=='success' %}#065f46{% else %}#991b1b{% endif %};">{{ msg }}</div>
+  {% endfor %}
+{% endwith %}
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Code</th><th>Type</th><th>Discount</th><th>Min. Order</th>
+                <th>Uses</th><th>Valid Until</th><th>Status</th><th></th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for c in coupons %}
+        <tr>
+            <td><strong style="font-family:monospace;font-size:.95rem;letter-spacing:.05em;">{{ c.code }}</strong></td>
+            <td>{{ c.discount_type | title }}</td>
+            <td>
+                {% if c.discount_type == 'percent' %}
+                    {{ c.discount_value | int }}%
+                {% else %}
+                    Rs. {{ "{:,.0f}".format(c.discount_value) }}
+                {% endif %}
+            </td>
+            <td>Rs. {{ "{:,.0f}".format(c.min_order_amount) }}</td>
+            <td>
+                {{ c.used_count }}{% if c.max_uses %} / {{ c.max_uses }}{% else %} / ∞{% endif %}
+            </td>
+            <td>{{ c.valid_until.strftime('%d %b %Y') if c.valid_until else '—' }}</td>
+            <td>
+                {% if c.valid_until and c.valid_until < now %}
+                    <span class="badge badge-expired">Expired</span>
+                {% elif c.is_active %}
+                    <span class="badge badge-completed">Active</span>
+                {% else %}
+                    <span class="badge badge-rejected">Inactive</span>
+                {% endif %}
+            </td>
+            <td style="display:flex;gap:.4rem;">
+                <a href="{{ url_for('admin.edit_coupon', coupon_id=c.id) }}" class="btn btn-sm btn-primary">Edit</a>
+                <form method="POST" action="{{ url_for('admin.delete_coupon', coupon_id=c.id) }}"
+                      onsubmit="return confirm('Delete coupon {{ c.code }}?')">
+{{ csrf() }}
+                    <button type="submit" class="btn btn-sm" style="background:#fee2e2;color:#991b1b;border:1px solid #fecaca;">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" style="text-align:center;color:#9ca3af;padding:2rem">No coupons yet. <a href="{{ url_for('admin.add_coupon') }}" style="color:var(--accent);">Create one →</a></td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

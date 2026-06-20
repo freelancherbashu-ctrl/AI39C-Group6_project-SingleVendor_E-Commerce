@@ -1,75 +1,19 @@
-# Virtual environment
-venv/
-.venv/
-env/
-.env/
-
-# Python cache
-__pycache__/
-*.pyc
-*.pyo
-
-# Database
-*.db
-*.sqlite
-
-# Config with secrets
-config.py
-
-# IDE
-.DS_Store
-.vscode/
-.idea/
-
-# Logs
-*.log
-
-# Testing files
-.pytest_cache/
-.coverage
-htmlcov/
-
-# Python cache
-__pycache__/
-*.pyc
-*.pyo
-
-# Virtual environment
-.venv/
-venv/
-env/
-
-# IDE files
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS files
-.DS_Store
-Thumbs.db
-desktop.ini
-
-# Logs and database
-*.log
-*.sqlite
-*.db
-
-# Uploads and temp
-static/uploads/
-temp/
-tmp/
-
-# Environment variables
+# Environment
 .env
-.env.local
+*.env
 
-# Backup files
-*.bak
-*.backup
-*.old
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+.venv/
 
-# Testing files
-.pytest_cache/
-.coverage
-htmlcov/
+# Uploads
+app/static/profile_pics/*
+!app/static/profile_pics/.gitkeep
+
+# DB files
+*.db
+*.sqlite

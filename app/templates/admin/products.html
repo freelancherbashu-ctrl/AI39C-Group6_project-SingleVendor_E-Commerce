@@ -1,30 +1,255 @@
-{% extends "base.html" %}
-{% block title %}Admin – Products{% endblock %}
-{% block content %}
-<div class="page-header">
-    <h1>Product Management</h1>
-    <a href="/admin/products/new" class="btn btn-primary">+ Add Product</a>
-</div>
+{% extends 'admin/base.html' %}
+{%- from "macros.html" import csrf -%}
+{% block title %}Products — MeroPasal Admin{% endblock %}
+{% block page_title %}Products{% endblock %}
+{% block breadcrumb %}<span class="bc-sep">›</span><span class="bc-current">Products</span>{% endblock %}
 
-<table class="data-table">
-    <thead>
-        <tr><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Actions</th></tr>
-    </thead>
-    <tbody>
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2>All Products ({{ products|length }})</h2>
+        <button class="btn btn-primary" onclick="openProductModal()">+ Add Product</button>
+    </div>
+    <table>
+        <thead>
+            <tr><th>#</th><th>Image</th><th>Name</th><th>Category</th><th>Price (Rs.)</th><th>Stock</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
         {% for p in products %}
         <tr>
-            <td>{{ p.name }}</td>
-            <td>{{ p.category or '–' }}</td>
-            <td>Rs. {{ "%.2f"|format(p.price) }}</td>
-            <td>{{ p.stock }}</td>
+            <td>{{ p.id }}</td>
             <td>
-                <a href="/admin/products/{{ p.id }}/edit" class="btn btn-sm btn-secondary">Edit</a>
-                <form method="post" action="/admin/products/{{ p.id }}/delete" style="display:inline">
-                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this product?')">Delete</button>
+                <img src="{{ p.image }}" alt="{{ p.name }}"
+                     style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid var(--border);background:var(--surface-2);">
+            </td>
+            <td>{{ p.name }}</td>
+            <td><span class="badge badge-processing">{{ p.category }}</span></td>
+            <td>{{ "{:,.0f}".format(p.price) }}</td>
+            <td>
+                {% if p.available == 0 %}
+                    <span class="badge badge-danger">Out of Stock</span>
+                {% elif p.available <= 5 %}
+                    <span class="badge badge-warning">Low: {{ p.available }}</span>
+                {% else %}
+                    <span class="badge badge-success">{{ p.available }}</span>
+                {% endif %}
+                {% if p.reserved > 0 %}
+                    <span style="font-size:.75rem;color:var(--text-muted);display:block;margin-top:2px;">
+                        {{ p.reserved }} reserved / {{ p.stock }} total
+                    </span>
+                {% endif %}
+                <form method="POST" action="{{ url_for('admin.update_stock', product_id=p.id) }}"
+                      style="display:inline-flex;gap:.3rem;align-items:center;margin-left:.4rem;">
+{{ csrf() }}
+                    <input type="number" name="stock" value="{{ p.stock }}" min="0"
+                           style="width:64px;padding:3px 6px;font-size:.78rem;border-radius:5px;border:1px solid var(--border);">
+                    <button type="submit" class="btn btn-sm" style="padding:3px 8px;font-size:.75rem;">Set</button>
+                </form>
+            </td>
+            <td style="display:flex;gap:.4rem;align-items:center;">
+                <button class="btn btn-sm btn-primary"
+                    data-pid="{{ p.id }}"
+                    data-name="{{ p.name | e }}"
+                    data-price="{{ p.price }}"
+                    data-stock="{{ p.stock }}"
+                    data-category="{{ p.category | e }}"
+                    data-image="{{ p.image | e }}"
+                    data-description="{{ (p.description or '') | e }}"
+                    onclick="openEditProductModal(this)">
+                    Edit
+                </button>
+                <form method="POST" action="{{ url_for('admin.delete_product', product_id=p.id) }}"
+                      style="display:inline" onsubmit="return confirm('Delete {{ p.name }}?')">
+{{ csrf() }}
+                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
                 </form>
             </td>
         </tr>
+        {% else %}
+        <tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:2rem">No products yet.</td></tr>
         {% endfor %}
-    </tbody>
-</table>
+        </tbody>
+    </table>
+</div>
+
+<!-- ── ADD / EDIT PRODUCT MODAL ─────────────────────────────────────────── -->
+<div id="productModal" class="mp-modal-backdrop" onclick="closeProductModal(event)">
+    <div class="mp-modal mp-modal-lg">
+        <div class="mp-modal-header">
+            <h3 id="productModalTitle">Add Product</h3>
+            <button class="mp-modal-close" onclick="closeProductModal()">&times;</button>
+        </div>
+        <form id="productForm" method="POST" enctype="multipart/form-data">
+{{ csrf() }}
+            <div class="mp-modal-body">
+
+                <div class="fg-row">
+                    <div class="fg">
+                        <label>Product Name <span style="color:#ef4444">*</span></label>
+                        <input type="text" name="name" id="prodName" required placeholder="e.g. Wireless Headphones">
+                    </div>
+                    <div class="fg">
+                        <label>Price (Rs.) <span style="color:#ef4444">*</span></label>
+                        <input type="number" name="price" id="prodPrice" min="0" required placeholder="e.g. 2500">
+                    </div>
+                </div>
+
+                <div class="fg-row">
+                    <div class="fg">
+                        <label>Stock Quantity <span style="color:#ef4444">*</span></label>
+                        <input type="number" name="stock" id="prodStock" min="0" value="0" required placeholder="e.g. 50">
+                    </div>
+                    <div class="fg">
+                        <label>Category <span style="color:#ef4444">*</span></label>
+                    <input type="hidden" name="category" id="prodCategoryHidden">
+                    <select id="prodCategory" required onchange="document.getElementById('prodCategoryHidden').value=this.value">
+                        <option value="">— Select category —</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.name }}">{{ cat.name|title }}</option>
+                        {% endfor %}
+                    </select>
+                    </div>
+                </div>
+
+                <div class="fg">
+                    <label>Product Image</label>
+                    <div id="currentProdImgWrap" style="display:none;align-items:center;gap:.6rem;margin-bottom:.5rem;">
+                        <img id="currentProdImg" src="" alt="Current"
+                             style="width:56px;height:56px;object-fit:cover;border-radius:7px;border:1px solid var(--border);">
+                        <span style="font-size:.78rem;color:var(--text-secondary);">Current image — upload to replace</span>
+                    </div>
+                    <div class="upload-box" id="prodUploadBox">
+                        <input type="file" name="image" id="prodImageInput"
+                               accept="image/png,image/jpeg,image/gif,image/webp"
+                               onchange="previewProdImg(this)">
+                        <div class="upload-ph" id="prodUploadPh">
+                            <div style="font-size:1.8rem;">📷</div>
+                            <div>Click or drag an image here</div>
+                            <small>PNG, JPG, GIF, WEBP</small>
+                        </div>
+                        <img id="prodPreviewImg" class="upload-preview-img" style="display:none;" alt="Preview">
+                    </div>
+                </div>
+
+                <div class="fg">
+                    <label>Description</label>
+                    <textarea name="description" id="prodDescription" rows="3" placeholder="Optional product description..."></textarea>
+                </div>
+
+            </div>
+            <div class="mp-modal-footer">
+                <button type="button" class="btn" onclick="closeProductModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="prodSubmitBtn">Add Product</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ── DELETE CONFIRM MODAL ─────────────────────────────────────────────── -->
+<div id="deleteProdModal" class="mp-modal-backdrop" onclick="closeDeleteProdModal(event)">
+    <div class="mp-modal" style="max-width:420px;">
+        <div class="mp-modal-header">
+            <h3>Delete Product</h3>
+            <button class="mp-modal-close" onclick="closeDeleteProdModal()">&times;</button>
+        </div>
+        <div class="mp-modal-body">
+            <p style="color:var(--text-primary);">Are you sure you want to delete <strong id="deleteProdName"></strong>?</p>
+        </div>
+        <div class="mp-modal-footer">
+            <button type="button" class="btn" onclick="closeDeleteProdModal()">Cancel</button>
+            <form id="deleteProdForm" method="POST" style="margin:0;">
+{{ csrf() }}
+                <button type="submit" class="btn btn-danger">Yes, Delete</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+const ADD_PROD_URL  = "{{ url_for('admin.add_product') }}";
+const EDIT_PROD_URL = "/admin/products/{id}/edit";
+
+function openProductModal() {
+    document.getElementById('productModalTitle').textContent = 'Add Product';
+    document.getElementById('prodSubmitBtn').textContent = 'Add Product';
+    document.getElementById('productForm').action = ADD_PROD_URL;
+    document.getElementById('prodName').value = '';
+    document.getElementById('prodPrice').value = '';
+    document.getElementById('prodCategory').value = '';
+    document.getElementById('prodCategoryHidden').value = '';
+    document.getElementById('prodDescription').value = '';
+    document.getElementById('currentProdImgWrap').style.display = 'none';
+    resetProdUpload();
+    document.getElementById('productModal').classList.add('open');
+}
+
+function openEditProductModal(btn) {
+    const id          = btn.dataset.pid;
+    const name        = btn.dataset.name;
+    const price       = btn.dataset.price;
+    const category    = btn.dataset.category;
+    const imgSrc      = btn.dataset.image;
+    const description = btn.dataset.description;
+
+    document.getElementById('productModalTitle').textContent = 'Edit Product';
+    document.getElementById('prodSubmitBtn').textContent = 'Save Changes';
+    document.getElementById('productForm').action = EDIT_PROD_URL.replace('{id}', id);
+    document.getElementById('prodName').value = name;
+    document.getElementById('prodPrice').value = price;
+    document.getElementById('prodStock').value = btn.dataset.stock || 0;
+    document.getElementById('prodDescription').value = description;
+
+    // set category — case-insensitive match
+    const sel = document.getElementById('prodCategory');
+    const catLower = String(category).trim().toLowerCase();
+    for (let opt of sel.options) { opt.selected = (opt.value.trim().toLowerCase() === catLower); }
+    if (!sel.value) {
+        const opt = document.createElement('option');
+        opt.value = category;
+        opt.textContent = category;
+        sel.appendChild(opt);
+        sel.value = category;
+    }
+    document.getElementById('prodCategoryHidden').value = sel.value || category;
+
+    // show current image
+    const wrap = document.getElementById('currentProdImgWrap');
+    if (imgSrc) {
+        document.getElementById('currentProdImg').src = imgSrc;
+        wrap.style.display = 'flex';
+    } else {
+        wrap.style.display = 'none';
+    }
+    resetProdUpload();
+    document.getElementById('productModal').classList.add('open');
+}
+
+function closeProductModal(e) {
+    if (e && e.target !== document.getElementById('productModal')) return;
+    document.getElementById('productModal').classList.remove('open');
+}
+
+function closeDeleteProdModal(e) {
+    if (e && e.target !== document.getElementById('deleteProdModal')) return;
+    document.getElementById('deleteProdModal').classList.remove('open');
+}
+
+function resetProdUpload() {
+    document.getElementById('prodImageInput').value = '';
+    document.getElementById('prodPreviewImg').style.display = 'none';
+    document.getElementById('prodUploadPh').style.display = 'block';
+}
+
+function previewProdImg(input) {
+    if (!input.files[0]) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+        const img = document.getElementById('prodPreviewImg');
+        img.src = e.target.result;
+        img.style.display = 'block';
+        document.getElementById('prodUploadPh').style.display = 'none';
+    };
+    reader.readAsDataURL(input.files[0]);
+}
+</script>
 {% endblock %}

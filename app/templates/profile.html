@@ -1,49 +1,199 @@
-{% extends "base.html" %}
-{% block title %}My Profile{% endblock %}
+{% extends 'base.html' %}
+{%- from "macros.html" import csrf -%}
+{% block title %}My Profile - MeroPasal{% endblock %}
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
+
 {% block content %}
-<div class="page-header">
-    <h1>My Profile</h1>
+<section class="auth-page">
+<div class="profile-card">
+
+    <!-- AVATAR + PICTURE UPLOAD -->
+    <div class="profile-top">
+        <div class="avatar-wrapper">
+            {% if user.profile_picture %}
+                <img src="{{ url_for('static', filename='profile_pics/' + user.profile_picture) }}"
+                     class="avatar-img" alt="Profile Picture"
+                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                <div class="avatar-initials" style="display:none;">{{ user.full_name[0].upper() }}</div>
+            {% else %}
+                <div class="avatar-initials">{{ user.full_name[0].upper() }}</div>
+            {% endif %}
+            <form action="{{ url_for('auth.upload_picture') }}" method="POST"
+                  enctype="multipart/form-data" class="upload-form">
+{{ csrf() }}
+                <label class="upload-label" title="Change photo">
+                    📷
+                    <input type="file" name="profile_picture"
+                           accept="image/*" onchange="this.form.submit()" hidden>
+                </label>
+            </form>
+        </div>
+        <div class="profile-name-block">
+            <h1>{{ user.full_name }}</h1>
+            <p class="profile-email">{{ user.email }}</p>
+            <p class="profile-since">
+                Member since {{ user.created_at.strftime('%B %Y') if user.created_at else 'N/A' }}
+            </p>
+        </div>
+    </div>
+
+    <!-- ACTION CARDS -->
+    <div class="profile-actions-grid">
+        <button class="profile-action-card" onclick="openEditModal()">
+            <span class="action-icon">✏️</span>
+            <span class="action-label">Edit Profile</span>
+            <span class="action-sub">Update your name</span>
+        </button>
+
+        {% if not user.is_google_only %}
+        <button class="profile-action-card" onclick="openPwdModal()">
+            <span class="action-icon">🔒</span>
+            <span class="action-label">Change Password</span>
+            <span class="action-sub">Update your password</span>
+        </button>
+        {% else %}
+        <div class="profile-action-card google-locked" title="You sign in with Google, so there's no password to change here.">
+            <span class="action-icon">🔒</span>
+            <span class="action-label">Change Password</span>
+            <span class="action-sub">Managed by your Google account</span>
+        </div>
+        {% endif %}
+
+        <a href="{{ url_for('auth.view_my_orders') }}" class="profile-action-card">
+            <span class="action-icon">📦</span>
+            <span class="action-label">My Orders</span>
+            <span class="action-sub">View order history</span>
+        </a>
+
+        <a href="{{ url_for('auth.logout') }}" class="profile-action-card danger">
+            <span class="action-icon">🚪</span>
+            <span class="action-label">Log Out</span>
+            <span class="action-sub">Sign out of account</span>
+        </a>
+    </div>
+
+</div>
+</section>
+
+<!-- ── EDIT PROFILE MODAL ─────────────────────────────────────────────────── -->
+<div id="editModal" class="pmp-backdrop" onclick="closeEditModal(event)">
+    <div class="pmp-box">
+        <div class="pmp-head">
+            <h3>✏️ Edit Profile</h3>
+            <button class="pmp-x" onclick="closeEditModal()">&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('auth.edit_profile') }}">
+{{ csrf() }}
+            <div class="pmp-body">
+                <div class="pfg">
+                    <label>Full Name</label>
+                    <input type="text" name="full_name" value="{{ user.full_name }}" required>
+                </div>
+            </div>
+            <div class="pmp-foot">
+                <button type="button" class="pmp-btn" onclick="closeEditModal()">Cancel</button>
+                <button type="submit" class="pmp-btn primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
 </div>
 
-<div class="form-card">
-    <h2>Profile Information</h2>
-    <form method="post" action="/profile">
-        <div class="form-group">
-            <label>Full Name</label>
-            <input type="text" name="full_name" value="{{ customer.full_name }}" required class="form-control">
+<!-- ── CHANGE PASSWORD MODAL ──────────────────────────────────────────────── -->
+<div id="pwdModal" class="pmp-backdrop" onclick="closePwdModal(event)">
+    <div class="pmp-box">
+        <div class="pmp-head">
+            <h3>🔒 Change Password</h3>
+            <button class="pmp-x" onclick="closePwdModal()">&times;</button>
         </div>
-        <div class="form-group">
-            <label>Email</label>
-            <input type="email" value="{{ customer.email }}" disabled class="form-control">
-        </div>
-        <div class="form-group">
-            <label>Phone</label>
-            <input type="text" name="phone" value="{{ customer.phone or '' }}" class="form-control">
-        </div>
-        <div class="form-group">
-            <label>Address</label>
-            <input type="text" name="address" value="{{ customer.address or '' }}" class="form-control">
-        </div>
-        <button type="submit" class="btn btn-primary">Save Changes</button>
-    </form>
+        <form method="POST" action="{{ url_for('auth.change_password') }}">
+{{ csrf() }}
+            <div class="pmp-body">
+                <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:.3rem;">
+                    Enter your current password to set a new one.
+                </p>
+                <div class="pfg">
+                    <label>Current Password</label>
+                    <input type="password" name="old_password" placeholder="••••••••" required>
+                </div>
+                <div class="pfg">
+                    <label>New Password</label>
+                    <input type="password" name="new_password" placeholder="At least 6 characters" required>
+                </div>
+                <div class="pfg">
+                    <label>Confirm New Password</label>
+                    <input type="password" name="confirm_password" placeholder="Repeat new password" required>
+                </div>
+            </div>
+            <div class="pmp-foot">
+                <button type="button" class="pmp-btn" onclick="closePwdModal()">Cancel</button>
+                <button type="submit" class="pmp-btn primary">Update Password</button>
+            </div>
+        </form>
+    </div>
 </div>
 
-<div class="form-card" style="margin-top: 24px;">
-    <h2>Change Password</h2>
-    <form method="post" action="/profile/change-password">
-        <div class="form-group">
-            <label>Current Password</label>
-            <input type="password" name="current_password" required class="form-control">
-        </div>
-        <div class="form-group">
-            <label>New Password</label>
-            <input type="password" name="new_password" required minlength="6" class="form-control">
-        </div>
-        <div class="form-group">
-            <label>Confirm New Password</label>
-            <input type="password" name="confirm_password" required class="form-control">
-        </div>
-        <button type="submit" class="btn btn-primary">Change Password</button>
-    </form>
-</div>
+<style>
+/* Profile action card as button */
+button.profile-action-card{
+    background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.1rem;
+    display:flex;flex-direction:column;align-items:flex-start;gap:.2rem;
+    cursor:pointer;text-align:left;width:100%;transition:box-shadow .15s,border-color .15s;
+    color:var(--text-primary);
+}
+button.profile-action-card:hover{box-shadow:var(--shadow-sm);border-color:var(--text-muted);}
+.profile-action-card.google-locked{
+    background:var(--bg-2);border:1px dashed var(--border);border-radius:12px;padding:1.1rem;
+    display:flex;flex-direction:column;align-items:flex-start;gap:.2rem;width:100%;
+    cursor:not-allowed;opacity:.75;color:var(--text-primary);
+}
+
+/* Modal backdrop */
+.pmp-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.45);backdrop-filter:blur(3px);
+    display:none;align-items:center;justify-content:center;z-index:900;padding:1rem;}
+.pmp-backdrop.open{display:flex;}
+.pmp-box{background:var(--surface);border-radius:14px;width:100%;max-width:420px;
+    box-shadow:0 20px 60px rgba(0,0,0,.18);animation:pmpUp .2s ease;}
+@keyframes pmpUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.pmp-head{display:flex;align-items:center;justify-content:space-between;
+    padding:1.1rem 1.4rem;border-bottom:1px solid var(--border);}
+.pmp-head h3{margin:0;font-size:.97rem;font-weight:700;color:var(--text-primary);}
+.pmp-x{background:none;border:none;font-size:1.4rem;color:var(--text-muted);cursor:pointer;line-height:1;}
+.pmp-x:hover{color:var(--text-secondary);}
+.pmp-body{padding:1.3rem 1.4rem;display:flex;flex-direction:column;gap:.9rem;}
+.pmp-foot{display:flex;justify-content:flex-end;gap:.5rem;
+    padding:.9rem 1.4rem;border-top:1px solid var(--border);}
+.pmp-btn{padding:.45rem 1.1rem;border:1px solid var(--border);border-radius:7px;
+    background:var(--surface);font-size:.86rem;cursor:pointer;color:var(--text-secondary);}
+.pmp-btn:hover{background:var(--bg-2);}
+.pmp-btn.primary{background:#4f46e5;color:#fff;border-color:#4f46e5;font-weight:600;}
+.pmp-btn.primary:hover{background:#4338ca;}
+.pfg{display:flex;flex-direction:column;gap:.3rem;}
+.pfg label{font-size:.82rem;font-weight:600;color:var(--text-secondary);}
+.pfg input{padding:.5rem .75rem;border:1px solid var(--border);border-radius:7px;
+    font-size:.9rem;color:var(--text-primary);background:var(--surface);outline:none;width:100%;box-sizing:border-box;}
+.pfg input:focus{border-color:#818cf8;box-shadow:0 0 0 3px #818cf820;}
+</style>
+
+<script>
+function openEditModal()  { document.getElementById('editModal').classList.add('open'); }
+function closeEditModal(e){ if(e && e.target !== document.getElementById('editModal')) return;
+                            document.getElementById('editModal').classList.remove('open'); }
+function openPwdModal()   { document.getElementById('pwdModal').classList.add('open'); }
+function closePwdModal(e) { if(e && e.target !== document.getElementById('pwdModal')) return;
+                            document.getElementById('pwdModal').classList.remove('open'); }
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeEditModal(); closePwdModal(); }
+});
+
+// If server redirected back with a flash error, re-open the relevant modal
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% for cat, msg in messages %}
+  {% if cat == 'error' %}
+  // Could detect which form had error here if needed
+  {% endif %}
+{% endfor %}
+{% endwith %}
+</script>
 {% endblock %}

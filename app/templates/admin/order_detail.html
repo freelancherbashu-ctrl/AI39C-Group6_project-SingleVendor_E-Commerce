@@ -1,80 +1,88 @@
-{% extends "admin/admin_layout.html" %}
-{% block title %}Order #{{ order.id }} - meropasal Admin{% endblock %}
-{% block heading %}Order #{{ order.id }}{% endblock %}
-
-{% block page_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='admin/css/orders.css') }}">
-{% endblock %}
+{% extends 'admin/base.html' %}
+{%- from "macros.html" import csrf -%}
+{% block title %}Order #{{ order.id }} — MeroPasal Admin{% endblock %}
+{% block page_title %}Order #{{ order.id }}{% endblock %}
+{% block breadcrumb %}<span class="bc-sep">›</span><a href="{{ url_for('admin.orders') }}" class="bc-item">Orders</a><span class="bc-sep">›</span><span class="bc-current">Order #{{ order.id }}</span>{% endblock %}
 
 {% block content %}
-<div class="ord-detail-actions no-print">
-  <a class="ord-btn ord-btn-light" href="{{ url_for('admin.orders') }}">Back to Orders</a>
- <a class="ord-btn ord-btn-primary" href="{{ url_for('admin.order_print', oid=order.id) }}" target="_blank">Print Receipt</a>
+<a href="{{ url_for('admin.orders') }}" style="color:#4f46e5;font-size:0.9rem;text-decoration:none;">← Back to Orders</a>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:1.5rem;">
+
+    <div class="card" style="padding:1.5rem;">
+        <h3 style="margin-bottom:1rem;color:var(--text-primary);">Customer Details</h3>
+        <p><strong>Name:</strong> {{ order.customer_name }}</p>
+        <p><strong>Phone:</strong> {{ order.phone }}</p>
+        <p><strong>Address:</strong> {{ order.area }}, {{ order.city }}, {{ order.district }}, {{ order.province }}</p>
+        {% if order.landmark %}<p><strong>Landmark:</strong> {{ order.landmark }}</p>{% endif %}
+        <p><strong>Payment:</strong> {{ order.payment_method | upper }}</p>
+        <p><strong>Payment Status:</strong>
+            <span class="badge badge-{{ (order.payment_status or 'pending')|lower }}">{{ order.payment_status or 'Pending' }}</span>
+        </p>
+        <p><strong>Placed:</strong> {{ order.created_at }}</p>
+    </div>
+
+    <div class="card" style="padding:1.5rem;">
+        <h3 style="margin-bottom:1rem;color:var(--text-primary);">Update Order Status</h3>
+        <p style="margin-bottom:1rem;">Current: <span class="badge badge-{{ order.order_status|lower }}">{{ order.order_status }}</span></p>
+
+        {% if order.order_status in ('Cancelled', 'Rejected', 'Completed') %}
+        <p style="font-size:0.85rem;color:var(--text-secondary);padding:0.6rem;background:var(--surface-2);border-radius:6px;">
+            This order is <strong>{{ order.order_status }}</strong> and can't be changed further.
+        </p>
+        {% else %}
+        <div style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:1rem;padding:0.6rem;background:var(--surface-2);border-radius:6px;">
+            Flow: <strong>Pending → Approved → Processing → Completed</strong><br>
+            Or: <strong>Pending → Rejected</strong> (only while payment isn't approved yet)
+        </div>
+
+        <form method="POST" action="{{ url_for('admin.update_order_status', order_id=order.id) }}">
+{{ csrf() }}
+            <select name="status" style="width:100%;padding:0.6rem;border:1px solid var(--border);border-radius:8px;margin-bottom:0.8rem;font-size:0.9rem;background:var(--input-bg);color:var(--text-primary);">
+                {% for s in ['Pending','Approved','Processing','Completed'] + ([] if order.payment_status == 'Approved' else ['Rejected']) %}
+                <option value="{{ s }}" {{ 'selected' if order.order_status == s }}>{{ s }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-primary" style="width:100%">Update Status</button>
+        </form>
+        {% endif %}
+    </div>
 </div>
 
-<div class="ord-receipt">
-  <div class="ord-receipt-header">
-    <div>
-      <h2>meropasal</h2>
-      <p class="ord-muted">Order Receipt</p>
-    </div>
-    <div class="ord-receipt-meta">
-      <div><strong>Order #{{ order.id }}</strong></div>
-      <div>{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
-      <div><span class="ord-badge ord-badge-{{ order.status }}">{{ order.status|upper }}</span></div>
-    </div>
-  </div>
-
-  <div class="ord-receipt-section">
-    <h3>Customer Details</h3>
-    <p><strong>Name:</strong> {{ order.customer_name }}</p>
-    <p><strong>Email:</strong> {{ order.customer_email or '-' }}</p>
-    <p><strong>Phone:</strong> {{ order.customer_phone or '-' }}</p>
-    <p><strong>Address:</strong> {{ order.address or '-' }}</p>
-  </div>
-
-  <div class="ord-receipt-section">
-    <h3>Order Items</h3>
-    <table class="ord-table">
-      <thead>
-        <tr><th>Product</th><th>Quantity</th><th>Unit Price</th><th>Subtotal</th></tr>
-      </thead>
-      <tbody>
-        {% for item in order.items %}
+<div class="card" style="margin-top:1.5rem;">
+    <div class="card-header"><h2>Items Ordered</h2><strong>Total: Rs. {{ "{:,.0f}".format(order.total_price) }}</strong></div>
+    <table>
+        <thead><tr><th>Image</th><th>Product</th><th>Qty</th><th>Price</th><th>Subtotal</th></tr></thead>
+        <tbody>
+        {% for item in order.order_items %}
         <tr>
-          <td>{{ item.product_name }}</td>
-          <td>{{ item.quantity }}</td>
-          <td>Rs. {{ '%.2f'|format(item.price) }}</td>
-          <td>Rs. {{ '%.2f'|format(item.price * item.quantity) }}</td>
+            <td>
+                {% if item.image %}
+                <img src="{{ item.image }}" alt="{{ item.name }}"
+                     style="width:52px;height:52px;object-fit:cover;border-radius:6px;border:1px solid var(--border);background:var(--surface-2);">
+                {% else %}
+                <div style="width:52px;height:52px;border-radius:6px;background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:1.2rem;">🛍</div>
+                {% endif %}
+            </td>
+            <td>
+                <span style="font-weight:500;">{{ item.name }}</span>
+                {% if item.on_sale %}<br><span class="badge badge-processing" style="font-size:.7rem;">Flash Sale</span>{% endif %}
+            </td>
+            <td>{{ item.qty }}</td>
+            <td>
+                {% if item.on_sale and item.original_price is defined %}
+                <span style="text-decoration:line-through;color:var(--text-muted);font-size:.8rem;">Rs. {{ "{:,.0f}".format(item.original_price) }}</span><br>
+                <strong style="color:#ef4444;">Rs. {{ "{:,.0f}".format(item.price) }}</strong>
+                {% else %}
+                Rs. {{ "{:,.0f}".format(item.price) }}
+                {% endif %}
+            </td>
+            <td><strong>Rs. {{ "{:,.0f}".format(item.subtotal) }}</strong></td>
         </tr>
+        {% else %}
+        <tr><td colspan="5" style="text-align:center;color:var(--text-muted)">No items.</td></tr>
         {% endfor %}
-      </tbody>
-      <tfoot>
-        <tr><td colspan="3" style="text-align:right"><strong>Total</strong></td><td><strong>Rs. {{ '%.2f'|format(order.total_amount) }}</strong></td></tr>
-      </tfoot>
+        </tbody>
     </table>
-  </div>
-
-  <div class="ord-receipt-footer">
-    <p class="ord-muted">Thank you for shopping at meropasal!</p>
-  </div>
 </div>
-
-<div class="ord-detail-actions no-print">
-  <form method="post" action="{{ url_for('admin.update_order_status', oid=order.id) }}" class="ord-status-form">
-    <label>Update Status:</label>
-    <select name="status">
-      <option value="pending" {% if order.status=='pending' %}selected{% endif %}>Pending</option>
-      <option value="processing" {% if order.status=='processing' %}selected{% endif %}>Processing</option>
-      <option value="completed" {% if order.status=='completed' %}selected{% endif %}>Completed</option>
-      <option value="cancelled" {% if order.status=='cancelled' %}selected{% endif %}>Cancelled</option>
-    </select>
-    <button class="ord-btn ord-btn-primary">Update</button>
-  </form>
-
-  <form method="post" action="{{ url_for('admin.delete_order', oid=order.id) }}" onsubmit="return confirm('Delete this order? This cannot be undone.')">
-    <button class="ord-btn ord-btn-danger">Delete Order</button>
-  </form>
-</div>
-
 {% endblock %}

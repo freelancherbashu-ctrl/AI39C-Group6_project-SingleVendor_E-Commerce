@@ -1,0 +1,272 @@
+{% extends 'admin/base.html' %}
+{%- from "macros.html" import csrf -%}
+{% block title %}Flash Sales — MeroPasal Admin{% endblock %}
+{% block page_title %}Flash Sales{% endblock %}
+{% block breadcrumb %}<span class="bc-sep">›</span><span class="bc-current">Flash Sales</span>{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2>All Flash Sales</h2>
+        <button class="btn btn-primary btn-sm" onclick="openSaleModal()">+ New Sale</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>#</th><th>Product</th><th>Label</th><th>Discount</th>
+                <th>Sale Price</th><th>Starts</th><th>Ends</th><th>Status</th><th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for s in sales %}
+        <tr>
+            <td>#{{ s.id }}</td>
+            <td>
+                <div style="display:flex;align-items:center;gap:.6rem;">
+                    {% if s.product_image is defined and s.product_image %}
+                    <img src="{{ s.product_image }}" alt="{{ s.product_name }}"
+                         style="width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid var(--border);background:var(--surface-2);flex-shrink:0;">
+                    {% endif %}
+                    <span style="font-weight:500;">{{ s.product_name }}</span>
+                </div>
+            </td>
+            <td>{{ s.label }}</td>
+            <td><strong>{{ s.discount|int }}%</strong> off</td>
+            <td>
+                <span style="text-decoration:line-through;color:var(--text-muted);font-size:.8rem;">
+                    Rs. {{ "{:,.0f}".format(s.original_price) }}
+                </span><br>
+                <strong style="color:#ef4444;">Rs. {{ "{:,.0f}".format(s.sale_price) }}</strong>
+            </td>
+            <td style="font-size:.82rem;">{{ s.starts_at.strftime('%Y-%m-%d %H:%M') if s.starts_at else '—' }}</td>
+            <td style="font-size:.82rem;">{{ s.ends_at.strftime('%Y-%m-%d %H:%M') if s.ends_at else '—' }}</td>
+            <td>
+                {% if s.ends_at and s.ends_at < now %}
+                    <span class="badge badge-expired">Expired</span>
+                {% elif s.is_active %}
+                    <span class="badge badge-processing">Active</span>
+                {% else %}
+                    <span class="badge badge-cancelled">Inactive</span>
+                {% endif %}
+            </td>
+            <td style="display:flex;gap:.35rem;flex-wrap:wrap;">
+                <button class="btn btn-sm btn-primary" onclick="openEditSaleModal(
+                    {{ s.id }},
+                    {{ s.product_id }},
+                    {{ s.discount }},
+                    '{{ s.label }}',
+                    '{{ s.starts_at.strftime('%Y-%m-%dT%H:%M') if s.starts_at else '' }}',
+                    '{{ s.ends_at.strftime('%Y-%m-%dT%H:%M') if s.ends_at else '' }}',
+                    {{ 1 if s.is_active else 0 }}
+                )">Edit</button>
+
+                <form method="POST" action="{{ url_for('admin.toggle_flash_sale', sale_id=s.id) }}" style="margin:0;">
+{{ csrf() }}
+                    <button class="btn btn-sm" type="submit">
+                        {{ 'Deactivate' if s.is_active else 'Activate' }}
+                    </button>
+                </form>
+
+                <button class="btn btn-sm btn-danger"
+                    onclick="openDeleteSaleModal({{ s.id }}, '{{ s.product_name }}')">Delete</button>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="9" style="text-align:center;color:#9ca3af;padding:2rem;">
+                No flash sales yet.
+                <button class="btn btn-sm btn-primary" onclick="openSaleModal()" style="margin-left:.5rem;">Create one</button>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- ── ADD / EDIT SALE MODAL ────────────────────────────────────────────── -->
+<div id="saleModal" class="mp-modal-backdrop" onclick="closeSaleModal(event)">
+    <div class="mp-modal" style="max-width:580px;">
+        <div class="mp-modal-header">
+            <h3 id="saleModalTitle">New Flash Sale</h3>
+            <button class="mp-modal-close" onclick="closeSaleModal()">&times;</button>
+        </div>
+        <form id="saleForm" method="POST">
+{{ csrf() }}
+            <div class="mp-modal-body">
+
+                <!-- Product picker + live preview -->
+                <div class="fg">
+                    <label>Product <span style="color:#ef4444">*</span></label>
+                    <div id="prod-preview" style="display:none;align-items:center;gap:.7rem;padding:.55rem .8rem;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;margin-bottom:.4rem;">
+                        <img id="prev-img" src="" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid var(--border);">
+                        <div>
+                            <div id="prev-name" style="font-weight:600;font-size:.88rem;color:var(--text-primary);"></div>
+                            <div id="prev-price" style="font-size:.78rem;color:var(--text-secondary);"></div>
+                        </div>
+                    </div>
+                    <select name="product_id" id="prod-select" required>
+                        <option value="">— Select product —</option>
+                        {% for p in products %}
+                        <option value="{{ p.id }}"
+                            data-image="{{ p.image }}"
+                            data-name="{{ p.name }}"
+                            data-price="{{ '{:,.0f}'.format(p.price) }}">
+                            {{ p.name }} (Rs. {{ "{:,.0f}".format(p.price) }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                    <div class="fg">
+                        <label>Discount % <span style="color:#ef4444">*</span></label>
+                        <input type="number" name="discount" id="sale-discount"
+                               min="1" max="99" step="0.01" required placeholder="e.g. 20">
+                    </div>
+                    <div class="fg">
+                        <label>Sale Label</label>
+                        <input type="text" name="label" id="sale-label"
+                               maxlength="80" placeholder="Flash Sale">
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                    <div class="fg">
+                        <label>Starts At <span style="color:#ef4444">*</span></label>
+                        <input type="datetime-local" name="starts_at" id="sale-starts" required>
+                    </div>
+                    <div class="fg">
+                        <label>Ends At <span style="color:#ef4444">*</span></label>
+                        <input type="datetime-local" name="ends_at" id="sale-ends" required>
+                    </div>
+                </div>
+
+                <div class="fg" id="activeToggleWrap" style="display:none;">
+                    <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-weight:400;">
+                        <input type="checkbox" name="is_active" id="sale-active" value="1" style="width:auto;margin:0;">
+                        Active (visible on storefront)
+                    </label>
+                </div>
+
+            </div>
+            <div class="mp-modal-footer">
+                <button type="button" class="btn" onclick="closeSaleModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="saleSubmitBtn">Create Sale</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ── DELETE SALE MODAL ─────────────────────────────────────────────────── -->
+<div id="deleteSaleModal" class="mp-modal-backdrop" onclick="closeDeleteSaleModal(event)">
+    <div class="mp-modal" style="max-width:400px;">
+        <div class="mp-modal-header">
+            <h3>Delete Flash Sale</h3>
+            <button class="mp-modal-close" onclick="closeDeleteSaleModal()">&times;</button>
+        </div>
+        <div class="mp-modal-body">
+            <p>Delete the flash sale for <strong id="deleteSaleName"></strong>?</p>
+            <p style="font-size:.83rem;color:var(--text-muted);margin-top:.3rem;">The product itself won't be affected.</p>
+        </div>
+        <div class="mp-modal-footer">
+            <button type="button" class="btn" onclick="closeDeleteSaleModal()">Cancel</button>
+            <form id="deleteSaleForm" method="POST" style="margin:0;">
+{{ csrf() }}
+                <button type="submit" class="btn btn-danger">Yes, Delete</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Flash sale page re-uses admin.css modal variables — no overrides needed here */
+/* Product preview box dark mode fix */
+#prod-preview {
+    background: var(--surface-2) !important;
+    border-color: var(--border) !important;
+}
+#prev-name { color: var(--text-primary) !important; }
+#prev-price { color: var(--text-secondary) !important; }
+#prev-img { border-color: var(--border) !important; }
+/* datetime-local input dark mode */
+input[type="datetime-local"] {
+    color-scheme: light;
+}
+[data-theme="dark"] input[type="datetime-local"] {
+    color-scheme: dark;
+}
+/* Delete confirm modal paragraph */
+#deleteSaleModal .mp-modal-body p { color: var(--text-primary); }
+#deleteSaleModal .mp-modal-body p + p { color: var(--text-secondary); }
+/* Flash sale table image border */
+.flash-prod-img { border-color: var(--border) !important; background: var(--surface-2) !important; }
+</style>
+
+<script>
+const ADD_SALE_URL  = "{{ url_for('admin.add_flash_sale') }}";
+const EDIT_SALE_URL = "/admin/flash-sales/{id}/edit";
+
+function openSaleModal() {
+    document.getElementById('saleModalTitle').textContent = 'New Flash Sale';
+    document.getElementById('saleSubmitBtn').textContent  = 'Create Sale';
+    document.getElementById('saleForm').action = ADD_SALE_URL;
+    document.getElementById('prod-select').value   = '';
+    document.getElementById('sale-discount').value = '';
+    document.getElementById('sale-label').value    = 'Flash Sale';
+    document.getElementById('activeToggleWrap').style.display = 'none';
+    document.getElementById('prod-preview').style.display     = 'none';
+    // Default times
+    const now = new Date(); now.setSeconds(0,0);
+    const tomorrow = new Date(now); tomorrow.setDate(tomorrow.getDate()+1);
+    document.getElementById('sale-starts').value = now.toISOString().slice(0,16);
+    document.getElementById('sale-ends').value   = tomorrow.toISOString().slice(0,16);
+    document.getElementById('saleModal').classList.add('open');
+}
+
+function openEditSaleModal(id, productId, discount, label, startsAt, endsAt, isActive) {
+    document.getElementById('saleModalTitle').textContent = 'Edit Flash Sale';
+    document.getElementById('saleSubmitBtn').textContent  = 'Save Changes';
+    document.getElementById('saleForm').action = EDIT_SALE_URL.replace('{id}', id);
+    // Set product — coerce to string so option value comparison works
+    const sel = document.getElementById('prod-select');
+    sel.value = String(productId);
+    updateProdPreview();
+    document.getElementById('sale-discount').value = discount;
+    document.getElementById('sale-label').value    = label;
+    document.getElementById('sale-starts').value   = startsAt;
+    document.getElementById('sale-ends').value     = endsAt;
+    document.getElementById('activeToggleWrap').style.display = 'block';
+    document.getElementById('sale-active').checked = isActive === 1;
+    document.getElementById('saleModal').classList.add('open');
+}
+
+function closeSaleModal(e) {
+    if (e && e.target !== document.getElementById('saleModal')) return;
+    document.getElementById('saleModal').classList.remove('open');
+}
+
+function openDeleteSaleModal(id, name) {
+    document.getElementById('deleteSaleName').textContent = name;
+    document.getElementById('deleteSaleForm').action = `/admin/flash-sales/${id}/delete`;
+    document.getElementById('deleteSaleModal').classList.add('open');
+}
+
+function closeDeleteSaleModal(e) {
+    if (e && e.target !== document.getElementById('deleteSaleModal')) return;
+    document.getElementById('deleteSaleModal').classList.remove('open');
+}
+
+function updateProdPreview() {
+    const sel  = document.getElementById('prod-select');
+    const opt  = sel.options[sel.selectedIndex];
+    const prev = document.getElementById('prod-preview');
+    if (!opt || !opt.value) { prev.style.display = 'none'; return; }
+    document.getElementById('prev-img').src         = opt.dataset.image  || '';
+    document.getElementById('prev-name').textContent = opt.dataset.name   || '';
+    document.getElementById('prev-price').textContent = 'Rs. ' + (opt.dataset.price || '');
+    prev.style.display = 'flex';
+}
+document.getElementById('prod-select').addEventListener('change', updateProdPreview);
+</script>
+{% endblock %}

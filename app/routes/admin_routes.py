@@ -1,28 +1,116 @@
-﻿import csv
-import io
-from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, Response
-from datetime import datetime, timedelta
-from sqlalchemy import func, or_
-from app.models.database import db
-from app.models.product_models import Product, Category, Order, OrderItem
-from app.models.settings_model import Setting
-from app.controllers.admin import save_product_image, delete_product_image
-from app.controllers.auth import admin_required
+import os
+import uuid
+from datetime import datetime
+from functools import wraps
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app
+from werkzeug.utils import secure_filename
+from app.extensions import mysql
+from app.models.admin import Admin
+from app.models.order import Order
+from app.models.product import Product
+from app.models.category import Category
+from app.models.flash_sale import FlashSale
+from app.models.user import User
 
-admin_bp = Blueprint(
-    "admin", __name__,
-    url_prefix="/admin",
-    template_folder="../templates/admin",
-)
+admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
-# Apply auth gate to every admin route. No-op until auth teammate's
-# module is ready; flipping admin_required's body turns it on for all routes.
-@admin_bp.before_request
-@admin_required
-def _gate():
-    pass
+@admin_bp.context_processor
+def inject_pending_orders():
+    """Inject pending_orders count into all admin templates for the notification bell."""
+    if session.get("admin"):
+        try:
+            cursor = mysql.connection.cursor()
+            cursor.execute("SELECT COUNT(*) FROM orders WHERE order_status = 'Pending'")
+            count = cursor.fetchone()[0]
+            cursor.close()
+            return {"pending_orders": count}
+        except Exception:
+            pass
+    return {"pending_orders": 0}
 
-# ===== ADMIN HOME (admin_index) =====
+ALLOWED_EXT = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+
+def _allowed(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXT
+
+def _save_image(file, subfolder):
+    """Save an uploaded image to static/images/<subfolder>/, return the URL path or None."""
+    if not file or file.filename == '':
+        return None
+    if not _allowed(file.filename):
+        return None
+    ext      = file.filename.rsplit('.', 1)[1].lower()
+    filename = f"{uuid.uuid4().hex}.{ext}"
+    folder   = os.path.join(current_app.root_path, 'static', 'images', subfolder)
+    os.makedirs(folder, exist_ok=True)
+    file.save(os.path.join(folder, filename))
+    return f"/static/images/{subfolder}/{filename}"
+
+def _delete_image(image_path, subfolder):
+    """Delete an uploaded image file only if it lives inside the managed subfolder.
+    Handles Windows file-locking (WinError 32) gracefully — if the file is still
+    held by the dev-server reloader, the delete is skipped silently rather than
+    crashing the request.
+    """
+    if not image_path:
+        return
+    # Only delete files uploaded by admin — ignore seeded/static images
+    if f"images/{subfolder}/" not in image_path:
+        return
+    relative = image_path.lstrip("/")
+    if relative.startswith("static/"):
+        relative = relative[len("static/"):]
+    abs_path = os.path.join(current_app.root_path, 'static', relative)
+    if not os.path.isfile(abs_path):
+        return
+    try:
+        os.remove(abs_path)
+    except PermissionError:
+        # Windows: file is locked by another process (e.g. the Flask reloader).
+        # The old image will remain on disk but the DB record is already updated,
+        # so this is harmless — the file will be orphaned but won't block the operation.
+        current_app.logger.warning(
+            "Could not delete image (file locked): %s — it may be cleaned up manually.", abs_path
+        )
+    except OSError as exc:
+        current_app.logger.warning("Could not delete image %s: %s", abs_path, exc)
+
+
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get("admin"):
+            flash("Please log in to access the admin area.", "error")
+            return redirect(url_for("admin.login"))
+        return f(*args, **kwargs)
+    return decorated
+
+# ── AUTH ──────────────────────────────────────────────────────────────────────
+
+@admin_bp.route("/login", methods=["GET", "POST"])
+def login():
+    if session.get("admin"):
+        return redirect(url_for("admin.dashboard"))
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
+        admin = Admin.verify(mysql, username, password)
+        if admin:
+            session["admin"] = {"id": admin["id"], "username": admin["username"]}
+            session.modified = True
+            flash(f"Welcome, {admin['username']}!", "success")
+            return redirect(url_for("admin.dashboard"))
+        flash("Invalid username or password.", "error")
+    return render_template("admin/login.html")
+
+@admin_bp.route("/logout")
+def logout():
+    session.pop("admin", None)
+    flash("Logged out successfully.", "success")
+    return redirect(url_for("admin.login"))
+
+# ── DASHBOARD ─────────────────────────────────────────────────────────────────
+
 @admin_bp.route("/")
 @admin_bp.route("/dashboard")
 @admin_required
@@ -36,11 +124,7 @@ def dashboard():
     cancelled_orders = cursor.fetchone()[0]
     cursor.execute("SELECT COUNT(*) FROM users")
     total_users = cursor.fetchone()[0]
-    cursor.execute("""
-        SELECT SUM(total_price) FROM orders
-        WHERE (payment_method IN ('esewa','khalti') AND payment_status = 'Approved')
-           OR (payment_method = 'cod' AND order_status = 'Completed')
-    """)
+    cursor.execute("SELECT SUM(total_price) FROM orders WHERE order_status = 'Completed'")
     revenue = cursor.fetchone()[0] or 0
     cursor.execute("""
         SELECT id, customer_name, total_price, order_status, created_at
@@ -72,12 +156,12 @@ def orders():
     cursor = mysql.connection.cursor()
     if status:
         cursor.execute("""
-            SELECT id, customer_name, phone, total_price, order_status, payment_method, created_at, user_id
+            SELECT id, user_id, phone, total_price, order_status, payment_method, created_at
             FROM orders WHERE order_status = %s ORDER BY created_at DESC
         """, (status,))
     else:
         cursor.execute("""
-            SELECT id, customer_name, phone, total_price, order_status, payment_method, created_at, user_id
+            SELECT id, user_id, phone, total_price, order_status, payment_method, created_at
             FROM orders ORDER BY created_at DESC
         """)
     rows = cursor.fetchall()
@@ -99,237 +183,459 @@ def order_detail(order_id):
 def order_detail_json(order_id):
     """JSON endpoint for the order drawer on the orders list page."""
     from flask import jsonify
-    today = datetime.utcnow().date()
-    labels, values = [], []
-    for i in range(6, -1, -1):
-        day = today - timedelta(days=i)
-        next_day = day + timedelta(days=1)
-        total = (db.session.query(func.coalesce(func.sum(Order.total_amount), 0))
-                 .filter(Order.status == "completed",
-                         Order.created_at >= day,
-                         Order.created_at < next_day)
-                 .scalar() or 0)
-        labels.append(day.strftime("%b %d"))
-        values.append(float(total))
-    return jsonify({"labels": labels, "values": values})
+    order = Order.get_by_id(mysql, order_id)
+    if not order:
+        return jsonify({"error": "Not found"}), 404
+    items = []
+    for it in (order.get("order_items") or []):
+        items.append({
+            "name":     it.get("name", ""),
+            "image":    it.get("image", ""),
+            "qty":      it.get("qty", 1),
+            "price":    float(it.get("price", 0)),
+            "subtotal": float(it.get("subtotal", 0)),
+            "on_sale":  it.get("on_sale", False),
+        })
+    return jsonify({
+        "id":             order["id"],
+        "customer_name":  order["customer_name"],
+        "phone":          order["phone"],
+        "area":           order.get("area", ""),
+        "city":           order.get("city", ""),
+        "district":       order.get("district", ""),
+        "province":       order.get("province", ""),
+        "landmark":       order.get("landmark", ""),
+        "payment_method": order.get("payment_method", ""),
+        "payment_status": order.get("payment_status", "Pending"),
+        "order_status":   order["order_status"],
+        "total_price":    float(order["total_price"]),
+        "created_at":     order["created_at"].strftime("%d %b %Y, %I:%M %p") if order.get("created_at") else "",
+        "items":          items,
+    })
 
+@admin_bp.route("/orders/<int:order_id>/status", methods=["POST"])
+@admin_required
+def update_order_status(order_id):
+    new_status = request.form.get("status")
+    # Admin can Reject an order, but never Cancel one — cancelling is a
+    # customer-only action. "Cancelled" orders only ever arrive via the
+    # customer-facing cancel flow or an auto-cancel on payment rejection.
+    valid = ("Pending", "Approved", "Processing", "Completed", "Rejected")
+    if new_status not in valid:
+        flash("Invalid status.", "error")
+        return redirect(url_for("admin.orders"))
 
-# ===== PRODUCTS =====
+    # Fetch current order so we can make the right inventory call
+    order = Order.get_by_id(mysql, order_id)
+    if not order:
+        flash("Order not found.", "error")
+        return redirect(url_for("admin.orders"))
+
+    old_status = order["order_status"]
+
+    # Terminal states can't be reopened or changed further — most importantly,
+    # a Cancelled order (e.g. the customer cancelled it) must stay cancelled
+    # and never be silently moved forward again.
+    terminal_statuses = ("Cancelled", "Rejected", "Completed")
+    if old_status in terminal_statuses:
+        flash(f"Order #{order_id} is already {old_status} and can't be changed further.", "error")
+        return redirect(url_for("admin.orders"))
+
+    # Block processing/completing online payment orders until payment is approved
+    online_methods = ("esewa", "khalti")
+    restricted     = ("Processing", "Completed", "Approved")
+    if (new_status in restricted
+            and order.get("payment_method") in online_methods
+            and order.get("payment_status") != "Approved"):
+        flash("Payment must be approved before changing order to this status.", "error")
+        return redirect(url_for("admin.orders"))
+
+    # Reject is only allowed while payment hasn't been approved yet — once
+    # payment is approved, the order has to be fulfilled or completed, not rejected.
+    if new_status == "Rejected" and order.get("payment_status") == "Approved":
+        flash("Can't reject — payment for this order is already approved.", "error")
+        return redirect(url_for("admin.orders"))
+
+    # Statuses where stock is still reserved (not yet deducted or released)
+    reserved_statuses = ("Pending", "Approved", "Processing")
+
+    cursor = mysql.connection.cursor()
+    cursor.execute("UPDATE orders SET order_status=%s WHERE id=%s", (new_status, order_id))
+    mysql.connection.commit()
+
+    if cursor.rowcount:
+        if new_status == "Completed" and old_status in reserved_statuses:
+            # COD delivered — convert reservations into real deductions
+            Order.confirm_stock(mysql, order_id)
+        elif new_status in ("Cancelled", "Rejected") and old_status in reserved_statuses:
+            # Order aborted — release the reservations back to available
+            Order.release_stock(mysql, order_id)
+
+    flash(f"Order #{order_id} marked as {new_status}.", "success")
+    return redirect(url_for("admin.orders"))
+
+# ── USERS ─────────────────────────────────────────────────────────────────────
+
+@admin_bp.route("/users")
+@admin_required
+def users():
+    all_users = User.get_all(mysql)
+    return render_template("admin/users.html", users=all_users, admin=session["admin"])
+
+@admin_bp.route("/users/<int:user_id>/toggle-block", methods=["POST"])
+@admin_required
+def toggle_block_user(user_id):
+    result = User.toggle_block(mysql, user_id)
+    if result is None:
+        flash("User not found.", "error")
+    elif result:
+        flash("User has been blocked.", "success")
+    else:
+        flash("User has been unblocked.", "success")
+    return redirect(url_for("admin.users"))
+
+# ── PRODUCTS ──────────────────────────────────────────────────────────────────
+
 @admin_bp.route("/products")
+@admin_required
 def products():
-    q = request.args.get("q", "").strip()
-    cat_id = request.args.get("category_id", type=int)
-    page = request.args.get("page", 1, type=int)
-    per_page = 10
-
-    query = Product.query
-    if q:
-        query = query.filter(Product.name.ilike(f"%{q}%"))
-    if cat_id:
-        query = query.filter(Product.category_id == cat_id)
-
-    pagination = (query.order_by(Product.created_at.desc())
-                       .paginate(page=page, per_page=per_page, error_out=False))
-    categories = Category.query.order_by(Category.name).all()
-
-    return render_template("admin/products.html",
-                           products=pagination.items,
-                           pagination=pagination,
-                           categories=categories,
-                           q=q,
-                           selected_cat=cat_id)
-
+    all_products = Product.get_all(mysql)
+    categories   = Category.get_all(mysql)
+    return render_template("admin/products.html", products=all_products, categories=categories, admin=session["admin"])
 
 @admin_bp.route("/products/add", methods=["GET", "POST"])
+@admin_required
 def add_product():
-    categories = Category.query.order_by(Category.name).all()
+    categories = Category.get_all(mysql)
     if request.method == "POST":
-        try:
-            image_name = save_product_image(request.files.get("image"))
-            product = Product(
-                name=request.form["name"].strip(),
-                description=request.form.get("description", "").strip(),
-                price=float(request.form.get("price") or 0),
-                stock=int(request.form.get("stock") or 0),
-                category_id=int(request.form["category_id"]) if request.form.get("category_id") else None,
-                image=image_name,
-                is_active=bool(request.form.get("is_active")),
-            )
-            db.session.add(product)
-            db.session.commit()
-            flash("Product added successfully.", "success")
+        name        = request.form.get("name", "").strip()
+        price       = request.form.get("price", "0").strip()
+        category    = request.form.get("category", "").strip()
+        description = request.form.get("description", "").strip()
+        stock       = request.form.get("stock", "0").strip()
+        image_file  = request.files.get("image")
+
+        if not name or not category:
+            flash("Name and category are required.", "error")
             return redirect(url_for("admin.products"))
-        except Exception as e:
-            db.session.rollback()
-            flash(f"Error: {e}", "danger")
-    return render_template("admin/product_form.html", product=None, categories=categories)
-
-
-@admin_bp.route("/products/edit/<int:pid>", methods=["GET", "POST"])
-def edit_product(pid):
-    product = Product.query.get_or_404(pid)
-    categories = Category.query.order_by(Category.name).all()
-    if request.method == "POST":
         try:
-            product.name = request.form["name"].strip()
-            product.description = request.form.get("description", "").strip()
-            product.price = float(request.form.get("price") or 0)
-            product.stock = int(request.form.get("stock") or 0)
-            product.category_id = int(request.form["category_id"]) if request.form.get("category_id") else None
-            product.is_active = bool(request.form.get("is_active"))
-            new_image = save_product_image(request.files.get("image"))
-            if new_image:
-                delete_product_image(product.image)
-                product.image = new_image
-            db.session.commit()
-            flash("Product updated.", "success")
+            price = int(price)
+        except ValueError:
+            flash("Price must be a number.", "error")
             return redirect(url_for("admin.products"))
-        except Exception as e:
-            db.session.rollback()
-            flash(f"Error: {e}", "danger")
-    return render_template("admin/product_form.html", product=product, categories=categories)
+        try:
+            stock = int(stock)
+            if stock < 0:
+                raise ValueError
+        except ValueError:
+            flash("Stock must be a non-negative number.", "error")
+            return redirect(url_for("admin.products"))
 
+        image_path = _save_image(image_file, "products") or "/static/images/placeholder.png"
 
-@admin_bp.route("/products/delete/<int:pid>", methods=["POST"])
-def delete_product(pid):
-    product = Product.query.get_or_404(pid)
-    delete_product_image(product.image)
-    db.session.delete(product)
-    db.session.commit()
-    flash("Product deleted.", "info")
+        pid, err = Product.create(mysql, name, price, category, image_path, description, stock)
+        if pid:
+            flash(f"Product '{name}' added successfully.", "success")
+            return redirect(url_for("admin.products"))
+        flash(f"Error adding product: {err}", "error")
+
     return redirect(url_for("admin.products"))
 
-@admin_bp.route("/products/bulk", methods=["POST"])
-def bulk_products():
-    action = request.form.get("action")
-    ids = request.form.getlist("ids", type=int)
-    if not ids:
-        flash("No products selected.", "warning")
+@admin_bp.route("/products/<int:product_id>/edit", methods=["GET", "POST"])
+@admin_required
+def edit_product(product_id):
+    product    = Product.get_by_id(mysql, product_id)
+    categories = Category.get_all(mysql)
+    if not product:
+        flash("Product not found.", "error")
         return redirect(url_for("admin.products"))
 
-    items = Product.query.filter(Product.id.in_(ids)).all()
-    count = 0
-    if action == "activate":
-        for p in items:
-            p.is_active = True
-            count += 1
-        msg = f"Activated {count} product(s)."
-    elif action == "deactivate":
-        for p in items:
-            p.is_active = False
-            count += 1
-        msg = f"Deactivated {count} product(s)."
-    elif action == "delete":
-        for p in items:
-            delete_product_image(p.image)
-            db.session.delete(p)
-            count += 1
-        msg = f"Deleted {count} product(s)."
-    else:
-        flash("Unknown action.", "danger")
-        return redirect(url_for("admin.products"))
-
-    db.session.commit()
-    flash(msg, "success")
-    return redirect(url_for("admin.products"))
-
-
-@admin_bp.route("/products/<int:pid>/stock", methods=["POST"])
-def adjust_stock(pid):
-    product = Product.query.get_or_404(pid)
-    try:
-        delta = int(request.form.get("delta", 0))
-    except ValueError:
-        delta = 0
-    product.stock = max(0, product.stock + delta)
-    db.session.commit()
-    flash(f"Stock for '{product.name}' is now {product.stock}.", "success")
-    return redirect(request.referrer or url_for("admin.products"))
-
-# ===== CATEGORIES =====
-@admin_bp.route("/categories", methods=["GET", "POST"])
-def categories():
     if request.method == "POST":
-        name = request.form["name"].strip()
-        desc = request.form.get("description", "").strip()
-        if not name:
-            flash("Name required.", "warning")
-        elif Category.query.filter_by(name=name).first():
-            flash("Category already exists.", "warning")
+        name        = request.form.get("name", "").strip()
+        price       = request.form.get("price", "0").strip()
+        category    = request.form.get("category", "").strip()
+        description = request.form.get("description", "").strip()
+        stock       = request.form.get("stock", "0").strip()
+        image_file  = request.files.get("image")
+
+        if not name or not category:
+            flash("Name and category are required.", "error")
+            return redirect(url_for("admin.products"))
+        try:
+            price = int(price)
+        except ValueError:
+            flash("Price must be a number.", "error")
+            return redirect(url_for("admin.products"))
+        try:
+            stock = int(stock)
+            if stock < 0:
+                raise ValueError
+        except ValueError:
+            flash("Stock must be a non-negative number.", "error")
+            return redirect(url_for("admin.products"))
+
+        # Only replace image if a new file was uploaded; delete the old one first
+        new_image = _save_image(image_file, "products")
+        if new_image:
+            _delete_image(product["image"], "products")
+            image_path = new_image
         else:
-            db.session.add(Category(name=name, description=desc))
-            db.session.commit()
-            flash("Category added.", "success")
+            image_path = product["image"]
+
+        ok, err = Product.update(mysql, product_id, name, price, category, image_path, description, stock)
+        if ok:
+            flash(f"Product '{name}' updated successfully.", "success")
+        else:
+            flash(f"Error updating product: {err or 'Unknown error'}", "error")
+        return redirect(url_for("admin.products"))
+
+    return redirect(url_for("admin.products"))
+
+@admin_bp.route("/products/<int:product_id>/delete", methods=["POST"])
+@admin_required
+def delete_product(product_id):
+    product = Product.get_by_id(mysql, product_id)
+    if product:
+        _delete_image(product["image"], "products")
+        if Product.delete(mysql, product_id):
+            flash(f"Product '{product['name']}' deleted.", "success")
+        else:
+            flash("Could not delete product.", "error")
+    else:
+        flash("Product not found.", "error")
+    return redirect(url_for("admin.products"))
+
+@admin_bp.route("/products/<int:product_id>/stock", methods=["POST"])
+@admin_required
+def update_stock(product_id):
+    try:
+        new_stock = int(request.form.get("stock", 0))
+        if new_stock < 0:
+            raise ValueError
+    except (ValueError, TypeError):
+        flash("Stock must be a non-negative number.", "error")
+        return redirect(url_for("admin.products"))
+    Product.update_stock(mysql, product_id, new_stock)
+    flash("Stock updated.", "success")
+    return redirect(url_for("admin.products"))
+
+# ── CATEGORIES ────────────────────────────────────────────────────────────────
+
+@admin_bp.route("/categories")
+@admin_required
+def categories():
+    all_categories = Category.get_all(mysql)
+    return render_template("admin/categories.html", categories=all_categories, admin=session["admin"])
+
+@admin_bp.route("/categories/add", methods=["GET", "POST"])
+@admin_required
+def add_category():
+    if request.method == "POST":
+        name       = request.form.get("name", "").strip()
+        image_file = request.files.get("image")
+
+        if not name:
+            flash("Category name is required.", "error")
+            return render_template("admin/category_form.html",
+                                   admin=session["admin"], action="Add", category=None)
+
+        image_path = _save_image(image_file, "categories") or "images/placeholder.png"
+        # Category model stores paths relative to /static/ for legacy templates
+        # strip leading /static/ if present so it stays consistent
+        if image_path.startswith("/static/"):
+            image_path = image_path[len("/static/"):]
+
+        cid, err = Category.create(mysql, name, image_path)
+        if cid:
+            flash(f"Category '{name}' added.", "success")
+            return redirect(url_for("admin.categories"))
+        flash(f"Error: {err}", "error")
+
+    return render_template("admin/category_form.html",
+                           admin=session["admin"], action="Add", category=None)
+
+@admin_bp.route("/categories/<int:cat_id>/edit", methods=["GET", "POST"])
+@admin_required
+def edit_category(cat_id):
+    category = Category.get_by_id(mysql, cat_id)
+    if not category:
+        flash("Category not found.", "error")
         return redirect(url_for("admin.categories"))
-    items = Category.query.order_by(Category.name).all()
-    return render_template("admin/categories.html", categories=items)
 
+    if request.method == "POST":
+        name       = request.form.get("name", "").strip()
+        image_file = request.files.get("image")
 
-@admin_bp.route("/categories/edit/<int:cid>", methods=["POST"])
-def edit_category(cid):
-    cat = Category.query.get_or_404(cid)
-    cat.name = request.form["name"].strip()
-    cat.description = request.form.get("description", "").strip()
-    db.session.commit()
-    flash("Category updated.", "success")
+        if not name:
+            flash("Category name is required.", "error")
+            return render_template("admin/category_form.html",
+                                   admin=session["admin"], action="Edit", category=category)
+
+        new_image = _save_image(image_file, "categories")
+        if new_image:
+            if new_image.startswith("/static/"):
+                new_image = new_image[len("/static/"):]
+            _delete_image(category["image"], "categories")
+            image_path = new_image
+        else:
+            image_path = category["image"]
+
+        ok, err = Category.update(mysql, cat_id, name, image_path)
+        if ok:
+            flash(f"Category '{name}' updated.", "success")
+            return redirect(url_for("admin.categories"))
+        flash(f"Error: {err}", "error")
+
+    return render_template("admin/category_form.html",
+                           admin=session["admin"], action="Edit", category=category)
+
+@admin_bp.route("/categories/<int:cat_id>/delete", methods=["POST"])
+@admin_required
+def delete_category(cat_id):
+    cat = Category.get_by_id(mysql, cat_id)
+    if cat:
+        _delete_image(cat["image"], "categories")
+        if Category.delete(mysql, cat_id):
+            flash(f"Category '{cat['name']}' deleted.", "success")
+        else:
+            flash("Could not delete category.", "error")
+    else:
+        flash("Category not found.", "error")
     return redirect(url_for("admin.categories"))
 
+@admin_bp.route("/users/<int:user_id>/delete", methods=["POST"])
+@admin_required
+def delete_user(user_id):
+    user = User.get_by_id(mysql, user_id)
+    if not user:
+        flash("User not found.", "error")
+        return redirect(url_for("admin.users"))
 
-@admin_bp.route("/categories/delete/<int:cid>", methods=["POST"])
-def delete_category(cid):
-    cat = Category.query.get_or_404(cid)
-    db.session.delete(cat)
-    db.session.commit()
-    flash("Category deleted.", "info")
-    return redirect(url_for("admin.categories"))
+    # Delete profile picture from disk if one exists
+    pic = user.get("profile_picture")
+    if pic:
+        pic_path = os.path.join(current_app.root_path, 'static', 'profile_pics', pic)
+        if os.path.isfile(pic_path):
+            try:
+                os.remove(pic_path)
+            except (PermissionError, OSError) as exc:
+                current_app.logger.warning("Could not delete profile pic %s: %s", pic_path, exc)
 
+    if User.delete(mysql, user_id):
+        flash(f"User '{user['full_name']}' deleted.", "success")
+    else:
+        flash("Could not delete user.", "error")
+    return redirect(url_for("admin.users"))
 
-# ===== ORDERS =====
-@admin_bp.route("/orders")
-def orders():
-    status = request.args.get("status")
-    q = request.args.get("q", "").strip()
-    page = request.args.get("page", 1, type=int)
+# ── FLASH SALES ───────────────────────────────────────────────────────────────
 
-    query = Order.query
-    if status in ("pending", "processing", "completed", "cancelled"):
-        query = query.filter_by(status=status)
-    if q:
-        like = f"%{q}%"
-        query = query.filter(or_(
-            Order.customer_name.ilike(like),
-            Order.customer_email.ilike(like),
-            Order.customer_phone.ilike(like),
-        ))
+@admin_bp.route("/flash-sales")
+@admin_required
+def flash_sales():
+    sales    = FlashSale.get_all(mysql)
+    products = Product.get_all(mysql)
+    return render_template("admin/flash_sales.html", sales=sales, products=products,
+                            now=datetime.now(), admin=session["admin"])
 
-    pagination = query.order_by(Order.created_at.desc()).paginate(
-        page=page, per_page=15, error_out=False)
+@admin_bp.route("/flash-sales/add", methods=["GET", "POST"])
+@admin_required
+def add_flash_sale():
+    products = Product.get_all(mysql)
+    if request.method == "POST":
+        product_id = request.form.get("product_id", "").strip()
+        discount   = request.form.get("discount", "").strip()
+        label      = request.form.get("label", "Flash Sale").strip() or "Flash Sale"
+        starts_at  = request.form.get("starts_at", "").strip()
+        ends_at    = request.form.get("ends_at", "").strip()
+        try:
+            discount = float(discount)
+            if not (1 <= discount < 100):
+                raise ValueError
+        except (ValueError, TypeError):
+            flash("Discount must be a number between 1 and 99.", "error")
+            return render_template("admin/flash_sale_form.html",
+                                   products=products, sale=None,
+                                   action="Add", admin=session["admin"])
+        if not product_id or not starts_at or not ends_at:
+            flash("Product, start time, and end time are required.", "error")
+            return render_template("admin/flash_sale_form.html",
+                                   products=products, sale=None,
+                                   action="Add", admin=session["admin"])
+        if starts_at >= ends_at:
+            flash("End time must be after start time.", "error")
+            return render_template("admin/flash_sale_form.html",
+                                   products=products, sale=None,
+                                   action="Add", admin=session["admin"])
+        sid, err = FlashSale.create(mysql, int(product_id), discount, starts_at, ends_at, label)
+        if sid:
+            flash(f"Flash sale created successfully.", "success")
+            return redirect(url_for("admin.flash_sales"))
+        flash(f"Error: {err}", "error")
+    return render_template("admin/flash_sale_form.html",
+                           products=products, sale=None,
+                           action="Add", admin=session["admin"])
 
-    return render_template("admin/orders.html",
-                           orders=pagination.items,
-                           pagination=pagination,
-                           active_status=status,
-                           q=q,
-                           filter_total=0,
-                           filter_count=pagination.total)
+@admin_bp.route("/flash-sales/<int:sale_id>/edit", methods=["GET", "POST"])
+@admin_required
+def edit_flash_sale(sale_id):
+    sale     = FlashSale.get_by_id(mysql, sale_id)
+    products = Product.get_all(mysql)
+    if not sale:
+        flash("Flash sale not found.", "error")
+        return redirect(url_for("admin.flash_sales"))
+    if request.method == "POST":
+        product_id = request.form.get("product_id", "").strip()
+        discount   = request.form.get("discount", "").strip()
+        label      = request.form.get("label", "Flash Sale").strip() or "Flash Sale"
+        starts_at  = request.form.get("starts_at", "").strip()
+        ends_at    = request.form.get("ends_at", "").strip()
+        is_active  = 1 if request.form.get("is_active") else 0
+        try:
+            discount = float(discount)
+            if not (1 <= discount < 100):
+                raise ValueError
+        except (ValueError, TypeError):
+            flash("Discount must be a number between 1 and 99.", "error")
+            return render_template("admin/flash_sale_form.html",
+                                   products=products, sale=sale,
+                                   action="Edit", admin=session["admin"])
+        if not product_id or not starts_at or not ends_at:
+            flash("Product, start time, and end time are required.", "error")
+            return render_template("admin/flash_sale_form.html",
+                                   products=products, sale=sale,
+                                   action="Edit", admin=session["admin"])
+        if starts_at >= ends_at:
+            flash("End time must be after start time.", "error")
+            return render_template("admin/flash_sale_form.html",
+                                   products=products, sale=sale,
+                                   action="Edit", admin=session["admin"])
+        ok, err = FlashSale.update(mysql, sale_id, int(product_id), discount,
+                                   starts_at, ends_at, label, is_active)
+        if ok:
+            flash("Flash sale updated.", "success")
+            return redirect(url_for("admin.flash_sales"))
+        flash(f"Error: {err}", "error")
+    return render_template("admin/flash_sale_form.html",
+                           products=products, sale=sale,
+                           action="Edit", admin=session["admin"])
 
-@admin_bp.route("/orders/export.csv")
-def orders_export_csv():
-    from datetime import datetime
+@admin_bp.route("/flash-sales/<int:sale_id>/toggle", methods=["POST"])
+@admin_required
+def toggle_flash_sale(sale_id):
+    FlashSale.toggle_active(mysql, sale_id)
+    flash("Sale status updated.", "success")
+    return redirect(url_for("admin.flash_sales"))
 
-    status = request.args.get("status")
-    q = request.args.get("q", "").strip()
+@admin_bp.route("/flash-sales/<int:sale_id>/delete", methods=["POST"])
+@admin_required
+def delete_flash_sale(sale_id):
+    if FlashSale.delete(mysql, sale_id):
+        flash("Flash sale deleted.", "success")
+    else:
+        flash("Could not delete flash sale.", "error")
+    return redirect(url_for("admin.flash_sales"))
 
-    query = Order.query
-    if status in ("pending", "processing", "completed", "cancelled"):
-        query = query.filter_by(status=status)
-    if q:
-        like = f"%{q}%"
-        query = query.filter(or_(
-            Order.customer_name.ilike(like),
-            Order.customer_email.ilike(like),
-            Order.customer_phone.ilike(like),
-        ))
+# ── PAYMENTS ──────────────────────────────────────────────────────────────────
 
 @admin_bp.route("/payments")
 @admin_required
@@ -338,16 +644,16 @@ def payments():
     cursor = mysql.connection.cursor()
     if status:
         cursor.execute("""
-            SELECT o.id, o.customer_name, o.total_price, o.payment_method,
-                   o.payment_status, o.order_status, o.created_at, o.transaction_code, o.user_id
+            SELECT o.id, o.user_id, o.total_price, o.payment_method,
+                   o.payment_status, o.order_status, o.created_at, o.transaction_code
             FROM orders o
             WHERE o.payment_method IN ('esewa','khalti') AND o.payment_status = %s
             ORDER BY o.created_at DESC
         """, (status,))
     else:
         cursor.execute("""
-            SELECT o.id, o.customer_name, o.total_price, o.payment_method,
-                   o.payment_status, o.order_status, o.created_at, o.transaction_code, o.user_id
+            SELECT o.id, o.user_id, o.total_price, o.payment_method,
+                   o.payment_status, o.order_status, o.created_at, o.transaction_code
             FROM orders o
             WHERE o.payment_method IN ('esewa','khalti')
             ORDER BY o.created_at DESC
@@ -356,16 +662,21 @@ def payments():
     return render_template("admin/payments.html", payments=rows,
                            active_status=status, admin=session["admin"])
 
-    buf = io.StringIO()
-    writer = csv.writer(buf)
-    writer.writerow(["Order ID", "Customer", "Email", "Phone",
-                     "Address", "Amount", "Status", "Created At"])
-    for o in rows:
-        writer.writerow([
-            o.id, o.customer_name, o.customer_email or "", o.customer_phone or "",
-            o.address or "", f"{o.total_amount:.2f}", o.status,
-            o.created_at.strftime("%Y-%m-%d %H:%M"),
-        ])
+@admin_bp.route("/payments/<int:order_id>/approve", methods=["POST"])
+@admin_required
+def approve_payment(order_id):
+    cursor = mysql.connection.cursor()
+    cursor.execute("""
+        UPDATE orders SET payment_status='Approved', order_status='Approved'
+        WHERE id=%s AND payment_status='Pending' AND order_status = 'Pending'
+    """, (order_id,))
+    mysql.connection.commit()
+    if cursor.rowcount:
+        Order.confirm_stock(mysql, order_id)
+        flash(f"Payment for Order #{order_id} approved.", "success")
+    else:
+        flash("Could not approve — payment may already be processed, or the order was cancelled.", "error")
+    return redirect(url_for("admin.payments"))
 
 @admin_bp.route("/payments/<int:order_id>/reject", methods=["POST"])
 @admin_required
@@ -373,14 +684,14 @@ def reject_payment(order_id):
     cursor = mysql.connection.cursor()
     cursor.execute("""
         UPDATE orders SET payment_status='Rejected', order_status='Cancelled'
-        WHERE id=%s AND payment_status='Pending'
+        WHERE id=%s AND payment_status='Pending' AND order_status = 'Pending'
     """, (order_id,))
     mysql.connection.commit()
     if cursor.rowcount:
         Order.release_stock(mysql, order_id)
         flash(f"Payment for Order #{order_id} rejected. Order auto-cancelled.", "error")
     else:
-        flash("Could not reject — payment may already be processed.", "error")
+        flash("Could not reject — payment may already be processed, or the order was already cancelled.", "error")
     return redirect(url_for("admin.payments"))
 
 # ── REPORTS ───────────────────────────────────────────────────────────────────
@@ -396,9 +707,8 @@ def reports():
                COUNT(*) AS total_orders,
                SUM(total_price) AS revenue
         FROM orders
-        WHERE created_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
-          AND ((payment_method IN ('esewa','khalti') AND payment_status = 'Approved')
-           OR  (payment_method = 'cod' AND order_status = 'Completed'))
+        WHERE order_status = 'Completed'
+          AND created_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
         GROUP BY month
         ORDER BY month ASC
     """)
@@ -412,7 +722,7 @@ def reports():
             SUM(JSON_UNQUOTE(JSON_EXTRACT(item.value, '$.subtotal'))) AS total_revenue
         FROM orders o
         JOIN JSON_TABLE(o.items_json, '$[*]' COLUMNS (value JSON PATH '$')) AS item
-        WHERE o.order_status NOT IN ('Cancelled', 'Rejected')
+        WHERE o.order_status = 'Completed'
           AND o.items_json IS NOT NULL AND o.items_json != ''
         GROUP BY product_name
         ORDER BY total_revenue DESC
@@ -421,22 +731,13 @@ def reports():
     top_products = cursor.fetchall()
 
     # Summary stats
-    cursor.execute("SELECT COUNT(*) FROM orders WHERE order_status NOT IN ('Cancelled','Rejected')")
+    cursor.execute("SELECT COUNT(*) FROM orders WHERE order_status = 'Completed'")
     total_orders = cursor.fetchone()[0]
-    cursor.execute("""
-        SELECT SUM(total_price) FROM orders
-        WHERE (payment_method IN ('esewa','khalti') AND payment_status = 'Approved')
-           OR (payment_method = 'cod' AND order_status = 'Completed')
-    """)
+    cursor.execute("SELECT SUM(total_price) FROM orders WHERE order_status = 'Completed'")
     total_revenue = cursor.fetchone()[0] or 0
-    cursor.execute("SELECT COUNT(*) FROM orders WHERE MONTH(created_at)=MONTH(NOW()) AND YEAR(created_at)=YEAR(NOW()) AND order_status NOT IN ('Cancelled','Rejected')")
+    cursor.execute("SELECT COUNT(*) FROM orders WHERE MONTH(created_at)=MONTH(NOW()) AND YEAR(created_at)=YEAR(NOW()) AND order_status = 'Completed'")
     this_month_orders = cursor.fetchone()[0]
-    cursor.execute("""
-        SELECT SUM(total_price) FROM orders
-        WHERE MONTH(created_at)=MONTH(NOW()) AND YEAR(created_at)=YEAR(NOW())
-          AND ((payment_method IN ('esewa','khalti') AND payment_status = 'Approved')
-           OR  (payment_method = 'cod' AND order_status = 'Completed'))
-    """)
+    cursor.execute("SELECT SUM(total_price) FROM orders WHERE MONTH(created_at)=MONTH(NOW()) AND YEAR(created_at)=YEAR(NOW()) AND order_status = 'Completed'")
     this_month_revenue = cursor.fetchone()[0] or 0
 
     return render_template("admin/reports.html",
@@ -448,6 +749,62 @@ def reports():
         this_month_revenue=this_month_revenue,
         admin=session["admin"]
     )
+
+@admin_bp.route("/reports/export.csv")
+@admin_required
+def export_reports_csv():
+    """Downloadable CSV of the same monthly revenue + top products data shown on the reports page."""
+    import csv, io
+    from flask import Response
+
+    cursor = mysql.connection.cursor()
+    cursor.execute("""
+        SELECT DATE_FORMAT(created_at, '%Y-%m') AS month,
+               COUNT(*) AS total_orders,
+               SUM(total_price) AS revenue
+        FROM orders
+        WHERE order_status = 'Completed'
+          AND created_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
+        GROUP BY month
+        ORDER BY month ASC
+    """)
+    monthly_sales = cursor.fetchall()
+
+    cursor.execute("""
+        SELECT
+            JSON_UNQUOTE(JSON_EXTRACT(item.value, '$.name')) AS product_name,
+            SUM(JSON_UNQUOTE(JSON_EXTRACT(item.value, '$.qty'))) AS total_qty,
+            SUM(JSON_UNQUOTE(JSON_EXTRACT(item.value, '$.subtotal'))) AS total_revenue
+        FROM orders o
+        JOIN JSON_TABLE(o.items_json, '$[*]' COLUMNS (value JSON PATH '$')) AS item
+        WHERE o.order_status = 'Completed'
+          AND o.items_json IS NOT NULL AND o.items_json != ''
+        GROUP BY product_name
+        ORDER BY total_revenue DESC
+        LIMIT 10
+    """)
+    top_products = cursor.fetchall()
+
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(["MeroPasal — Sales Report"])
+    writer.writerow([])
+    writer.writerow(["Monthly Revenue (last 12 months)"])
+    writer.writerow(["Month", "Orders", "Revenue (Rs.)"])
+    for month, orders_count, revenue in monthly_sales:
+        writer.writerow([month, orders_count, f"{revenue or 0:.2f}"])
+    writer.writerow([])
+    writer.writerow(["Top Products by Revenue"])
+    writer.writerow(["Product", "Units Sold", "Revenue (Rs.)"])
+    for name, qty, revenue in top_products:
+        writer.writerow([name, qty, f"{revenue or 0:.2f}"])
+
+    return Response(
+        buf.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment; filename=meropasal_sales_report.csv"}
+    )
+
 
 # ── REFUNDS ───────────────────────────────────────────────────────────────────
 
@@ -494,7 +851,7 @@ def coupons():
     from app.models.coupon import Coupon
     all_coupons = Coupon.get_all(mysql)
     return render_template("admin/coupons.html", coupons=all_coupons,
-                           admin=session["admin"])
+                           now=datetime.now(), admin=session["admin"])
 
 @admin_bp.route("/coupons/add", methods=["GET", "POST"])
 @admin_required

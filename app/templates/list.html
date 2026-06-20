@@ -74,3 +74,55 @@
     </div>
 {% endif %}
 {% endblock %}
+
+
+
+
+
+
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1>📋 Categories</h1>
+    <a href="/add-category" class="btn btn-primary">➕ Add Category</a>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}
+{% endwith %}
+
+{% if categories %}
+    <div class="category-grid">
+        {% for cat in categories %}
+        <div class="category-card">
+            <div class="card-image">
+                {% if cat.image %}
+                    <img src="{{ url_for('static', filename=cat.image) }}" alt="{{ cat.name }}">
+                {% else %}
+                    <div class="no-image">📁</div>
+                {% endif %}
+            </div>
+            <div class="card-info">
+                <h3>{{ cat.name }}</h3>
+                {% if cat.description %}
+                    <p class="description">{{ cat.description }}</p>
+                {% endif %}
+            </div>
+            <div class="card-actions">
+                <a href="/edit-category/{{ cat.id }}" class="btn-edit">✏️ Edit</a>
+                <a href="/delete-category/{{ cat.id }}" class="btn-delete" onclick="return confirm('Delete {{ cat.name }}?')">🗑️ Delete</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="empty-state">
+        <h3>📭 No Categories Found</h3>
+        <p>Start by creating your first category.</p>
+        <a href="/add-category" class="btn btn-primary">➕ Create First Category</a>
+    </div>
+{% endif %}
+{% endblock %}

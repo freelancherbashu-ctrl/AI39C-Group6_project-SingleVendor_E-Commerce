@@ -1,157 +1,50 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends 'base.html' %}
+{% block title %}Login - MeroPasal{% endblock %}
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
 
-<head>
+{% block content %}
+<section class="auth-page">
+    <div class="auth-card">
 
-    <meta charset="UTF-8">
+        <div class="auth-logo"></div>
+        <h1>Welcome Back</h1>
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
 
-    <title>Login - MeroPasal</title>
+        <a href="{{ url_for('google.login') }}" class="google-btn">
+            <img src="https://developers.google.com/identity/images/g-logo.png" width="18">
+            Continue with Google:
+        </a>
 
-    <link rel="stylesheet"
-    href="{{ url_for('static', filename='css/logi.css') }}">
+        <div class="divider">or</div>
 
-</head>
+        <p class="auth-sub">Login to your MeroPasal account</p>
 
-<body>
+        <form method="POST" action="{{ url_for('auth.login') }}">
 
-<div class="login-wrapper">
-
-    <!-- LEFT SIDE -->
-
-    <div class="left-panel">
-
-        <div class="content">
-
-            <img src="{{ url_for('static',
-            filename='images/logo.png') }}"
-
-            alt="Logo">
-
-            <h1>
-
-                Welcome to MeroPasal
-
-            </h1>
-
-            <p>
-
-                Nepal’s Own Online Store
-
-            </p>
-
-            <div class="features">
-
-                <span>
-
-                    Fast Delivery
-
-                </span>
-
-                <span>
-
-                    Secure Payment
-
-                </span>
-
-                <span>
-
-                    Quality Products
-
-                </span>
-
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" name="email" placeholder="you@example.com"
+                       value="{{ request.form.get('email', '') }}" required>
             </div>
 
-        </div>
-
-    </div>
-
-
-    <!-- RIGHT SIDE -->
-
-    <div class="right-panel">
-
-        <form
-        method="POST"
-        class="login-form">
-
-            <h2>
-
-                Login
-
-            </h2>
-
-            <p class="subtitle">
-
-                Login to continue shopping
-
-            </p>
-
-            <input
-
-            type="email"
-
-            name="email"
-
-            placeholder="Enter email"
-
-            required>
-
-            <input
-
-            type="password"
-
-            name="password"
-
-            placeholder="Enter password"
-
-            required>
-
-
-            <div class="forgot">
-
-                <a href="{{ url_for(
-                'authroutes.forgot_password'
-                ) }}">
-
-                    Forgot Password?
-
-                </a>
-
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" name="password" placeholder="••••••••" required>
             </div>
-
-
-            <button
-            type="submit"
-            class="login-btn">
-
-                Login
-
-            </button>
-
-
-            <div class="register">
-
-                Don’t have an account?
-
-                <a href="{{ url_for(
-                'authroutes.register'
-                ) }}">
-
-                    Register
-
-                </a>
-
-            </div>
+            <a href="{{ url_for('auth.forgot_password') }}" class="forgot-link">
+                Forgot password?
+            </a>
+            <button type="submit" class="auth-btn">Log In</button>
 
         </form>
 
+        <p class="auth-switch">
+            Don't have an account?
+            <a href="{{ url_for('auth.register') }}">Create one</a>
+        </p>
+
     </div>
-
-</div>
-
-</body>
-
-</html>
+</section>
+{% endblock %}

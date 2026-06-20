@@ -1,4 +1,3 @@
-# Handles all raw SQL connections and queries for the MeroPasal app
 import pymysql
 import config
 
@@ -65,10 +64,11 @@ class Database:
                 email VARCHAR(100) NOT NULL UNIQUE,
                 password VARCHAR(255) NOT NULL,
                 role VARCHAR(20) DEFAULT 'user',
-                profile_picture VARCHAR(255) DEFAULT 'default_pp.jpg',
                 reset_token VARCHAR(255),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+
+ 
 
         db.close()

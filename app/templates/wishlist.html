@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block title %}My Wishlist - MeroPasal{% endblock %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/wishlist.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<section class="wishlist-page">
+
+    <div class="wishlist-header">
+        <h1>❤️ My Wishlist
+            {% if wishlist_products %}
+            <span class="wl-count-badge">{{ wishlist_products|length }}</span>
+            {% endif %}
+        </h1>
+        <a href="{{ url_for('auth.home') }}" class="btn-secondary">← Continue Shopping</a>
+    </div>
+
+    {% if wishlist_products %}
+    <div class="wishlist-grid">
+        {% for product in wishlist_products %}
+        <div class="wishlist-card" id="wl-card-{{ product.id }}">
+
+            <button class="wl-remove-btn" title="Remove from Wishlist"
+                    onclick="removeFromWishlist({ product})">✕</button>
+
+            <a href="javascript:void(0)" class="wl-image-link" onclick="openProductModal({product})">
+                <img src="{{ product.image }}" alt="{{ product.name }}" class="wl-product-img">
+            </a>
+
+            <div class="wl-product-info">
+                <h3 class="wl-product-name">
+                    <a href="javascript:void(0)" onclick="openProductModal({ product})">{{ product.name }}</a>
+                </h3>
+                <p class="wl-price">
+                    {% set sale = sale_map.get(product.id) if sale_map else None %}
+                    {% if sale %}
+                    <span style="text-decoration:line-through;color:#9ca3af;font-size:.85rem;">Rs. {{ "{:,.0f}".format(product.price) }}</span>
+                    <span style="color:#ef4444;font-weight:700;"> Rs. {{ "{:,.0f}".format(sale.sale_price) }}</span>
+                    {% else %}
+                    Rs. {{ "{:,.0f}".format(product.price) }}
+                    {% endif %}
+                </p>
+                <div class="wl-actions">
+                    <form action="{{ url_for('auth.add_to_cart', product_id=product.id) }}" method="POST">
+                        <input type="hidden" name="quantity" value="1">
+                        <button type="submit" class="btn wl-add-cart-btn">🛒 Add to Cart</button>
+                    </form>
+                    <button class="btn wl-view-btn" onclick="openProductModal({product})">View</button>
+                </div>
+            </div>
+
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="wishlist-empty">
+        <div class="empty-icon">💔</div>
+        <h2>Your wishlist is empty</h2>
+        <p>Browse products and click the ♡ heart to save your favourites here.</p>
+        <a href="{{ url_for('auth.home') }}" class="btn wl-browse-btn">Browse Products</a>
+    </div>
+    {% endif %}
+
+</section>
+
+<div id="wl-page-toast" class="wishlist-toast" style="display:none;"></div>
+
+<script>
+function removeFromWishlist(productId) {
+    fetch(`/wishlist/toggle/${productId}`, { method: "POST" })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) return;
+            const card = document.getElementById(`wl-card-${productId}`);
+            if (card) {
+                card.style.transition = "opacity 0.3s, transform 0.3s";
+                card.style.opacity = "0";
+                card.style.transform = "scale(0.9)";
+                setTimeout(() => {
+                    card.remove();
+                    const badge = document.querySelector(".wl-count-badge");
+                    if (badge) { if (data.wishlist_count > 0) badge.textContent = data.wishlist_count; else badge.remove(); }
+                }, 300);
+            }
+            updateHeaderWishlistBadge(data.wishlist_count);
+            showToast("Removed from wishlist", "info");
+            if (data.wishlist_count === 0) setTimeout(() => location.reload(), 500);
+        }).catch(() => showToast("Something went wrong.", "error"));
+}
+
+function showToast(message, type) {
+    const toast = document.getElementById("wl-page-toast");
+    toast.textContent = message;
+    toast.className = `wishlist-toast wishlist-toast-${type}`;
+    toast.style.display = "block";
+    setTimeout(() => toast.classList.add("show"), 10);
+    setTimeout(() => { toast.classList.remove("show"); setTimeout(() => { toast.style.display = "none"; }, 300); }, 2500);
+}
+
+updateHeaderWishlistBadge({ wishlist_count});
+</script>
+
+{% endblock %}

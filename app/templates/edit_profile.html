@@ -20,11 +20,16 @@
         </div>
     </nav>
 
-    <div class="auth-container">
-        <div class="auth-left">
-            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="logo" class="auth-logo">
-            <h2>MeroPasal</h2>
-            <p>Update your profile information</p>
+    <div class="auth-logo"></div>
+    <h1>Edit Profile</h1>
+    <p class="auth-sub">Update your name or email address</p>
+
+    <form method="POST" action="{{ url_for('auth.edit_profile') }}">
+
+        <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" name="full_name"
+                   value="{{ user.full_name }}" required>
         </div>
 
         <div class="auth-right">

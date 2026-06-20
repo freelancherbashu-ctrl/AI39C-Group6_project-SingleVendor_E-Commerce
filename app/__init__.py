@@ -1,7 +1,7 @@
 from flask import Flask
 import config
 from app.models.database import Database
-from app.routes.authroutes import AuthRoutes
+from app.routes.authroute import AuthRoutes
 
 def create_app():
     app = Flask(__name__)

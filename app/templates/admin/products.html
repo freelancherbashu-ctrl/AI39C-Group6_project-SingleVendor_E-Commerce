@@ -1,113 +1,30 @@
-{% extends "admin/admin_layout.html" %}
-{% block title %}Products - meropasal Admin{% endblock %}
-{% block heading %}Products{% endblock %}
-
-{% block page_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='admin/css/products.css') }}">
-{% endblock %}
-
+{% extends "base.html" %}
+{% block title %}Admin – Products{% endblock %}
 {% block content %}
-<div class="prod-action-bar">
-  <form method="get" class="prod-search-form">
-    <input type="text" name="q" id="prodSearch" value="{{ q }}" placeholder="Search by name...">
-    <select name="category_id">
-      <option value="">All categories</option>
-      {% for c in categories %}
-        <option value="{{ c.id }}" {% if selected_cat==c.id %}selected{% endif %}>{{ c.name }}</option>
-      {% endfor %}
-    </select>
-    <button class="prod-btn prod-btn-light">Filter</button>
-    {% if q or selected_cat %}<a class="prod-btn prod-btn-ghost" href="{{ url_for('admin.products') }}">Clear</a>{% endif %}
-  </form>
-  <a class="prod-btn prod-btn-primary" href="{{ url_for('admin.add_product') }}">+ Add Product</a>
+<div class="page-header">
+    <h1>Product Management</h1>
+    <a href="/admin/products/new" class="btn btn-primary">+ Add Product</a>
 </div>
 
-<form method="post" action="{{ url_for('admin.bulk_products') }}" id="prodBulkForm">
-<div class="prod-panel">
-  {% if products %}
-  <div class="prod-bulk-bar">
-    <label><input type="checkbox" id="prodCheckAll"> Select all</label>
-    <select name="action" required>
-      <option value="">-- Bulk action --</option>
-      <option value="activate">Activate</option>
-      <option value="deactivate">Deactivate</option>
-      <option value="delete">Delete</option>
-    </select>
-    <button class="prod-btn prod-btn-sm prod-btn-light">Apply</button>
-  </div>
-
-  <table class="prod-table">
+<table class="data-table">
     <thead>
-      <tr>
-        <th></th><th>Image</th><th>Name</th><th>Category</th>
-        <th>Price</th><th>Stock</th><th>Status</th><th>Actions</th>
-      </tr>
+        <tr><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Actions</th></tr>
     </thead>
     <tbody>
-      {% for p in products %}
-      <tr>
-        <td><input type="checkbox" name="ids" value="{{ p.id }}" class="prod-row-check"></td>
-        <td>
-          {% if p.image %}
-            <img src="{{ url_for('static', filename='admin/uploads/' ~ p.image) }}" class="prod-thumb" alt="">
-          {% else %}
-            <div class="prod-thumb prod-thumb-empty">N/A</div>
-          {% endif %}
-        </td>
-        <td><strong>{{ p.name }}</strong></td>
-        <td>{{ p.category.name if p.category else '-' }}</td>
-        <td>Rs. {{ '%.2f'|format(p.price) }}</td>
-        <td class="{% if p.stock <= 5 %}prod-stock-low{% endif %}">
-          {{ p.stock }}
-          <span class="prod-stock-quick">
-            <a href="#" class="prod-stock-btn" data-pid="{{ p.id }}" data-delta="1" title="+1">+</a>
-            <a href="#" class="prod-stock-btn" data-pid="{{ p.id }}" data-delta="-1" title="-1">-</a>
-          </span>
-        </td>
-        <td>
-          {% if p.is_active %}
-            <span class="prod-badge prod-badge-active">Active</span>
-          {% else %}
-            <span class="prod-badge prod-badge-inactive">Inactive</span>
-          {% endif %}
-        </td>
-        <td class="prod-actions">
-          <a class="prod-btn prod-btn-sm prod-btn-light" href="{{ url_for('admin.edit_product', pid=p.id) }}">Edit</a>
-        </td>
-      </tr>
-      {% endfor %}
+        {% for p in products %}
+        <tr>
+            <td>{{ p.name }}</td>
+            <td>{{ p.category or '–' }}</td>
+            <td>Rs. {{ "%.2f"|format(p.price) }}</td>
+            <td>{{ p.stock }}</td>
+            <td>
+                <a href="/admin/products/{{ p.id }}/edit" class="btn btn-sm btn-secondary">Edit</a>
+                <form method="post" action="/admin/products/{{ p.id }}/delete" style="display:inline">
+                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this product?')">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
     </tbody>
-  </table>
-
-  {% if pagination and pagination.pages > 1 %}
-  <div class="prod-pagination">
-    {% if pagination.has_prev %}
-      <a href="{{ url_for('admin.products', page=pagination.prev_num, q=q, category_id=selected_cat) }}">Prev</a>
-    {% endif %}
-    <span>Page {{ pagination.page }} of {{ pagination.pages }} ({{ pagination.total }} products)</span>
-    {% if pagination.has_next %}
-      <a href="{{ url_for('admin.products', page=pagination.next_num, q=q, category_id=selected_cat) }}">Next</a>
-    {% endif %}
-  </div>
-  {% endif %}
-
-  {% else %}
-    <div class="prod-empty">
-      <p>No products found.</p>
-      <a class="prod-btn prod-btn-primary" href="{{ url_for('admin.add_product') }}">Add your first product</a>
-    </div>
-  {% endif %}
-</div>
-</form>
-
-{# Hidden stock-adjust forms, submitted via JS #}
-{% for p in products %}
-<form method="post" action="{{ url_for('admin.adjust_stock', pid=p.id) }}" id="prodStock{{ p.id }}" style="display:none">
-  <input type="hidden" name="delta" value="0">
-</form>
-{% endfor %}
-{% endblock %}
-
-{% block page_js %}
-<script src="{{ url_for('static', filename='admin/js/products.js') }}"></script>
+</table>
 {% endblock %}

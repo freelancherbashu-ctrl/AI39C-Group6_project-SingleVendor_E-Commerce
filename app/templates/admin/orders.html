@@ -1,70 +1,38 @@
-{% extends "admin/admin_layout.html" %}
-{% block title %}Orders · meropasal Admin{% endblock %}
-{% block heading %}Orders{% endblock %}
-
-{% block page_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='admin/css/orders.css') }}">
-{% endblock %}
-
+{% extends "base.html" %}
+{% block title %}Admin – Orders{% endblock %}
 {% block content %}
-<div class="ord-tabs">
-  <a href="{{ url_for('admin.orders') }}"                    class="{% if not active_status %}active{% endif %}">All</a>
-  <a href="{{ url_for('admin.orders', status='pending') }}"    class="ord-tab-pending    {% if active_status=='pending' %}active{% endif %}">Pending</a>
-  <a href="{{ url_for('admin.orders', status='processing') }}" class="ord-tab-processing {% if active_status=='processing' %}active{% endif %}">Processing</a>
-  <a href="{{ url_for('admin.orders', status='completed') }}"  class="ord-tab-completed  {% if active_status=='completed' %}active{% endif %}">Completed</a>
-  <a href="{{ url_for('admin.orders', status='cancelled') }}"  class="ord-tab-cancelled  {% if active_status=='cancelled' %}active{% endif %}">Cancelled</a>
+<div class="page-header">
+    <h1>Order Management</h1>
 </div>
 
-<form method="get" class="ord-filter-bar">
-  {% if active_status %}<input type="hidden" name="status" value="{{ active_status }}">{% endif %}
-  <input type="text" name="q" value="{{ q }}" placeholder="Search by name / email / phone">
-  <button class="ord-btn ord-btn-light">Search</button>
-  {% if q %}<a class="ord-btn ord-btn-ghost" href="{{ url_for('admin.orders', status=active_status) }}">Clear</a>{% endif %}
-  <a class="ord-btn ord-btn-primary"
-     href="{{ url_for('admin.orders_export_csv', status=active_status, q=q) }}">
-    Download CSV
-  </a>
-</form>
-
-<div class="ord-panel">
-  {% if orders %}
-  <table class="ord-table">
+<table class="data-table">
     <thead>
-      <tr><th>Order #</th><th>Customer</th><th>Phone</th><th>Amount</th><th>Status</th><th>Date</th><th></th></tr>
+        <tr><th>Order #</th><th>Customer</th><th>Date</th><th>Total</th><th>Status</th><th>Update</th></tr>
     </thead>
     <tbody>
-      {% for o in orders %}
-      <tr class="ord-row-{{ o.status }}">
-        <td><strong>#{{ o.id }}</strong></td>
-        <td>{{ o.customer_name }}</td>
-        <td>{{ o.customer_phone or '—' }}</td>
-        <td>Rs. {{ '%.2f'|format(o.total_amount) }}</td>
-        <td><span class="ord-badge ord-badge-{{ o.status }}">{{ o.status }}</span></td>
-        <td>{{ o.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
-        <td><a class="ord-btn ord-btn-sm ord-btn-light" href="{{ url_for('admin.order_detail', oid=o.id) }}">View →</a></td>
-      </tr>
-      {% endfor %}
+        {% for order in orders %}
+        <tr>
+            <td>#{{ order.id }}</td>
+            <td>{{ order.full_name }}<br><small>{{ order.email }}</small></td>
+            <td>{{ order.created_at.strftime('%d %b %Y') }}</td>
+            <td>Rs. {{ "%.2f"|format(order.total_amount) }}</td>
+            <td>
+                <span class="badge badge-{{ 'success' if order.status == 'delivered' else 'danger' if order.status == 'cancelled' else 'warning' if order.status == 'pending' else 'info' }}">
+                    {{ order.status | capitalize }}
+                </span>
+            </td>
+            <td>
+                <form method="post" action="/admin/orders/{{ order.id }}/status">
+                    <select name="status" class="form-control form-control-sm">
+                        {% for s in ['pending', 'processing', 'shipped', 'delivered', 'cancelled'] %}
+                        <option value="{{ s }}" {% if order.status == s %}selected{% endif %}>{{ s|capitalize }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-sm btn-primary">Update</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
     </tbody>
-  </table>
-
-  {% if pagination and pagination.pages > 1 %}
-  <div class="ord-pagination">
-    {% if pagination.has_prev %}
-      <a href="{{ url_for('admin.orders', page=pagination.prev_num, status=active_status, q=q) }}">Prev</a>
-    {% endif %}
-    <span>Page {{ pagination.page }} of {{ pagination.pages }} ({{ pagination.total }} orders)</span>
-    {% if pagination.has_next %}
-      <a href="{{ url_for('admin.orders', page=pagination.next_num, status=active_status, q=q) }}">Next</a>
-    {% endif %}
-  </div>
-  {% endif %}
-
-  {% else %}
-    <p class="ord-muted">No orders {% if active_status %}with status "{{ active_status }}"{% endif %}.</p>
-  {% endif %}
-</div>
-{% endblock %}
-
-{% block page_js %}
-<script src="{{ url_for('static', filename='admin/js/orders.js') }}"></script>
+</table>
 {% endblock %}

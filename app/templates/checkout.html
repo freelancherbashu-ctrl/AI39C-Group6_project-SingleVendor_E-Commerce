@@ -1,204 +1,44 @@
-{% extends 'base.html' %}
-
-{% block title %}Checkout - MeroPasal{% endblock %}
-
-{% block style %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/checkout.css') }}">
-{% endblock %}
-
+{% extends "base.html" %}
+{% block title %}Checkout{% endblock %}
 {% block content %}
-
-<section class="checkout-page">
-
+<div class="page-header">
     <h1>Checkout</h1>
+</div>
 
-    <div class="checkout-layout">
-
-        <!-- LEFT: FORM -->
-        <form class="checkout-form"
-            method="POST"
-            action="{{ url_for('auth.place_order') }}"
-            onsubmit="return validateCheckout(event)"
-            autocomplete="off">
-
-            <h2>Delivery Info</h2>
-
-            <input type="text" name="name" placeholder="Full Name" required>
-
-            <input type="text" name="phone" placeholder="Phone Number"
-                   pattern="[0-9]{10}" maxlength="10" required>
-
-            <div class="form-row">
-                <select name="province" id="province" onchange="updateDistricts()" required>
-                    <option value="">Select Province</option>
-                    <option value="Koshi Province">Koshi Province</option>
-                    <option value="Madhesh Province">Madhesh Province</option>
-                    <option value="Bagmati Province">Bagmati Province</option>
-                    <option value="Gandaki Province">Gandaki Province</option>
-                    <option value="Lumbini Province">Lumbini Province</option>
-                    <option value="Karnali Province">Karnali Province</option>
-                    <option value="Sudurpashchim Province">Sudurpashchim Province</option>
-                </select>
-                <select name="district" id="district" required>
-                    <option value="">Select District</option>
-                </select>
-            </div>
-
-            <div class="form-row">
-                <input type="text" name="city"  placeholder="City / Municipality" required>
-                <input type="text" name="area"  placeholder="Area / Ward" required>
-            </div>
-
-            <textarea name="address" placeholder="Full Delivery Address" required></textarea>
-            <input type="text" name="landmark" placeholder="Landmark (Optional)">
-
-            <div class="payment-section">
-                <h2>Please Select Payment Method</h2>
-                <div class="payment-options">
-                    <label><input type="radio" name="payment" value="cod" required> Cash on Delivery</label>
-                    <label><input type="radio" name="payment" value="esewa"> eSewa</label>
-                    <label><input type="radio" name="payment" value="khalti"> Khalti</label>
-                </div>
-            </div>
-
-            <button type="submit" class="place-order-btn">Place Order</button>
-            <a href="{{ url_for('auth.cart') }}" class="cancel-btn">← Back to Cart</a>
-
-        </form>
-
-        <!-- RIGHT: ORDER SUMMARY -->
-        <div class="order-summary">
-
-            <h2>Your Order Summary</h2>
-
-            <div class="summary-items">
+{% if items %}
+<div class="checkout-container">
+    <div class="order-summary">
+        <h2>Order Summary</h2>
+        <table class="cart-table">
+            <thead>
+                <tr><th>Product</th><th>Qty</th><th>Subtotal</th></tr>
+            </thead>
+            <tbody>
                 {% for item in items %}
-                <div class="summary-item">
-                    <img src="{{ item.image }}" alt="{{ item.name }}">
-                    <div class="summary-item-info">
-                        <span class="summary-item-name">{{ item.name }}</span>
-                        <span class="summary-item-qty">Qty: {{ item.qty }}</span>
-                    </div>
-                    <span class="summary-item-price">Rs. {{ "{:,.0f}".format(item.subtotal) }}</span>
-                </div>
+                <tr>
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>Rs. {{ "%.2f"|format(item.line_total) }}</td>
+                </tr>
                 {% endfor %}
-            </div>
-
-            <div class="summary-total">
-                <span>Subtotal</span>
-                <span>Rs. {{ "{:,.0f}".format(total) }}</span>
-            </div>
-            <div class="summary-total">
-                <span>Delivery</span>
-                {% if delivery_fee == 0 %}
-                <span style="color:green;">Free 🎉</span>
-                {% else %}
-                <span>Rs. {{ "{:,.0f}".format(delivery_fee) }}</span>
-                {% endif %}
-            </div>
-            {% if delivery_fee > 0 %}
-            <p style="font-size:0.78rem;color:#888;margin:4px 0 8px;">
-                Add Rs. {{ "{:,.0f}".format(free_threshold - total) }} more for free delivery
-            </p>
-            {% endif %}
-            <!-- COUPON CODE -->
-            <div style="margin:.8rem 0;border:1px solid #e5e7eb;border-radius:10px;padding:.8rem;">
-                <div style="font-size:.82rem;font-weight:600;color:#6b7280;margin-bottom:.5rem;">Discount Coupon</div>
-                <div style="display:flex;gap:.5rem;">
-                    <input type="text" id="couponInput" placeholder="Enter coupon code"
-                           style="flex:1;padding:.45rem .65rem;border:1px solid #d1d5db;border-radius:7px;font-size:.9rem;text-transform:uppercase;">
-                    <button type="button" onclick="applyCoupon()"
-                            style="padding:.45rem .9rem;background:#6366f1;color:#fff;border:none;border-radius:7px;font-size:.85rem;font-weight:600;cursor:pointer;">Apply</button>
-                </div>
-                <div id="couponMsg" style="font-size:.8rem;margin-top:.4rem;"></div>
-                <input type="hidden" name="coupon_id" id="couponId" value="">
-                <input type="hidden" name="coupon_code" id="couponCode" value="">
-                <input type="hidden" name="discount_amount" id="discountAmount" value="0">
-            </div>
-
-            <div id="discountRow" style="display:none;" class="summary-total">
-                <span style="color:#16a34a;">Discount</span>
-                <span id="discountDisplay" style="color:#16a34a;">- Rs. 0</span>
-            </div>
-
-            <div class="summary-total" style="font-weight:700;font-size:1.1rem;border-top:2px solid #e5e7eb;padding-top:10px;margin-top:4px;">
-                <span>Grand Total</span>
-                <span class="total-amount" id="grandTotalDisplay">Rs. {{ "{:,.0f}".format(grand_total) }}</span>
-            </div>
-
+            </tbody>
+        </table>
+        <div class="cart-total">
+            <strong>Total: Rs. {{ "%.2f"|format(total) }}</strong>
         </div>
-
     </div>
 
-</section>
-
-<script>
-const districts = {
-    "Koshi Province":         ["Bhojpur","Dhankuta","Ilam","Jhapa","Morang","Sunsari","Khotang","Okhaldhunga","Panchthar","Sankhuwasabha","Solukhumbu","Taplejung","Terhathum","Udayapur"],
-    "Madhesh Province":       ["Parsa","Bara","Rautahat","Sarlahi","Dhanusha","Mahottari","Saptari","Siraha"],
-    "Bagmati Province":       ["Kathmandu","Lalitpur","Bhaktapur","Chitwan","Makwanpur","Dhading","Nuwakot","Rasuwa","Sindhuli","Ramechhap","Dolakha","Sindhupalchok"],
-    "Gandaki Province":       ["Kaski","Tanahun","Lamjung","Syangja","Gorkha","Manang","Mustang","Myagdi","Nawalpur","Parbat"],
-    "Lumbini Province":       ["Rupandehi","Kapilvastu","Dang","Banke","Bardiya","Arghakhanchi","Gulmi","Palpa","Pyuthan","Rolpa"],
-    "Karnali Province":       ["Surkhet","Jumla","Dolpa","Humla","Kalikot","Mugu","Salyan","Dailekh","Jajarkot"],
-    "Sudurpashchim Province": ["Kailali","Kanchanpur","Doti","Achham","Bajhang","Bajura","Baitadi","Dadeldhura","Darchula"]
-};
-
-function updateDistricts() {
-    const province = document.getElementById("province").value;
-    const districtSelect = document.getElementById("district");
-    districtSelect.innerHTML = '<option value="">Select District</option>';
-    (districts[province] || []).forEach(function(d) {
-        const opt = document.createElement("option");
-        opt.value = d; opt.textContent = d;
-        districtSelect.appendChild(opt);
-    });
-}
-
-function validateCheckout(event) {
-    const payment = document.querySelector('input[name="payment"]:checked');
-    if (!payment) {
-        event.preventDefault();
-        alert("Please select a payment method.");
-        return false;
-    }
-    return true;
-}
-</script>
-
-<script>
-const BASE_GRAND_TOTAL = {{ grand_total }};
-
-function applyCoupon() {
-    const code = document.getElementById('couponInput').value.trim().toUpperCase();
-    const msg  = document.getElementById('couponMsg');
-    if (!code) { msg.textContent = 'Please enter a coupon code.'; msg.style.color='#ef4444'; return; }
-    msg.textContent = 'Checking…'; msg.style.color = '#6b7280';
-    const fd = new FormData();
-    fd.append('code', code);
-    fd.append('cart_total', BASE_GRAND_TOTAL);
-    fetch('/coupon/validate', { method: 'POST', body: fd })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
-                msg.textContent = data.message; msg.style.color = '#16a34a';
-                document.getElementById('couponId').value = data.coupon_id;
-                document.getElementById('couponCode').value = data.code;
-                document.getElementById('discountAmount').value = data.discount_amount;
-                const newTotal = Math.max(0, BASE_GRAND_TOTAL - data.discount_amount);
-                document.getElementById('discountDisplay').textContent = '- Rs. ' + data.discount_amount.toLocaleString('en-IN', {maximumFractionDigits:0});
-                document.getElementById('grandTotalDisplay').textContent = 'Rs. ' + newTotal.toLocaleString('en-IN', {maximumFractionDigits:0});
-                document.getElementById('discountRow').style.display = 'flex';
-            } else {
-                msg.textContent = data.message; msg.style.color = '#ef4444';
-                document.getElementById('couponId').value = '';
-                document.getElementById('couponCode').value = '';
-                document.getElementById('discountAmount').value = '0';
-                document.getElementById('discountRow').style.display = 'none';
-                document.getElementById('grandTotalDisplay').textContent = 'Rs. ' + BASE_GRAND_TOTAL.toLocaleString('en-IN', {maximumFractionDigits:0});
-            }
-        })
-        .catch(() => { msg.textContent = 'Could not validate coupon.'; msg.style.color='#ef4444'; });
-}
-</script>
-
+    <div class="checkout-actions">
+        <form method="post" action="/checkout">
+            <button type="submit" class="btn btn-primary btn-lg">Confirm Order</button>
+        </form>
+        <a href="/cart" class="btn btn-secondary">← Back to Cart</a>
+    </div>
+</div>
+{% else %}
+<div class="empty-state">
+    <p>Your cart is empty.</p>
+    <a href="/products" class="btn btn-primary">Browse Products</a>
+</div>
+{% endif %}
 {% endblock %}

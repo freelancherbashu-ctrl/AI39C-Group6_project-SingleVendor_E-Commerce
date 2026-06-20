@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Shop – Our Products{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Shop</h1>
+</div>
+
+<form class="search-bar" method="get" action="/products">
+    <input type="text" name="search" placeholder="Search products…" value="{{ search or '' }}">
+    <select name="category">
+        <option value="">All Categories</option>
+        {% for cat in categories %}
+        <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>{{ cat }}</option>
+        {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-primary">Search</button>
+    {% if search or selected_category %}
+    <a href="/products" class="btn btn-secondary">Clear</a>
+    {% endif %}
+</form>
+
+{% if products %}
+<div class="product-grid">
+    {% for product in products %}
+    <div class="product-card">
+        {% if product.image_url %}
+        <img src="{{ product.image_url }}" alt="{{ product.name }}" class="product-img">
+        {% else %}
+        <div class="product-img-placeholder">No Image</div>
+        {% endif %}
+        <div class="product-info">
+            <span class="product-category">{{ product.category or 'Uncategorized' }}</span>
+            <h3 class="product-name">{{ product.name }}</h3>
+            <p class="product-desc">{{ (product.description or '')[:80] }}{% if product.description and product.description|length > 80 %}…{% endif %}</p>
+            <div class="product-footer">
+                <span class="product-price">Rs. {{ "%.2f"|format(product.price) }}</span>
+                {% if product.stock > 0 %}
+                <a href="/products/{{ product.id }}" class="btn btn-primary btn-sm">View</a>
+                {% else %}
+                <span class="badge badge-danger">Out of Stock</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<p class="empty-state">No products found. <a href="/products">Browse all</a>.</p>
+{% endif %}
+{% endblock %}

@@ -1,34 +1,28 @@
 import pymysql
-import config
+from flask import current_app, g
 
-class Database:
-    def __init__(self):
-        try:
-            self.connection = pymysql.connect(
-                host=config.MYSQL_HOST,
-                user=config.MYSQL_USER,
-                password=config.MYSQL_PASSWORD,
-                database=config.MYSQL_DATABASE,
-                cursorclass=pymysql.cursors.DictCursor
-            )
-            print("✅ Database connected")
-        except Exception as e:
-            print("❌ Connection failed:", e)
-    
-    def fetch_one(self, query, params=None):
-        with self.connection.cursor() as cursor:
-            cursor.execute(query, params)
-            return cursor.fetchone()
-    
-    def fetch_all(self, query, params=None):
-        with self.connection.cursor() as cursor:
-            cursor.execute(query, params)
-            return cursor.fetchall()
-    
-    def execute(self, query, params=None):
-        with self.connection.cursor() as cursor:
-            cursor.execute(query, params)
-            self.connection.commit()
-    
-    def close(self):
-        self.connection.close()
+
+def get_db():
+    """Open a new MySQL connection for the current request if one
+    does not already exist, and reuse it otherwise."""
+    if "db" not in g:
+        g.db = pymysql.connect(
+            host=current_app.config["MYSQL_HOST"],
+            user=current_app.config["MYSQL_USER"],
+            password=current_app.config["MYSQL_PASSWORD"],
+            database=current_app.config["MYSQL_DB"],
+            port=current_app.config["MYSQL_PORT"],
+        )
+    return g.db
+
+
+def close_db(e=None):
+    """Close the MySQL connection at the end of the request."""
+    db = g.pop("db", None)
+    if db is not None:
+        db.close()
+
+
+def init_app(app):
+    """Register database functions with the Flask app."""
+    app.teardown_appcontext(close_db)

@@ -1,163 +1,49 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Profile - MeroPasal</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
-</head>
-<body>
-
-    <nav class="navbar">
-        <div class="nav-brand">
-            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="logo" class="nav-logo">
-            <span>MeroPasal</span>
-        </div>
-        <div class="nav-links">
-            <a href="/">Home</a>
-            <a href="{{ url_for('authroutes.profile') }}" class="active">My Profile</a>
-            <a href="{{ url_for('authroutes.logout') }}">Logout</a>
-        </div>
-    </nav>
-
-    <div class="profile-container">
-        <div class="profile-left">
-            <div class="profile-photo-wrapper">
-                {% if user['profile_picture'] and user['profile_picture'] != 'default_pp.jpg' %}
-                    <img src="{{ url_for('static', filename='images/uploads/' + user['profile_picture']) }}"
-                         alt="Profile Picture"
-                         class="profile-photo">
-                {% else %}
-                    <img src="{{ url_for('static', filename='images/default_pp.jpg') }}"
-                         alt="Profile Picture"
-                         class="profile-photo">
-                {% endif %}
-            </div>
-            <h2 class="profile-name">{{ user['name'] }}</h2>
-            <p class="profile-role">Registered User</p>
-            <form action="{{ url_for('authroutes.upload_photo') }}" method="POST" enctype="multipart/form-data">
-                <label for="photo" class="btn-upload">Change Photo</label>
-                <input type="file" id="photo" name="photo" hidden onchange="this.form.submit()">
-            </form>
-        </div>
-
-        <div class="profile-right">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category }}">{{ message }}</div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-
-            <h1 class="profile-title">My Profile</h1>
-
-            <div class="profile-info">
-                <div class="info-row">
-                    <span class="info-label">Full Name</span>
-                    <span class="info-value">{{ user['name'] }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Email Address</span>
-                    <span class="info-value">{{ user['email'] }}</span>
-                </div>
-            </div>
-
-            <div class="profile-actions">
-                <a href="{{ url_for('authroutes.edit_profile') }}" class="btn-red">Edit Profile</a>
-                <a href="{{ url_for('authroutes.change_password') }}" class="btn-blue">Change Password</a>
-            </div>
-        </div>
-    </div>
-
-    <!-- ACTION CARDS -->
-    <div class="profile-actions-grid">
-        <button class="profile-action-card" onclick="openEditModal()">
-            <span class="action-icon"></span>
-            <span class="action-label">Edit Profile</span>
-            <span class="action-sub">Update name &amp; email</span>
-        </button>
-
-        <button class="profile-action-card" onclick="openPwdModal()">
-            <span class="action-icon"></span>
-            <span class="action-label">Change Password</span>
-            <span class="action-sub">Update your password</span>
-        </button>
-
-        <a href="{{ url_for('auth.view_my_orders') }}" class="profile-action-card">
-            <span class="action-icon"></span>
-            <span class="action-label">My Orders</span>
-            <span class="action-sub">View order history</span>
-        </a>
-
-        <a href="{{ url_for('auth.logout') }}" class="profile-action-card danger">
-            <span class="action-icon"></span>
-            <span class="action-label">Log Out</span>
-            <span class="action-sub">Sign out of account</span>
-        </a>
-    </div>
-
-</div>
-</section>
-
-<!-- ── EDIT PROFILE MODAL ─────────────────────────────────────────────────── -->
-<div id="editModal" class="pmp-backdrop" onclick="closeEditModal(event)">
-    <div class="pmp-box">
-        <div class="pmp-head">
-            <h3> Edit Profile</h3>
-            <button class="pmp-x" onclick="closeEditModal()">&times;</button>
-        </div>
-        <form method="POST" action="{{ url_for('auth.edit_profile') }}">
-            <div class="pmp-body">
-                <div class="pfg">
-                    <label>Full Name</label>
-                    <input type="text" name="full_name" value="{{ user.full_name }}" required>
-                </div>
-                <div class="pfg">
-                    <label>Email Address</label>
-                    <input type="email" name="email" value="{{ user.email }}" required>
-                </div>
-            </div>
-            <div class="pmp-foot">
-                <button type="button" class="pmp-btn" onclick="closeEditModal()">Cancel</button>
-                <button type="submit" class="pmp-btn primary">Save Changes</button>
-            </div>
-        </form>
-    </div>
+{% extends "base.html" %}
+{% block title %}My Profile{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>My Profile</h1>
 </div>
 
-<!-- ── CHANGE PASSWORD MODAL ──────────────────────────────────────────────── -->
-<div id="pwdModal" class="pmp-backdrop" onclick="closePwdModal(event)">
-    <div class="pmp-box">
-        <div class="pmp-head">
-            <h3> Change Password</h3>
-            <button class="pmp-x" onclick="closePwdModal()">&times;</button>
+<div class="form-card">
+    <h2>Profile Information</h2>
+    <form method="post" action="/profile">
+        <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" name="full_name" value="{{ customer.full_name }}" required class="form-control">
         </div>
-        <form method="POST" action="{{ url_for('auth.change_password') }}">
-            <div class="pmp-body">
-                <p style="font-size:.82rem;color:#6b7280;margin-bottom:.3rem;">
-                    Enter your current password to set a new one.
-                </p>
-                <div class="pfg">
-                    <label>Current Password</label>
-                    <input type="password" name="old_password" placeholder="••••••••" required>
-                </div>
-                <div class="pfg">
-                    <label>New Password</label>
-                    <input type="password" name="new_password" placeholder="At least 6 characters" required>
-                </div>
-                <div class="pfg">
-                    <label>Confirm New Password</label>
-                    <input type="password" name="confirm_password" placeholder="Repeat new password" required>
-                </div>
-            </div>
-            <div class="pmp-foot">
-                <button type="button" class="pmp-btn" onclick="closePwdModal()">Cancel</button>
-                <button type="submit" class="pmp-btn primary">Update Password</button>
-            </div>
-        </form>
-    </div>
+        <div class="form-group">
+            <label>Email</label>
+            <input type="email" value="{{ customer.email }}" disabled class="form-control">
+        </div>
+        <div class="form-group">
+            <label>Phone</label>
+            <input type="text" name="phone" value="{{ customer.phone or '' }}" class="form-control">
+        </div>
+        <div class="form-group">
+            <label>Address</label>
+            <input type="text" name="address" value="{{ customer.address or '' }}" class="form-control">
+        </div>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+    </form>
 </div>
 
-<style>
-/* Profile action card as button */
+<div class="form-card" style="margin-top: 24px;">
+    <h2>Change Password</h2>
+    <form method="post" action="/profile/change-password">
+        <div class="form-group">
+            <label>Current Password</label>
+            <input type="password" name="current_password" required class="form-control">
+        </div>
+        <div class="form-group">
+            <label>New Password</label>
+            <input type="password" name="new_password" required minlength="6" class="form-control">
+        </div>
+        <div class="form-group">
+            <label>Confirm New Password</label>
+            <input type="password" name="confirm_password" required class="form-control">
+        </div>
+        <button type="submit" class="btn btn-primary">Change Password</button>
+    </form>
+</div>
+{% endblock %}

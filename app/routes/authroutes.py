@@ -1,123 +1,42 @@
-# from flask import Blueprint
-# from app.controllers.auth import AuthController
+from flask import Blueprint, flash, redirect, render_template, request, session, url_for
 
-# from app.helpers.auth_helper import login_required
+from app.controllers.auth import login_customer, logout_customer, register_customer
 
-# class AuthRoutes:
+auth_bp = Blueprint("auth", __name__)
 
-#     def __init__(self):
 
-#         self.bp = Blueprint("authroutes", __name__)
-#         self.controller = AuthController()
+@auth_bp.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        full_name = request.form.get("full_name", "").strip()
+        email = request.form.get("email", "").strip()
+        phone = request.form.get("phone", "").strip()
+        address = request.form.get("address", "").strip()
+        password = request.form.get("password", "")
 
-#     def register(self):
+        success, message = register_customer(full_name, email, phone, address, password)
+        flash(message)
+        if success:
+            return redirect(url_for("auth.login"))
 
-#         # ---------------- AUTH ROUTES ----------------
-#         self.bp.route("/login", methods=["GET", "POST"])(
-#             self.controller.login
-#         )
+    return render_template("register.html")
 
-#         self.bp.route("/register", methods=["GET", "POST"])(
-#             self.controller.register
-#         )
 
-#         self.bp.route("/logout")(
-#             self.controller.logout
-#         )
+@auth_bp.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        email = request.form.get("email", "").strip()
+        password = request.form.get("password", "")
 
-        
+        success, message = login_customer(email, password)
+        flash(message)
+        if success:
+            return redirect(url_for("customer.dashboard"))
 
-#         # ---------------- RESET FLOW ----------------
-#         self.bp.route("/forgot-password", methods=["GET", "POST"])(
-#             self.controller.forgot_password
-#         )
+    return render_template("login.html")
 
-#         self.bp.route("/reset_password/<token>", methods=["GET", "POST"])(
-#             self.controller.reset_password
-#         )
 
-#         # ---------------- OTHER PAGES ----------------
-#         self.bp.route("/home")(
-#             self.controller.home
-#         )
-
-#         self.bp.route("/contact")(
-#             self.controller.contact
-#         )
-#         self.bp.route('/logout')(self.controller.logout)
-#         self.bp.route('/admin_dashboard')(self.controller.admin_dashboard)
-#         self.bp.route('/customer_dashboard')(self.controller.customer_dashboard)
-#         return self.bp
-
-from flask import Blueprint
-from app.controllers.auth import AuthController
-from app.helpers.auth_helper import login_required
-
-class AuthRoutes:
-
-    def __init__(self):
-
-        self.bp = Blueprint("authroutes", __name__)
-        self.controller = AuthController()
-
-    def register(self):
-
-        # ---------------- AUTH ROUTES ----------------
-
-        self.bp.route("/login", methods=["GET", "POST"])(
-            self.controller.login
-        )
-
-        self.bp.route("/register", methods=["GET", "POST"])(
-            self.controller.register
-        )
-
-        self.bp.route("/logout")(
-            self.controller.logout
-        )
-
-        # ---------------- RESET FLOW ----------------
-
-        self.bp.route("/forgot-password", methods=["GET", "POST"])(
-            self.controller.forgot_password
-        )
-
-        self.bp.route("/reset_password/<token>", methods=["GET", "POST"])(
-            self.controller.reset_password
-        )
-
-        # ---------------- OTHER PAGES ----------------
-
-        self.bp.route("/home")(
-            self.controller.home
-        )
-
-        self.bp.route("/contact")(
-            self.controller.contact
-        )
-
-        self.bp.route("/admin_dashboard")(
-            self.controller.admin_dashboard
-        )
-
-        self.bp.route("/customer_dashboard")(
-            self.controller.customer_dashboard
-        )
-        # ---------------- PROFILE ROUTES ----------------
-
-        self.bp.route("/profile", methods=["GET"])(
-            self.controller.profile
-)
-
-        self.bp.route("/edit-profile", methods=["GET", "POST"])(
-            self.controller.edit_profile
-)
-
-        self.bp.route("/change-password", methods=["GET", "POST"])(
-            self.controller.change_password
-)
-
-        self.bp.route("/upload-photo", methods=["POST"])(
-            self.controller.upload_photo
-)
-        return self.bp
+@auth_bp.route("/logout")
+def logout():
+    logout_customer()
+    return redirect(url_for("auth.login"))

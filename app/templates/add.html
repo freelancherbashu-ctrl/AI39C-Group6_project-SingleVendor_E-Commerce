@@ -44,3 +44,53 @@
     });
 </script>
 {% endblock %}
+
+
+
+
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="form-card">
+    <h1>➕ Add Category</h1>
+    
+    <form method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+            <label>Category Name *</label>
+            <input type="text" name="name" placeholder="Enter category name" required>
+        </div>
+        <div class="form-group">
+            <label>Description</label>
+            <textarea name="description" placeholder="Enter description (optional)"></textarea>
+        </div>
+        <div class="form-group">
+            <label>📸 Category Image</label>
+            <input type="file" name="image" accept="image/*" id="imageInput">
+            <div class="help">Supported: PNG, JPG, JPEG, GIF, SVG, WEBP</div>
+            <div class="preview-area">
+                <img id="imagePreview" src="#" alt="Preview">
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">💾 Save Category</button>
+            <a href="/" class="btn btn-secondary">↩️ Cancel</a>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.getElementById('imageInput').addEventListener('change', function(e) {
+        const preview = document.getElementById('imagePreview');
+        if (this.files && this.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                preview.src = ev.target.result;
+                preview.style.display = 'block';
+            };
+            reader.readAsDataURL(this.files[0]);
+        } else {
+            preview.style.display = 'none';
+        }
+    });
+</script>
+{% endblock %}

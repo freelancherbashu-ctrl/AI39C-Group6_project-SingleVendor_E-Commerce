@@ -1,16 +1,17 @@
-from flask import Flask
+from flask import Flask, redirect, url_for
 import config
-from app.models.database import Database
-from app.routes.authroute import AuthRoutes
 
 def create_app():
     app = Flask(__name__)
     app.secret_key = config.SECRET_KEY
-
-    with app.app_context():
-        Database.create_tables()
-
-    auth_routes = AuthRoutes()
-    app.register_blueprint(auth_routes.register())
-
+    
+    # Register blueprint
+    from app.routes.category_routes import category_bp
+    app.register_blueprint(category_bp)
+    
+    # Homepage route
+    @app.route('/')
+    def home():
+        return redirect(url_for('category.categories_list'))
+    
     return app

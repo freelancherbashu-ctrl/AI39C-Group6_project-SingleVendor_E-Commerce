@@ -1,4 +1,25 @@
+# Virtual environment
+venv/
+.venv/
+env/
+.env/
+
+# Python cache
 __pycache__/
 *.pyc
-venv/
-instance/
+*.pyo
+
+# Database
+*.db
+*.sqlite
+
+# Config with secrets
+config.py
+
+# IDE
+.DS_Store
+.vscode/
+.idea/
+
+# Logs
+*.log

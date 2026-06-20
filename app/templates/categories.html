@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>All Categories</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Categories List</h1>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+        
+        <a href="/add-category" class="btn-submit" style="display: inline-block; text-align: center; text-decoration: none; margin-bottom: 20px;">+ Add New Category</a>
+        
+        {% if categories %}
+            <div class="categories-list">
+                {% for cat in categories %}
+                <div class="category-card">
+                    <h3>{{ cat.name }}</h3>
+                    <p>{{ cat.description or 'No description' }}</p>
+                    {% if cat.image %}
+                        <small>Image: {{ cat.image }}</small>
+                    {% endif %}
+                    <small>Added: {{ cat.created_at.strftime('%Y-%m-%d') if cat.created_at else 'N/A' }}</small>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>No categories found. Add your first category!</p>
+        {% endif %}
+    </div>
+</body>
+</html>

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Login - MeroPasal</title>
+
+    <link rel="stylesheet"
+    href="{{ url_for('static', filename='css/logi.css') }}">
+
+</head>
+
+<body>
+
+<div class="login-wrapper">
+
+    <!-- LEFT SIDE -->
+
+    <div class="left-panel">
+
+        <div class="content">
+
+            <img src="{{ url_for('static',
+            filename='images/logo.png') }}"
+
+            alt="Logo">
+
+            <h1>
+
+                Welcome to MeroPasal
+
+            </h1>
+
+            <p>
+
+                Nepal’s Own Online Store
+
+            </p>
+
+            <div class="features">
+
+                <span>
+
+                    Fast Delivery
+
+                </span>
+
+                <span>
+
+                    Secure Payment
+
+                </span>
+
+                <span>
+
+                    Quality Products
+
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- RIGHT SIDE -->
+
+    <div class="right-panel">
+
+        <form
+        method="POST"
+        class="login-form">
+
+            <h2>
+
+                Login
+
+            </h2>
+
+            <p class="subtitle">
+
+                Login to continue shopping
+
+            </p>
+
+            <input
+
+            type="email"
+
+            name="email"
+
+            placeholder="Enter email"
+
+            required>
+
+            <input
+
+            type="password"
+
+            name="password"
+
+            placeholder="Enter password"
+
+            required>
+
+
+            <div class="forgot">
+
+                <a href="{{ url_for(
+                'authroutes.forgot_password'
+                ) }}">
+
+                    Forgot Password?
+
+                </a>
+
+            </div>
+
+
+            <button
+            type="submit"
+            class="login-btn">
+
+                Login
+
+            </button>
+
+
+            <div class="register">
+
+                Don’t have an account?
+
+                <a href="{{ url_for(
+                'authroutes.register'
+                ) }}">
+
+                    Register
+
+                </a>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+</body>
+
+</html>

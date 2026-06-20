@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile - MeroPasal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-brand">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="logo" class="nav-logo">
+            <span>MeroPasal</span>
+        </div>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="{{ url_for('authroutes.profile') }}">My Profile</a>
+            <a href="{{ url_for('authroutes.logout') }}">Logout</a>
+        </div>
+    </nav>
+
+    <div class="auth-container">
+        <div class="auth-left">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="logo" class="auth-logo">
+            <h2>MeroPasal</h2>
+            <p>Update your profile information</p>
+        </div>
+
+        <div class="auth-right">
+            <h1 class="auth-title">Edit Profile</h1>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form action="{{ url_for('authroutes.edit_profile') }}" method="POST">
+                <div class="form-group">
+                    <input type="text" name="name" class="form-input"
+                           placeholder="Full Name" value="{{ user['name'] }}" required>
+                </div>
+                <div class="form-group">
+                    <input type="email" name="email" class="form-input"
+                           placeholder="Email Address" value="{{ user['email'] }}" required>
+                </div>
+                <button type="submit" class="btn-submit">Save Changes</button>
+            </form>
+
+            <a href="{{ url_for('authroutes.profile') }}" class="back-link">← Back to Profile</a>
+        </div>
+    </div>
+
+</body>
+</html>

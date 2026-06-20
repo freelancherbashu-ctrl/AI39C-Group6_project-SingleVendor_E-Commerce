@@ -1,31 +1,4 @@
-# Python
 __pycache__/
 *.pyc
-*.pyo
-*.pyd
-*.egg-info/
-
-# Virtual environment
 venv/
-env/
-.venv/
-
-# Flask instance / DB
 instance/
-*.db
-*.sqlite
-*.sqlite3
-
-# Uploaded product images (keep folder, ignore contents)
-app/static/admin/uploads/*
-!app/static/admin/uploads/.gitkeep
-
-# IDE
-.vscode/
-.idea/
-*.swp
-.DS_Store
-
-# Env files
-.env
-.env.local

@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Meropasal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_dashboard.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <span class="brand-icon">🛍️</span>
+            <h2>Meropasal</h2>
+            <p>Admin Panel</p>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="#" class="active">
+                <i class="fas fa-th-large"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="#">
+                <i class="fas fa-folder"></i>
+                <span>Categories</span>
+            </a>
+            <a href="#">
+                <i class="fas fa-box"></i>
+                <span>Products</span>
+            </a>
+            <a href="#">
+                <i class="fas fa-users"></i>
+                <span>Users</span>
+            </a>
+            <a href="#">
+                <i class="fas fa-shopping-cart"></i>
+                <span>Orders</span>
+            </a>
+            <a href="#">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <a href="#">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="main-content">
+
+        <!-- ===== TOP HEADER ===== -->
+        <header class="top-header">
+            <div class="header-left">
+                <h1>Dashboard</h1>
+                <span class="breadcrumb">Home / Dashboard</span>
+            </div>
+            <div class="header-right">
+                <button class="notification-btn">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-dot"></span>
+                </button>
+                <div class="admin-profile">
+                    <img src="{{ url_for('static', filename='uploads/meropasal-logo.png') }}" alt="Admin">
+                    <div class="profile-info">
+                        <span class="profile-name">Admin</span>
+                        <span class="profile-role">Super Admin</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- ===== STATS CARDS ===== -->
+        <section class="stats-section">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#e8f5e9;color:#2e7d32;">
+                        <i class="fas fa-folder"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-number">156</span>
+                        <span class="stat-label">Total Categories</span>
+                    </div>
+                    <span class="stat-change positive">+12%</span>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#e3f2fd;color:#0d47a1;">
+                        <i class="fas fa-box"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-number">2,453</span>
+                        <span class="stat-label">Total Products</span>
+                    </div>
+                    <span class="stat-change positive">+8%</span>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#fff3e0;color:#e65100;">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-number">1,234</span>
+                        <span class="stat-label">Total Users</span>
+                    </div>
+                    <span class="stat-change positive">+15%</span>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#fce4ec;color:#c62828;">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-number">$45,678</span>
+                        <span class="stat-label">Total Revenue</span>
+                    </div>
+                    <span class="stat-change positive">+22%</span>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#f3e5f5;color:#6a1b9a;">
+                        <i class="fas fa-image"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-number">89</span>
+                        <span class="stat-label">Categories With Images</span>
+                    </div>
+                    <span class="stat-change positive">+5%</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== CHARTS & ACTIVITY ===== -->
+        <section class="charts-section">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3><i class="fas fa-chart-line"></i> Monthly Revenue</h3>
+                    <select>
+                        <option>Last 7 Days</option>
+                        <option>Last 30 Days</option>
+                        <option>Last 90 Days</option>
+                    </select>
+                </div>
+                <div class="chart-body">
+                    <!-- Simple Bar Chart -->
+                    <div class="bar-chart">
+                        <div class="bar" style="height:60%;"><span>Mon</span></div>
+                        <div class="bar" style="height:80%;"><span>Tue</span></div>
+                        <div class="bar" style="height:45%;"><span>Wed</span></div>
+                        <div class="bar" style="height:90%;"><span>Thu</span></div>
+                        <div class="bar" style="height:70%;"><span>Fri</span></div>
+                        <div class="bar" style="height:55%;"><span>Sat</span></div>
+                        <div class="bar" style="height:75%;"><span>Sun</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3><i class="fas fa-clock"></i> Recent Activities</h3>
+                </div>
+                <div class="activity-list">
+                    <div class="activity-item">
+                        <span class="activity-icon">📦</span>
+                        <div class="activity-content">
+                            <span class="activity-text">New product added: <strong>iPhone 15</strong></span>
+                            <span class="activity-time">2 mins ago</span>
+                        </div>
+                    </div>
+                    <div class="activity-item">
+                        <span class="activity-icon">👤</span>
+                        <div class="activity-content">
+                            <span class="activity-text">New user registered: <strong>John Doe</strong></span>
+                            <span class="activity-time">15 mins ago</span>
+                        </div>
+                    </div>
+                    <div class="activity-item">
+                        <span class="activity-icon">🛒</span>
+                        <div class="activity-content">
+                            <span class="activity-text">New order placed: <strong>#ORD-1234</strong></span>
+                            <span class="activity-time">1 hour ago</span>
+                        </div>
+                    </div>
+                    <div class="activity-item">
+                        <span class="activity-icon">⭐</span>
+                        <div class="activity-content">
+                            <span class="activity-text">Product reviewed: <strong>MacBook Air</strong></span>
+                            <span class="activity-time">2 hours ago</span>
+                        </div>
+                    </div>
+                    <div class="activity-item">
+                        <span class="activity-icon">📁</span>
+                        <div class="activity-content">
+                            <span class="activity-text">Category added: <strong>Electronics</strong></span>
+                            <span class="activity-time">3 hours ago</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== RECENT CATEGORIES ===== -->
+        <section class="recent-section">
+            <div class="recent-header">
+                <h3><i class="fas fa-folder"></i> Recent Categories</h3>
+                <a href="#" class="view-all">View All <i class="fas fa-arrow-right"></i></a>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Category</th>
+                            <th>Products</th>
+                            <th>Status</th>
+                            <th>Added</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>
+                                <div class="category-cell">
+                                    <img src="{{ url_for('static', filename='uploads/meropasal-logo.png') }}" alt="Electronics">
+                                    <span>Electronics</span>
+                                </div>
+                            </td>
+                            <td>24</td>
+                            <td><span class="status-badge active">Active</span></td>
+                            <td>2026-06-18</td>
+                            <td>
+                                <button class="btn-edit"><i class="fas fa-edit"></i></button>
+                                <button class="btn-delete"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>
+                                <div class="category-cell">
+                                    <img src="{{ url_for('static', filename='uploads/meropasal-logo.png') }}" alt="Clothing">
+                                    <span>Clothing</span>
+                                </div>
+                            </td>
+                            <td>18</td>
+                            <td><span class="status-badge active">Active</span></td>
+                            <td>2026-06-17</td>
+                            <td>
+                                <button class="btn-edit"><i class="fas fa-edit"></i></button>
+                                <button class="btn-delete"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>
+                                <div class="category-cell">
+                                    <span>Books</span>
+                                </div>
+                            </td>
+                            <td>12</td>
+                            <td><span class="status-badge inactive">Inactive</span></td>
+                            <td>2026-06-16</td>
+                            <td>
+                                <button class="btn-edit"><i class="fas fa-edit"></i></button>
+                                <button class="btn-delete"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>
+                                <div class="category-cell">
+                                    <img src="{{ url_for('static', filename='uploads/meropasal-logo.png') }}" alt="Home">
+                                    <span>Home & Living</span>
+                                </div>
+                            </td>
+                            <td>9</td>
+                            <td><span class="status-badge active">Active</span></td>
+                            <td>2026-06-15</td>
+                            <td>
+                                <button class="btn-edit"><i class="fas fa-edit"></i></button>
+                                <button class="btn-delete"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>5</td>
+                            <td>
+                                <div class="category-cell">
+                                    <span>Sports</span>
+                                </div>
+                            </td>
+                            <td>7</td>
+                            <td><span class="status-badge active">Active</span></td>
+                            <td>2026-06-14</td>
+                            <td>
+                                <button class="btn-edit"><i class="fas fa-edit"></i></button>
+                                <button class="btn-delete"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ===== FOOTER ===== -->
+        <footer class="footer">
+            <div class="footer-content">
+                <span>🛍️ Meropasal</span>
+                <span>© 2026 All Rights Reserved</span>
+            </div>
+        </footer>
+
+    </main>
+
+</body>
+</html>

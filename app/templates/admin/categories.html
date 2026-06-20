@@ -1,0 +1,58 @@
+{% extends "admin/admin_layout.html" %}
+{% block title %}Categories · meropasal Admin{% endblock %}
+{% block heading %}Categories{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='admin/css/categories.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="cat-layout">
+
+  <section class="cat-panel cat-add">
+    <h3>Add New Category</h3>
+    <form method="post" id="catAddForm">
+      <div class="cat-form-row">
+        <label>Name <span class="cat-req">*</span></label>
+        <input type="text" name="name" required>
+      </div>
+      <div class="cat-form-row">
+        <label>Description</label>
+        <input type="text" name="description">
+      </div>
+      <button class="cat-btn cat-btn-primary">+ Add Category</button>
+    </form>
+  </section>
+
+  <section class="cat-panel">
+    <h3>All Categories ({{ categories|length }})</h3>
+    {% if categories %}
+    <table class="cat-table">
+      <thead><tr><th>Name</th><th>Description</th><th>Products</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for c in categories %}
+        <tr>
+          <form method="post" action="{{ url_for('admin.edit_category', cid=c.id) }}" class="cat-edit-form">
+            <td><input type="text" name="name" value="{{ c.name }}" required></td>
+            <td><input type="text" name="description" value="{{ c.description or '' }}"></td>
+            <td><span class="cat-count">{{ c.products|length }}</span></td>
+            <td class="cat-actions">
+              <button class="cat-btn cat-btn-sm cat-btn-light">Save</button>
+          </form>
+              <form method="post" action="{{ url_for('admin.delete_category', cid=c.id) }}"
+                    class="cat-delete-form" data-name="{{ c.name }}" data-count="{{ c.products|length }}" style="display:inline">
+                <button class="cat-btn cat-btn-sm cat-btn-danger">Delete</button>
+              </form>
+            </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<p class="cat-muted">No categories yet — add your first one ↖</p>{% endif %}
+  </section>
+</div>
+{% endblock %}
+
+{% block page_js %}
+<script src="{{ url_for('static', filename='admin/js/categories.js') }}"></script>
+{% endblock %}

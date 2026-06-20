@@ -1,0 +1,69 @@
+/* =====================================================
+   dashboard.css — Styles for admin_index.html only
+   ===================================================== */
+
+.dash-section { margin-bottom:22px; }
+.dash-section-title { margin:0 0 12px; font-size:15px; color:#555; text-transform:uppercase; letter-spacing:.5px; }
+
+.dash-stat-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(190px, 1fr));
+  gap:16px;
+}
+
+.dash-card {
+  background:#fff; padding:18px; border-radius:10px;
+  box-shadow:0 1px 3px rgba(0,0,0,.06);
+  border-left:4px solid #888;
+  transition:transform .15s, box-shadow .15s;
+}
+.dash-card:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.08); }
+.dash-card-label { font-size:12px; color:#666; text-transform:uppercase; letter-spacing:.5px; }
+.dash-card-value { font-size:28px; font-weight:700; margin-top:6px; color:#1a1d29; }
+.dash-card-link { display:inline-block; margin-top:8px; font-size:12px; color:#1d4ed8; text-decoration:none; }
+.dash-card-link:hover { text-decoration:underline; }
+
+.dash-blue   { border-left-color:#1d4ed8; }
+.dash-purple { border-left-color:#7c3aed; }
+.dash-orange { border-left-color:#ea580c; }
+.dash-green  { border-left-color:#16a34a; }
+.dash-yellow { border-left-color:#eab308; }
+.dash-cyan   { border-left-color:#0891b2; }
+.dash-red    { border-left-color:#dc2626; }
+
+/* Two-column layout */
+.dash-two-col { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+@media (max-width:900px) { .dash-two-col { grid-template-columns:1fr; } }
+
+.dash-panel {
+  background:#fff; padding:20px; border-radius:10px;
+  box-shadow:0 1px 3px rgba(0,0,0,.06);
+}
+.dash-panel h3 { margin-top:0; font-size:16px; }
+
+/* Table */
+.dash-table { width:100%; border-collapse:collapse; }
+.dash-table th, .dash-table td { padding:9px 10px; text-align:left; border-bottom:1px solid #eee; font-size:13px; }
+.dash-table th { background:#fafafa; font-weight:600; color:#555; }
+.dash-table a { color:#1d4ed8; text-decoration:none; }
+
+/* Badges */
+.dash-badge { padding:3px 9px; border-radius:12px; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
+.dash-badge-pending    { background:#fef3c7; color:#92400e; }
+.dash-badge-processing { background:#cffafe; color:#155e75; }
+.dash-badge-completed  { background:#d1fae5; color:#065f46; }
+.dash-badge-cancelled  { background:#fee2e2; color:#991b1b; }
+
+.dash-stock-low { color:#c0392b; font-weight:700; }
+.dash-muted { color:#888; }
+/* Sales chart height limit */
+.dash-panel canvas { max-height: 280px !important; width: 100% !important; }
+
+/* Dashboard greeting */
+.dash-greeting { background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%); color: #fff; padding: 24px 28px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(29,78,216,0.2); }
+.dash-greeting h2 { margin: 0 0 6px; font-size: 24px; font-weight: 700; }
+.dash-greeting p { margin: 0; opacity: 0.9; font-size: 14px; }
+
+/* Stat card hover effects */
+.dash-card { transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer; }
+.dash-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }

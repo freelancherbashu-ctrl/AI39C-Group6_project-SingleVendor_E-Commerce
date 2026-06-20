@@ -1,0 +1,10 @@
+{% extends "admin/admin_layout.html" %}
+{% block title %}Server Error - meropasal Admin{% endblock %}
+{% block heading %}500 - Server Error{% endblock %}
+{% block content %}
+<div class="admin-error-page">
+  <h1>500</h1>
+  <p>Something went wrong on our end. Please try again, or contact the developer.</p>
+  <a class="prod-btn prod-btn-primary" href="{{ url_for('admin.admin_index') }}">Back to Dashboard</a>
+</div>
+{% endblock %}

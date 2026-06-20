@@ -64,6 +64,12 @@
                 <button class="cancel-order-btn"
                     onclick="openCancelModal({ order})">Cancel Order</button>
                 {% endif %}
+
+                {% if order.order_status == 'Completed' %}
+                <button class="cancel-order-btn"
+                    onclick="openRefundModal({{ order.id }})"
+                    style="background:#eff6ff;color:#1e40af;border-color:#bfdbfe;">Request Refund</button>
+                {% endif %}
             </div>
 
         </div>
@@ -91,6 +97,29 @@
         <div id="omBody" class="om-body">
             <div class="om-loading">Loading…</div>
         </div>
+    </div>
+</div>
+
+<!-- ── REFUND REQUEST MODAL ──────────────────────────────────────────────── -->
+<div id="refundModal" class="mp-backdrop" onclick="closeRefundModal(event)">
+    <div class="mp-box" style="max-width:460px;">
+        <div class="mp-head">
+            <h3>Request Refund</h3>
+            <button class="mp-x" onclick="closeRefundModal()">&times;</button>
+        </div>
+        <form id="refundForm" method="POST" style="margin:0;">
+            <div class="mp-body">
+                <p>Please describe why you'd like a refund for <strong id="refundOrderLabel"></strong>:</p>
+                <textarea name="reason" rows="4" maxlength="1000" required
+                    placeholder="e.g. Item arrived damaged, wrong product received…"
+                    style="width:100%;margin-top:.8rem;padding:.6rem .75rem;border:1px solid #d1d5db;border-radius:8px;font-size:.88rem;resize:vertical;box-sizing:border-box;"></textarea>
+                <p style="font-size:.78rem;color:#9ca3af;margin-top:.4rem;">Our team will review your request within 2–3 business days.</p>
+            </div>
+            <div class="mp-foot">
+                <button type="button" class="mp-btn" onclick="closeRefundModal()">Cancel</button>
+                <button type="submit" class="mp-btn" style="background:#1e40af;color:#fff;border-color:#1e40af;">Submit Request</button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -258,6 +287,16 @@ function renderOrderModal(o) {
 }
 
 // ── Cancel Modal ────────────────────────────────────────────────────────────
+function openRefundModal(orderId) {
+    document.getElementById('refundOrderLabel').textContent = 'Order #' + orderId;
+    document.getElementById('refundForm').action = '/orders/' + orderId + '/refund';
+    document.getElementById('refundModal').classList.add('open');
+}
+function closeRefundModal(e) {
+    if (e && e.target !== document.getElementById('refundModal')) return;
+    document.getElementById('refundModal').classList.remove('open');
+}
+
 function openCancelModal(orderId) {
     document.getElementById('cancelOrderId').textContent = 'Order #' + orderId;
     document.getElementById('cancelForm').action = `/cancel_order/${orderId}`;

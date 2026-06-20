@@ -1,0 +1,247 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ product.name }} - MeroPasal{% endblock %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/view_product.css') }}">
+{% endblock %}
+
+{% block content %}
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+    <div class="cart-alert alert-{{ category }}">
+        {{ message }}
+        <div class="alert-actions">
+            <a href="{{ url_for('auth.cart') }}" class="alert-btn">View Cart 🛒</a>
+            <a href="{{ url_for('auth.home') }}" class="alert-btn secondary">Continue Shopping</a>
+        </div>
+    </div>
+    {% endfor %}
+{% endwith %}
+
+<section class="product-page">
+
+    <!-- LEFT: IMAGE -->
+    <div class="product-image">
+        <div class="product-image-wrap">
+            <img src="{{ product.image }}" alt="{{ product.name }}">
+        </div>
+    </div>
+
+    <!-- RIGHT: DETAILS -->
+    <div class="product-details">
+
+        <span class="product-badge">{{ product.category | title }}</span>
+
+        <div class="product-title-row">
+            <h1>{{ product.name }}</h1>
+            {% if user %}
+            <button class="heart-btn" id="wishlist-btn" data-product-id="{{ product.id }}" title="Add to Wishlist">♡</button>
+            {% else %}
+            <a href="{{ url_for('auth.login') }}" class="heart-btn" title="Login to add to Wishlist">♡</a>
+            {% endif %}
+        </div>
+
+        <div class="price-block">
+            {% if sale %}
+            <span class="price-original">Rs. {{ "{:,.0f}".format(product.price) }}</span>
+            <span class="price-sale">Rs. {{ "{:,.0f}".format(sale.sale_price) }}</span>
+            <span class="sale-badge">{{ sale.discount | int }}% OFF</span>
+            {% else %}
+            <span class="price-main">Rs. {{ "{:,.0f}".format(product.price) }}</span>
+            {% endif %}
+        </div>
+
+        {% if product.available == 0 %}
+        <div class="stock-badge stock-out">Out of Stock</div>
+        {% elif product.available <= 5 %}
+        <div class="stock-badge stock-low">Only {{ product.available }} left!</div>
+        {% else %}
+        <div class="stock-badge stock-in">In Stock</div>
+        {% endif %}
+
+        {% if product.description %}
+        <p class="product-description">{{ product.description }}</p>
+        {% endif %}
+
+        <hr class="product-divider">
+
+        <div class="qty-section">
+            <label>Quantity</label>
+            <div class="qty-selector">
+                <button type="button" onclick="changeQty(-1)">−</button>
+                <input type="number" id="qty" value="1" min="1" max="{{ product.available if product.available > 0 else 1 }}" readonly>
+                <button type="button" onclick="changeQty(1)">+</button>
+            </div>
+        </div>
+
+        <div class="product-actions">
+            {% if product.available == 0 %}
+            <button class="btn cart" disabled style="opacity:.5;cursor:not-allowed;">🛒 Out of Stock</button>
+            <button class="btn buy"  disabled style="opacity:.5;cursor:not-allowed;">⚡ Unavailable</button>
+            {% else %}
+            <form id="cartForm" action="{{ url_for('auth.add_to_cart', product_id=product.id) }}" method="POST">
+                <input type="hidden" name="quantity" id="cartQty" value="1">
+                <button type="submit" class="btn cart">🛒 Add to Cart</button>
+            </form>
+            <form id="buyNowForm" action="{{ url_for('auth.buy_now', product_id=product.id) }}" method="POST">
+                <input type="hidden" name="quantity" id="buyQty" value="1">
+                <button type="submit" class="btn buy">⚡ Buy Now</button>
+            </form>
+            {% endif %}
+        </div>
+
+        <a href="{{ url_for('auth.home') }}" class="btn-secondary">← Continue Shopping</a>
+
+    </div>
+
+</section>
+
+<!-- ── REVIEWS ──────────────────────────────────────────────────────── -->
+<section class="reviews-section" style="max-width:900px;margin:2.5rem auto;padding:0 1rem;">
+    <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;">
+        <h2 style="margin:0;font-size:1.3rem;">Customer Reviews</h2>
+        {% if avg_rating %}
+        <div style="display:flex;align-items:center;gap:.4rem;">
+            <span style="color:#f59e0b;font-size:1.2rem;">
+                {% for i in range(avg_rating|int) %}★{% endfor %}{% if avg_rating - avg_rating|int >= 0.5 %}½{% endif %}{% for i in range(5 - (avg_rating + 0.49)|int) %}☆{% endfor %}
+            </span>
+            <strong style="font-size:1.1rem;">{{ avg_rating }}</strong>
+            <span style="color:#9ca3af;font-size:.9rem;">({{ review_count }} review{{ 's' if review_count != 1 }})</span>
+        </div>
+        {% else %}
+        <span style="color:#9ca3af;font-size:.9rem;">No reviews yet — be the first!</span>
+        {% endif %}
+    </div>
+
+    {% if reviewable_order_id %}
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:1.3rem;margin-bottom:1.8rem;">
+        <h3 style="margin:0 0 1rem;font-size:1rem;color:#065f46;">Write a Review</h3>
+        <form method="POST" action="{{ url_for('auth.submit_review', product_id=product.id) }}">
+            <input type="hidden" name="order_id" value="{{ reviewable_order_id }}">
+            <div style="margin-bottom:.9rem;">
+                <label style="display:block;font-size:.85rem;font-weight:600;margin-bottom:.4rem;color:#374151;">Your Rating *</label>
+                <div class="star-picker" style="display:flex;gap:.2rem;font-size:1.8rem;cursor:pointer;">
+                    {% for i in range(1, 6) %}
+                    <label style="cursor:pointer;color:#d1d5db;transition:color .15s;" data-val="{{ i }}">
+                        ★
+                        <input type="radio" name="rating" value="{{ i }}" required style="display:none;">
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+            <div style="margin-bottom:.9rem;">
+                <label style="display:block;font-size:.85rem;font-weight:600;margin-bottom:.4rem;color:#374151;">Comment (optional)</label>
+                <textarea name="comment" rows="3" maxlength="1000" placeholder="Share your experience…"
+                    style="width:100%;padding:.6rem .8rem;border:1px solid #d1d5db;border-radius:8px;font-size:.9rem;resize:vertical;box-sizing:border-box;"></textarea>
+            </div>
+            <button type="submit" style="background:#16a34a;color:#fff;border:none;padding:.6rem 1.4rem;border-radius:8px;font-weight:600;cursor:pointer;">Submit Review</button>
+        </form>
+    </div>
+    {% elif user and not reviewable_order_id %}
+    <p style="font-size:.85rem;color:#9ca3af;margin-bottom:1.5rem;">
+        Purchase and complete an order for this product to leave a review.
+    </p>
+    {% elif not user %}
+    <p style="font-size:.85rem;color:#9ca3af;margin-bottom:1.5rem;">
+        <a href="{{ url_for('auth.login') }}" style="color:#6366f1;">Log in</a> and purchase this product to leave a review.
+    </p>
+    {% endif %}
+
+    {% if reviews %}
+    <div style="display:flex;flex-direction:column;gap:1rem;">
+        {% for rev in reviews %}
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:1.1rem 1.3rem;">
+            <div style="display:flex;align-items:center;gap:.8rem;margin-bottom:.5rem;">
+                {% if rev.user_picture %}
+                <img src="{{ rev.user_picture }}" alt="{{ rev.user_name }}" style="width:34px;height:34px;border-radius:50%;object-fit:cover;">
+                {% else %}
+                <div style="width:34px;height:34px;border-radius:50%;background:#e0e7ff;display:flex;align-items:center;justify-content:center;font-weight:700;color:#4f46e5;font-size:.9rem;">{{ rev.user_name[0].upper() }}</div>
+                {% endif %}
+                <div>
+                    <strong style="font-size:.9rem;color:#111;">{{ rev.user_name }}</strong>
+                    <div style="font-size:.75rem;color:#9ca3af;">{{ rev.created_at.strftime('%d %b %Y') if rev.created_at else '' }}</div>
+                </div>
+                <span style="margin-left:auto;color:#f59e0b;font-size:1rem;">
+                    {% for i in range(rev.rating) %}★{% endfor %}{% for i in range(5 - rev.rating) %}☆{% endfor %}
+                </span>
+            </div>
+            {% if rev.comment %}
+            <p style="margin:0;font-size:.9rem;color:#374151;line-height:1.6;">{{ rev.comment }}</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p style="color:#9ca3af;text-align:center;padding:2rem 0;">No reviews yet for this product.</p>
+    {% endif %}
+</section>
+
+<script>
+// Star picker interactivity
+const starPicker = document.querySelector('.star-picker');
+if (starPicker) {
+    const labels = starPicker.querySelectorAll('label');
+    labels.forEach((label, idx) => {
+        label.addEventListener('mouseenter', () => {
+            labels.forEach((l, i) => l.style.color = i <= idx ? '#f59e0b' : '#d1d5db');
+        });
+        label.addEventListener('mouseleave', () => {
+            const checked = starPicker.querySelector('input:checked');
+            const val = checked ? parseInt(checked.value) - 1 : -1;
+            labels.forEach((l, i) => l.style.color = i <= val ? '#f59e0b' : '#d1d5db');
+        });
+        label.addEventListener('click', () => {
+            label.querySelector('input').checked = true;
+            const val = idx;
+            labels.forEach((l, i) => l.style.color = i <= val ? '#f59e0b' : '#d1d5db');
+        });
+    });
+}
+</script>
+
+<div id="wl-toast" class="wishlist-toast" style="display:none;"></div>
+
+<script>
+function changeQty(delta) {
+    const input = document.getElementById("qty");
+    const newVal = Math.max(1, parseInt(input.value) + delta);
+    input.value = newVal;
+    document.getElementById("cartQty").value = newVal;
+    document.getElementById("buyQty").value  = newVal;
+}
+
+const wishlistBtn = document.getElementById("wishlist-btn");
+if (wishlistBtn) {
+    fetch(`/wishlist/status/${wishlistBtn.dataset.productId}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.wishlisted) { wishlistBtn.classList.add("wishlisted"); wishlistBtn.textContent = "♥"; wishlistBtn.title = "Remove from Wishlist"; }
+            updateHeaderWishlistBadge(data.wishlist_count);
+        }).catch(() => {});
+
+    wishlistBtn.addEventListener("click", function () {
+        fetch(`/wishlist/toggle/${this.dataset.productId}`, { method: "POST" })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) { if (data.error === "login_required") window.location.href = "/login"; return; }
+                if (data.wishlisted) { this.classList.add("wishlisted"); this.textContent = "♥"; this.title = "Remove from Wishlist"; }
+                else { this.classList.remove("wishlisted"); this.textContent = "♡"; this.title = "Add to Wishlist"; }
+                updateHeaderWishlistBadge(data.wishlist_count);
+                showToast(data.message, data.wishlisted ? "success" : "info");
+            }).catch(() => showToast("Something went wrong.", "error"));
+    });
+}
+
+function showToast(message, type) {
+    const toast = document.getElementById("wl-toast");
+    toast.textContent = message;
+    toast.className = `wishlist-toast wishlist-toast-${type}`;
+    toast.style.display = "block";
+    setTimeout(() => toast.classList.add("show"), 10);
+    setTimeout(() => { toast.classList.remove("show"); setTimeout(() => { toast.style.display = "none"; }, 300); }, 2500);
+}
+</script>
+
+{% endblock %}

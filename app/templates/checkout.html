@@ -85,8 +85,45 @@
             </div>
 
             <div class="summary-total">
-                <span>Total</span>
-                <span class="total-amount">Rs. {{ "{:,.0f}".format(total) }}</span>
+                <span>Subtotal</span>
+                <span>Rs. {{ "{:,.0f}".format(total) }}</span>
+            </div>
+            <div class="summary-total">
+                <span>Delivery</span>
+                {% if delivery_fee == 0 %}
+                <span style="color:green;">Free 🎉</span>
+                {% else %}
+                <span>Rs. {{ "{:,.0f}".format(delivery_fee) }}</span>
+                {% endif %}
+            </div>
+            {% if delivery_fee > 0 %}
+            <p style="font-size:0.78rem;color:#888;margin:4px 0 8px;">
+                Add Rs. {{ "{:,.0f}".format(free_threshold - total) }} more for free delivery
+            </p>
+            {% endif %}
+            <!-- COUPON CODE -->
+            <div style="margin:.8rem 0;border:1px solid #e5e7eb;border-radius:10px;padding:.8rem;">
+                <div style="font-size:.82rem;font-weight:600;color:#6b7280;margin-bottom:.5rem;">Discount Coupon</div>
+                <div style="display:flex;gap:.5rem;">
+                    <input type="text" id="couponInput" placeholder="Enter coupon code"
+                           style="flex:1;padding:.45rem .65rem;border:1px solid #d1d5db;border-radius:7px;font-size:.9rem;text-transform:uppercase;">
+                    <button type="button" onclick="applyCoupon()"
+                            style="padding:.45rem .9rem;background:#6366f1;color:#fff;border:none;border-radius:7px;font-size:.85rem;font-weight:600;cursor:pointer;">Apply</button>
+                </div>
+                <div id="couponMsg" style="font-size:.8rem;margin-top:.4rem;"></div>
+                <input type="hidden" name="coupon_id" id="couponId" value="">
+                <input type="hidden" name="coupon_code" id="couponCode" value="">
+                <input type="hidden" name="discount_amount" id="discountAmount" value="0">
+            </div>
+
+            <div id="discountRow" style="display:none;" class="summary-total">
+                <span style="color:#16a34a;">Discount</span>
+                <span id="discountDisplay" style="color:#16a34a;">- Rs. 0</span>
+            </div>
+
+            <div class="summary-total" style="font-weight:700;font-size:1.1rem;border-top:2px solid #e5e7eb;padding-top:10px;margin-top:4px;">
+                <span>Grand Total</span>
+                <span class="total-amount" id="grandTotalDisplay">Rs. {{ "{:,.0f}".format(grand_total) }}</span>
             </div>
 
         </div>
@@ -125,6 +162,42 @@ function validateCheckout(event) {
         return false;
     }
     return true;
+}
+</script>
+
+<script>
+const BASE_GRAND_TOTAL = {{ grand_total }};
+
+function applyCoupon() {
+    const code = document.getElementById('couponInput').value.trim().toUpperCase();
+    const msg  = document.getElementById('couponMsg');
+    if (!code) { msg.textContent = 'Please enter a coupon code.'; msg.style.color='#ef4444'; return; }
+    msg.textContent = 'Checking…'; msg.style.color = '#6b7280';
+    const fd = new FormData();
+    fd.append('code', code);
+    fd.append('cart_total', BASE_GRAND_TOTAL);
+    fetch('/coupon/validate', { method: 'POST', body: fd })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                msg.textContent = data.message; msg.style.color = '#16a34a';
+                document.getElementById('couponId').value = data.coupon_id;
+                document.getElementById('couponCode').value = data.code;
+                document.getElementById('discountAmount').value = data.discount_amount;
+                const newTotal = Math.max(0, BASE_GRAND_TOTAL - data.discount_amount);
+                document.getElementById('discountDisplay').textContent = '- Rs. ' + data.discount_amount.toLocaleString('en-IN', {maximumFractionDigits:0});
+                document.getElementById('grandTotalDisplay').textContent = 'Rs. ' + newTotal.toLocaleString('en-IN', {maximumFractionDigits:0});
+                document.getElementById('discountRow').style.display = 'flex';
+            } else {
+                msg.textContent = data.message; msg.style.color = '#ef4444';
+                document.getElementById('couponId').value = '';
+                document.getElementById('couponCode').value = '';
+                document.getElementById('discountAmount').value = '0';
+                document.getElementById('discountRow').style.display = 'none';
+                document.getElementById('grandTotalDisplay').textContent = 'Rs. ' + BASE_GRAND_TOTAL.toLocaleString('en-IN', {maximumFractionDigits:0});
+            }
+        })
+        .catch(() => { msg.textContent = 'Could not validate coupon.'; msg.style.color='#ef4444'; });
 }
 </script>
 
